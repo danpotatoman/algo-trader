@@ -1,0 +1,34 @@
+{
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "git.enabled": true,
+    "git.autorefresh": true,
+    "git.showUntrackedFiles": true,
+    "github.copilot.enable": {
+        "*": false,
+        "plaintext": false,
+        "markdown": false,
+        "scminput": false
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/.venv/**": true,
+        "**/venv/**": true,
+        "**/__pycache__/**": true,
+        "**/target/**": true,
+        "**/saved_models/**": true,
+        "**/.VSCodeCounter/**": true
+    },
+    "search.exclude": {
+        "**/.venv": true,
+        "**/venv": true,
+        "**/__pycache__": true,
+        "**/target": true,
+        "**/saved_models": true,
+        "**/.VSCodeCounter": true
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.VSCodeCounter": true
+    }
+}
