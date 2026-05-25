@@ -1,0 +1,35 @@
+# Python
+venv/
+.venv/
+__pycache__/
+**/venv/
+**/.venv/
+**/__pycache__/
+*.pyc
+**/*.pyc
+/python/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+.VSCodeCounter/
+
+# Java
+target/
+*.class
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Model/data artifacts
+saved_models/
+data/cache/
+
+# Environment variables
+.env
