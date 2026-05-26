@@ -4,8 +4,8 @@ import java.time.Instant;
 import java.util.List;
 
 import com.algotrader.data.TimeInterval;
-import com.algotrader.data.buffer.DataBufferException;
-import com.algotrader.data.buffer.CSVLoader;
+import com.algotrader.data.cache.CSVLoader;
+import com.algotrader.data.cache.DataCacheException;
 import com.algotrader.data.dataobjects.StampedOHLCV;
 
 /**
@@ -44,13 +44,13 @@ public class CSVOHLCVSource implements OHLCVSource {
      * @param ticker the stock ticker symbol
      * @param interval the candlestick interval
      * @return all loaded OHLCV rows
-     * @throws DataBufferException if the CSV file cannot be loaded or parsed
+     * @throws DataCacheException if the CSV file cannot be loaded or parsed
      */
     @Override
     public List<StampedOHLCV> loadRows(
             String ticker,
             TimeInterval interval
-    ) throws DataBufferException {
+    ) throws DataCacheException {
 
         validateRequest(ticker, interval);
 
@@ -78,10 +78,10 @@ public class CSVOHLCVSource implements OHLCVSource {
             String ticker,
             TimeInterval interval,
             Instant timestamp
-    ) throws DataBufferException {
+    ) throws DataCacheException {
 
         if (timestamp == null) {
-            throw new DataBufferException("Timestamp cannot be null.");
+            throw new DataCacheException("Timestamp cannot be null.");
         }
 
         List<StampedOHLCV> rows = loadRows(ticker, interval);
@@ -89,7 +89,7 @@ public class CSVOHLCVSource implements OHLCVSource {
         return rows.stream()
                 .filter(row -> row.timestamp().equals(timestamp))
                 .findFirst()
-                .orElseThrow(() -> new DataBufferException(
+                .orElseThrow(() -> new DataCacheException(
                         "No OHLCV row found for ticker "
                                 + ticker.toUpperCase()
                                 + ", interval "
@@ -120,14 +120,14 @@ public class CSVOHLCVSource implements OHLCVSource {
     }
 
     private void validateRequest(String ticker, TimeInterval interval)
-            throws DataBufferException {
+            throws DataCacheException {
 
         if (ticker == null || ticker.isBlank()) {
-            throw new DataBufferException("Ticker cannot be empty.");
+            throw new DataCacheException("Ticker cannot be empty.");
         }
 
         if (interval == null) {
-            throw new DataBufferException("Interval cannot be null.");
+            throw new DataCacheException("Interval cannot be null.");
         }
     }
 

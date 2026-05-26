@@ -1,4 +1,4 @@
-package com.algotrader.data.buffer;
+package com.algotrader.data.cache;
 
 import java.time.Instant;
 
@@ -6,10 +6,10 @@ import com.algotrader.data.TimeInterval;
 import com.algotrader.data.dataobjects.DataBatch;
 
 /**
- * Provides sequential sliding-window access over a {@link DataBuffer}.
+ * Provides sequential sliding-window access over a {@link MarketDataProvider}.
  *
  * <p>Each instance owns its own traversal state, so multiple
- * SlidingWindowProvider instances can share the same underlying DataBuffer
+ * SlidingWindowProvider instances can share the same underlying MarketDataProvider
  * without interfering with each other.
  */
 public class SlidingWindowProvider {
@@ -17,7 +17,7 @@ public class SlidingWindowProvider {
     private final String ticker;
     private final TimeInterval interval;
     private final int batchSize;
-    private final DataBuffer dataBuffer;
+    private final MarketDataProvider marketDataProvider;
 
     private Instant currentTimestamp;
 
@@ -26,7 +26,7 @@ public class SlidingWindowProvider {
             TimeInterval interval,
             int batchSize,
             Instant startingTime,
-            DataBuffer dataBuffer
+            MarketDataProvider marketDataProvider
     ) {
         if (ticker == null || ticker.isBlank()) {
             throw new IllegalArgumentException("Ticker cannot be empty.");
@@ -44,15 +44,15 @@ public class SlidingWindowProvider {
             throw new IllegalArgumentException("Starting time cannot be null.");
         }
 
-        if (dataBuffer == null) {
-            throw new IllegalArgumentException("DataBuffer cannot be null.");
+        if (marketDataProvider == null) {
+            throw new IllegalArgumentException("MarketDataProvider cannot be null.");
         }
 
         this.ticker = ticker.toUpperCase();
         this.interval = interval;
         this.batchSize = batchSize;
         this.currentTimestamp = startingTime;
-        this.dataBuffer = dataBuffer;
+        this.marketDataProvider = marketDataProvider;
     }
 
     /**
@@ -60,20 +60,20 @@ public class SlidingWindowProvider {
      *
      * <p>The first call returns a batch ending at the starting timestamp
      * provided at construction. Each following call advances to the next
-     * available timestamp in the underlying DataBuffer.
+     * available timestamp in the underlying MarketDataProvider.
      *
      * @return the next sliding-window DataBatch
-     * @throws DataBufferException if the next window cannot be produced
+     * @throws DataCacheException if the next window cannot be produced
      */
-    public DataBatch nextWindow() throws DataBufferException {
-        DataBatch batch = dataBuffer.requestBatch(
+    public DataBatch nextWindow() throws DataCacheException {
+        DataBatch batch = marketDataProvider.requestBatch(
                 ticker,
                 interval,
                 batchSize,
                 currentTimestamp
         );
 
-        currentTimestamp = dataBuffer.getNextTimestamp(
+        currentTimestamp = marketDataProvider.getNextTimestamp(
                 ticker,
                 interval,
                 currentTimestamp

@@ -1,39 +1,87 @@
 package com.algotrader.prediction;
 
+import com.algotrader.config.ModelConfig;
 import com.algotrader.prediction.api.PythonPredictionClient;
 import com.algotrader.prediction.provider.PythonClassificationPredictionProvider;
 import com.algotrader.prediction.provider.PythonRegressionPredictionProvider;
 
+/**
+ * Factory for constructing prediction providers from {@link ModelConfig}
+ * definitions.
+ */
 public final class PredictionProviderFactory {
 
-    private static final String BASE_URL = "http://127.0.0.1:8000";
+    public PredictionProviderFactory() {}
 
-    private static final String REGRESSION_ENDPOINT =
-            "/predict/regression";
+    /**
+     * Creates a classification prediction provider from the supplied model config.
+     *
+     * @param modelConfig the model configuration
+     * @return a classification prediction provider
+     */
+    public ClassificationPredictionProvider
+            createClassificationProvider(
+                    ModelConfig modelConfig
+            ) {
 
-    private static final String CLASSIFICATION_ENDPOINT =
-            "/predict/classification";
+        validateModelConfig(modelConfig, "CLASSIFICATION");
 
-    private static final PythonPredictionClient CLIENT =
-            new PythonPredictionClient(
-                    BASE_URL,
-                    REGRESSION_ENDPOINT,
-                    CLASSIFICATION_ENDPOINT
-            );
+        PythonPredictionClient client =
+                new PythonPredictionClient(
+                        modelConfig.getEndpoint()
+                );
 
-    private static final RegressionPredictionProvider REGRESSION_PROVIDER =
-            new PythonRegressionPredictionProvider(CLIENT);
-
-    private static final ClassificationPredictionProvider CLASSIFICATION_PROVIDER =
-            new PythonClassificationPredictionProvider(CLIENT);
-
-    private PredictionProviderFactory() {}
-
-    public static RegressionPredictionProvider getRegressionProvider() {
-        return REGRESSION_PROVIDER;
+        return new PythonClassificationPredictionProvider(client);
     }
 
-    public static ClassificationPredictionProvider getClassificationProvider() {
-        return CLASSIFICATION_PROVIDER;
+    /**
+     * Creates a regression prediction provider from the supplied model config.
+     *
+     * @param modelConfig the model configuration
+     * @return a regression prediction provider
+     */
+    public RegressionPredictionProvider
+            createRegressionProvider(
+                    ModelConfig modelConfig
+            ) {
+
+        validateModelConfig(modelConfig, "REGRESSION");
+
+        PythonPredictionClient client =
+                new PythonPredictionClient(
+                        modelConfig.getEndpoint()
+                );
+
+        return new PythonRegressionPredictionProvider(client);
+    }
+
+    /**
+     * Validates that the supplied model config matches the expected
+     * prediction type.
+     *
+     * @param modelConfig the model config to validate
+     * @param expectedPredictionType the required prediction type
+     */
+    private void validateModelConfig(
+            ModelConfig modelConfig,
+            String expectedPredictionType
+    ) {
+        if (modelConfig == null) {
+            throw new IllegalArgumentException(
+                    "ModelConfig cannot be null."
+            );
+        }
+
+        String actualPredictionType =
+                modelConfig.getPredictionType().toUpperCase();
+
+        if (!actualPredictionType.equals(expectedPredictionType)) {
+            throw new IllegalArgumentException(
+                    "Expected prediction type "
+                            + expectedPredictionType
+                            + " but received "
+                            + actualPredictionType
+            );
+        }
     }
 }

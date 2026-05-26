@@ -1,4 +1,4 @@
-package com.algotrader.data.buffer;
+package com.algotrader.data.cache;
 
 import java.time.Instant;
 
@@ -28,7 +28,7 @@ public interface MarketDataProvider {
             TimeInterval interval,
             int batchSize,
             Instant closingTimestamp
-    ) throws DataBufferException;
+    ) throws DataCacheException;
 
     /**
      * Returns the next available timestamp after the provided timestamp
@@ -44,11 +44,11 @@ public interface MarketDataProvider {
      * @param interval the time interval between candles/data points
      * @param timestamp the reference timestamp
      * @return the next available timestamp after {@code timestamp}
-     * @throws DataBufferException if no later timestamp exists or the request is invalid
+     * @throws DataCacheException if no later timestamp exists or the request is invalid
      */
     Instant getNextTimestamp(
             String ticker,
             TimeInterval interval,
             Instant timestamp
-    ) throws DataBufferException;
+    ) throws DataCacheException;
 }

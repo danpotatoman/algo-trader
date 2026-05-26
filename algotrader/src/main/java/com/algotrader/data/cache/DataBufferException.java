@@ -1,4 +1,4 @@
-package com.algotrader.data.buffer;
+package com.algotrader.data.cache;
 
 /**
  * Exception thrown when an error occurs during data buffering operations.

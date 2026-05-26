@@ -1,4 +1,4 @@
-package com.algotrader.data.buffer;
+package com.algotrader.data.cache;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ import com.algotrader.data.source.OHLCVSource;
  * <p>This class owns caching, timestamp navigation, and batch construction.
  * It does not know how individual sources retrieve their data.
  */
-public class MarketDataCache implements MarketDataProvider, PriceProvider {
+public class MarketDataCache implements MarketDataProvider {
 
     private final List<OHLCVSource> sources;
 
@@ -56,12 +56,12 @@ public class MarketDataCache implements MarketDataProvider, PriceProvider {
             TimeInterval interval,
             int batchSize,
             Instant closingTimestamp
-    ) throws DataBufferException {
+    ) throws DataCacheException {
 
         validateRequest(ticker, interval, batchSize);
 
         if (closingTimestamp == null) {
-            throw new DataBufferException("Closing timestamp cannot be null.");
+            throw new DataCacheException("Closing timestamp cannot be null.");
         }
 
         String normalizedTicker = ticker.toUpperCase();
@@ -72,7 +72,7 @@ public class MarketDataCache implements MarketDataProvider, PriceProvider {
                 getRowsFor(normalizedTicker, interval);
 
         if (!matchingRows.containsKey(closingTimestamp)) {
-            throw new DataBufferException(
+            throw new DataCacheException(
                     "No candle found for ticker " + normalizedTicker
                             + ", interval " + interval
                             + ", timestamp " + closingTimestamp
@@ -92,7 +92,7 @@ public class MarketDataCache implements MarketDataProvider, PriceProvider {
         );
 
         if (batchRows.size() < batchSize) {
-            throw new DataBufferException(
+            throw new DataCacheException(
                     "Not enough data before timestamp " + closingTimestamp
                             + " to build batch of size " + batchSize
             );
@@ -108,10 +108,10 @@ public class MarketDataCache implements MarketDataProvider, PriceProvider {
             String ticker,
             TimeInterval interval,
             Instant timestamp
-    ) throws DataBufferException {
+    ) throws DataCacheException {
 
         if (timestamp == null) {
-            throw new DataBufferException("Timestamp cannot be null.");
+            throw new DataCacheException("Timestamp cannot be null.");
         }
 
         validateRequest(ticker, interval, 1);
@@ -127,7 +127,7 @@ public class MarketDataCache implements MarketDataProvider, PriceProvider {
                 rowsByTimestamp.higherEntry(timestamp);
 
         if (nextEntry == null) {
-            throw new DataBufferException(
+            throw new DataCacheException(
                     "No timestamp exists after " + timestamp
                             + " for ticker " + normalizedTicker
                             + " and interval " + interval
@@ -137,7 +137,6 @@ public class MarketDataCache implements MarketDataProvider, PriceProvider {
         return nextEntry.getKey();
     }
 
-    @Override
     public MarketPrice getTickerPrice(
             String ticker,
             TimeInterval interval,
@@ -176,7 +175,7 @@ public class MarketDataCache implements MarketDataProvider, PriceProvider {
                     row.timestamp()
             );
 
-        } catch (DataBufferException e) {
+        } catch (DataCacheException e) {
             throw new IllegalArgumentException(
                     "Could not get market price for ticker "
                             + ticker
@@ -192,7 +191,7 @@ public class MarketDataCache implements MarketDataProvider, PriceProvider {
     private void ensureRowsLoaded(
             String ticker,
             TimeInterval interval
-    ) throws DataBufferException {
+    ) throws DataCacheException {
 
         MarketDataKey key = new MarketDataKey(ticker, interval);
         boolean fileSourcesAlreadyChecked = checkedFileBasedKeys.contains(key);
@@ -255,18 +254,18 @@ public class MarketDataCache implements MarketDataProvider, PriceProvider {
             String ticker,
             TimeInterval interval,
             int batchSize
-    ) throws DataBufferException {
+    ) throws DataCacheException {
 
         if (ticker == null || ticker.isBlank()) {
-            throw new DataBufferException("Ticker cannot be empty.");
+            throw new DataCacheException("Ticker cannot be empty.");
         }
 
         if (interval == null) {
-            throw new DataBufferException("Interval cannot be null.");
+            throw new DataCacheException("Interval cannot be null.");
         }
 
         if (batchSize <= 0) {
-            throw new DataBufferException("Batch size must be positive.");
+            throw new DataCacheException("Batch size must be positive.");
         }
     }
 

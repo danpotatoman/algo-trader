@@ -1,5 +1,7 @@
 package com.algotrader.prediction.interpretation;
 
+import java.util.List;
+
 import com.algotrader.data.dataobjects.ModelPrediction;
 import com.algotrader.data.dataobjects.TradeRecommendation;
 
@@ -7,8 +9,7 @@ import com.algotrader.data.dataobjects.TradeRecommendation;
  * Converts model prediction results into concrete trade recommendations.
  *
  * <p>A {@code PredictionInterpreter} is responsible for strategy logic. It
- * examines a {@link PredictionResult}, including both the model's prediction
- * score and the data batch that produced it, and returns one or more
+ * examines a {@link ModelPrediction} and returns one or more
  * {@link TradeRecommendation} objects.
  *
  * <p>The returned recommendations may include actions scheduled for different
@@ -17,21 +18,20 @@ import com.algotrader.data.dataobjects.TradeRecommendation;
  * execute trades; it only produces recommendations.
  *
  * <p>Actual execution, timing, account state checks, and broker or paper-trading
- * behavior are handled by a separate trade service or trade maker.
+ * behavior are handled by a separate trade service or trade executor.
  */
 public interface PredictionInterpreter<T extends ModelPrediction> {
 
     /**
-     * Generates trade recommendations from a model prediction result.
+     * Generates trade recommendations from a model prediction.
      *
-     * <p>The returned array may contain multiple timestamped recommendations,
+     * <p>The returned list may contain multiple timestamped recommendations,
      * such as one recommendation to buy and another recommendation to sell.
      * The trade execution layer is responsible for performing each recommendation.
      *
-     * @param prediction the prediction result containing the input data batch and
-     *                   corresponding model prediction score
-     * @return an array of trade recommendations derived from the prediction result
-     * @throws IllegalArgumentException if {@code result} is null
+     * @param prediction the prediction result used to generate recommendations
+     * @return a list of trade recommendations derived from the prediction
+     * @throws IllegalArgumentException if {@code prediction} is null
      */
-    TradeRecommendation[] getRecommendations(T prediction);
+    List<TradeRecommendation> getRecommendations(T prediction);
 }

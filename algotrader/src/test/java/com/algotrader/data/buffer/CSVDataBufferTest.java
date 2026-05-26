@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.algotrader.data.TimeInterval;
+import com.algotrader.data.cache.DataBufferException;
 import com.algotrader.data.dataobjects.DataBatch;
 
 class CSVDataBufferTest {

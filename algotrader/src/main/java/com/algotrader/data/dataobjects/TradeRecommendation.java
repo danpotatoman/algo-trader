@@ -24,23 +24,22 @@ public final class TradeRecommendation {
      */
     public enum Action {
         BUY,
-        SELL,
-        HOLD
+        SELL
     }
 
     private final String ticker;
     private final Action action;
     private final double confidence;
-    private final double quantity; //this needs to be defined
+    private final double quantity; //TODO: define what quantity is - number of stocks to buy/sell, or price of stocks to buy/sell?
     private final Instant timestamp;
 
     /**
      * Constructs a new {@code TradeRecommendation}.
      *
      * @param ticker the ticker symbol (e.g. "AAPL")
-     * @param action the trading action (BUY, SELL, HOLD)
+     * @param action the trading action (BUY, SELL)
      * @param confidence confidence in the recommendation (0.0 to 1.0)
-     * @param quantity the quantity to trade (ignored if HOLD)
+     * @param quantity the quantity to trade
      * @param timestamp the time the recommendation was generated
      *
      * @throws IllegalArgumentException if any field is invalid
@@ -87,10 +86,6 @@ public final class TradeRecommendation {
         if (timestamp == null) {
             throw new IllegalArgumentException("Timestamp cannot be null.");
         }
-
-        if (action == Action.HOLD && quantity != 0) {
-            throw new IllegalArgumentException("HOLD action must have quantity 0.");
-        }
     }
 
     public String getTicker() {
@@ -119,10 +114,6 @@ public final class TradeRecommendation {
 
     public boolean isSell() {
         return action == Action.SELL;
-    }
-
-    public boolean isHold() {
-        return action == Action.HOLD;
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.algotrader.data.buffer;
+package com.algotrader.data.cache;
 
 import java.time.Instant;
 
@@ -34,7 +34,6 @@ public interface PriceProvider {
      */
     MarketPrice getTickerPrice(
             String ticker,
-            TimeInterval interval, //TODO: its goofy that PriceProvier needs an interval at all. This may need to change
             Instant timestamp
     );
 }

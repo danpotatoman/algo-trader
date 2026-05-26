@@ -1,4 +1,4 @@
-package com.algotrader.data.buffer;
+package com.algotrader.data.cache;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -66,10 +66,10 @@ public class CSVLoader {
      * @param ticker the ticker symbol associated with the data
      * @param interval the time interval of the candlestick data
      * @return a list of parsed {@link StampedOHLCV} rows in the order they appear in the file
-     * @throws DataBufferException if the file cannot be found, read, or parsed
+     * @throws DataCacheException if the file cannot be found, read, or parsed
      */
     public List<StampedOHLCV> load(String fileName, String ticker, TimeInterval interval)
-            throws DataBufferException {
+            throws DataCacheException {
 
         String resourcePath = dataDirectory + "/" + fileName;
 
@@ -78,7 +78,7 @@ public class CSVLoader {
                 .getResourceAsStream(resourcePath)) {
 
             if (is == null) {
-                throw new DataBufferException(
+                throw new DataCacheException(
                         "CSV file not found in classpath: " + resourcePath
                 );
             }
@@ -86,7 +86,7 @@ public class CSVLoader {
             return readRows(is, fileName, ticker, interval);
 
         } catch (IOException e) {
-            throw new DataBufferException("Failed to read CSV file: " + fileName, e);
+            throw new DataCacheException("Failed to read CSV file: " + fileName, e);
         }
     }
 
@@ -102,14 +102,14 @@ public class CSVLoader {
      * @param interval the time interval of the candlestick data
      * @return a list of parsed rows
      * @throws IOException if an I/O error occurs while reading the stream
-     * @throws DataBufferException if the file is empty or contains malformed data
+     * @throws DataCacheException if the file is empty or contains malformed data
      */
     private List<StampedOHLCV> readRows(
             InputStream is,
             String fileName,
             String ticker,
             TimeInterval interval
-    ) throws IOException, DataBufferException {
+    ) throws IOException, DataCacheException {
 
         List<StampedOHLCV> loadedRows = new ArrayList<>();
 
@@ -117,7 +117,7 @@ public class CSVLoader {
             String line = reader.readLine(); // header
 
             if (line == null) {
-                throw new DataBufferException("CSV file is empty: " + fileName);
+                throw new DataCacheException("CSV file is empty: " + fileName);
             }
 
             int lineNumber = 1;
@@ -147,19 +147,19 @@ public class CSVLoader {
      * @param ticker the ticker symbol
      * @param interval the time interval
      * @return a parsed {@link StampedOHLCV} object
-     * @throws DataBufferException if the line is malformed or contains invalid data
+     * @throws DataCacheException if the line is malformed or contains invalid data
      */
     private StampedOHLCV parseLine(
             String line,
             int lineNumber,
             String ticker,
             TimeInterval interval
-    ) throws DataBufferException {
+    ) throws DataCacheException {
 
         String[] parts = line.split(",");
 
         if (parts.length < 6) {
-            throw new DataBufferException(
+            throw new DataCacheException(
                     "Malformed CSV line " + lineNumber
                             + ": expected 6 columns but got " + parts.length
             );
@@ -184,12 +184,12 @@ public class CSVLoader {
             );
 
         } catch (NumberFormatException e) {
-            throw new DataBufferException(
+            throw new DataCacheException(
                     "Failed to parse numeric value on CSV line " + lineNumber,
                     e
             );
         } catch (IllegalArgumentException e) {
-            throw new DataBufferException(
+            throw new DataCacheException(
                     "Invalid CSV data on line " + lineNumber + ": " + e.getMessage(),
                     e
             );

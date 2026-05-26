@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.algotrader.data.TimeInterval;
-import com.algotrader.data.buffer.DataBufferException;
+import com.algotrader.data.cache.DataCacheException;
 import com.algotrader.data.dataobjects.StampedOHLCV;
 
 /**
@@ -25,12 +25,12 @@ public interface OHLCVSource {
      * @param ticker the stock ticker symbol, e.g. {@code "AAPL"}
      * @param interval the candlestick interval
      * @return all available matching OHLCV rows
-     * @throws DataBufferException if the data cannot be retrieved
+     * @throws DataCacheException if the data cannot be retrieved
      */
     List<StampedOHLCV> loadRows(
             String ticker,
             TimeInterval interval
-    ) throws DataBufferException;
+    ) throws DataCacheException;
 
     /**
      * Retrieves a single OHLCV row for a ticker, interval, and timestamp.
@@ -39,14 +39,14 @@ public interface OHLCVSource {
      * @param interval the candlestick interval
      * @param timestamp the timestamp of the requested candle
      * @return the matching OHLCV row
-     * @throws DataBufferException if the data cannot be retrieved
+     * @throws DataCacheException if the data cannot be retrieved
      *         or no matching candle exists
      */
     StampedOHLCV loadRow(
             String ticker,
             TimeInterval interval,
             Instant timestamp
-    ) throws DataBufferException;
+    ) throws DataCacheException;
 
     /**
      * Returns whether this source retrieves data from files.

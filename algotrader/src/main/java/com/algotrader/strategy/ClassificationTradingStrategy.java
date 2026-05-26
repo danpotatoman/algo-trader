@@ -1,5 +1,7 @@
 package com.algotrader.strategy;
 
+import java.util.List;
+
 import com.algotrader.data.dataobjects.ClassificationPrediction;
 import com.algotrader.data.dataobjects.DataBatch;
 import com.algotrader.data.dataobjects.TradeRecommendation;
@@ -21,11 +23,15 @@ public final class ClassificationTradingStrategy implements TradingStrategy {
             PredictionInterpreter<ClassificationPrediction> interpreter
     ) {
         if (predictionProvider == null) {
-            throw new IllegalArgumentException("ClassificationPredictionProvider cannot be null.");
+            throw new IllegalArgumentException(
+                    "ClassificationPredictionProvider cannot be null."
+            );
         }
 
         if (interpreter == null) {
-            throw new IllegalArgumentException("PredictionInterpreter cannot be null.");
+            throw new IllegalArgumentException(
+                    "PredictionInterpreter cannot be null."
+            );
         }
 
         this.predictionProvider = predictionProvider;
@@ -33,11 +39,13 @@ public final class ClassificationTradingStrategy implements TradingStrategy {
     }
 
     @Override
-    public TradeRecommendation[] generateRecommendations(
+    public List<TradeRecommendation> generateRecommendations(
             DataBatch batch
     ) throws PredictionProviderException {
         if (batch == null) {
-            throw new IllegalArgumentException("DataBatch cannot be null.");
+            throw new IllegalArgumentException(
+                    "DataBatch cannot be null."
+            );
         }
 
         ClassificationPrediction prediction =

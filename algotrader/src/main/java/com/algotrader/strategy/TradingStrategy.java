@@ -1,5 +1,7 @@
 package com.algotrader.strategy;
 
+import java.util.List;
+
 import com.algotrader.data.dataobjects.DataBatch;
 import com.algotrader.data.dataobjects.TradeRecommendation;
 import com.algotrader.prediction.PredictionProviderException;
@@ -17,7 +19,7 @@ import com.algotrader.prediction.PredictionProviderException;
  * trading pipeline:
  *
  * <pre>
- * DataBatch -> Prediction -> TradeRecommendation[]
+ * DataBatch -> Prediction -> List&lt;TradeRecommendation&gt;
  * </pre>
  *
  * <p>Different implementations may use:
@@ -36,12 +38,13 @@ public interface TradingStrategy {
      * Generates trade recommendations from the supplied market data batch.
      *
      * @param batch the market data batch used for prediction
-     * @return generated trade recommendations (possibly empty)
+     * @return generated trade recommendations (possibly empty),
+     *         always sorted chronologically
      *
      * @throws IllegalArgumentException if batch is null
      * @throws PredictionProviderException if prediction generation fails
      */
-    TradeRecommendation[] generateRecommendations(
+    List<TradeRecommendation> generateRecommendations(
             DataBatch batch
     ) throws PredictionProviderException;
 }
