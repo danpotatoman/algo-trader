@@ -3,6 +3,8 @@ package com.algotrader.config;
 import java.util.List;
 
 import com.algotrader.data.TimeInterval;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Immutable configuration describing a prediction model.
@@ -34,15 +36,16 @@ public final class ModelConfig {
     /**
      * Constructs a {@code ModelConfig}.
      */
+    @JsonCreator
     public ModelConfig(
-            String modelId,
-            String modelType,
-            String predictionType,
-            String endpoint,
-            String description,
-            String version,
-            InputConfig input,
-            OutputConfig output
+            @JsonProperty("modelId") String modelId,
+            @JsonProperty("modelType") String modelType,
+            @JsonProperty("predictionType") String predictionType,
+            @JsonProperty("endpoint") String endpoint,
+            @JsonProperty("description") String description,
+            @JsonProperty("version") String version,
+            @JsonProperty("input") InputConfig input,
+            @JsonProperty("output") OutputConfig output
     ) {
         if (modelId == null || modelId.isBlank()) {
             throw new IllegalArgumentException(
@@ -145,10 +148,11 @@ public final class ModelConfig {
         private final int batchSize;
         private final List<String> features;
 
+        @JsonCreator
         public InputConfig(
-                TimeInterval interval,
-                int batchSize,
-                List<String> features
+                @JsonProperty("interval") TimeInterval interval,
+                @JsonProperty("batchSize") int batchSize,
+                @JsonProperty("features") List<String> features
         ) {
             if (interval == null) {
                 throw new IllegalArgumentException(
@@ -194,9 +198,10 @@ public final class ModelConfig {
         private final String positiveClassLabel;
         private final int horizonMinutes;
 
+        @JsonCreator
         public OutputConfig(
-                String positiveClassLabel,
-                int horizonMinutes
+                @JsonProperty("positiveClassLabel") String positiveClassLabel,
+                @JsonProperty("horizonMinutes") int horizonMinutes
         ) {
             if (positiveClassLabel == null
                     || positiveClassLabel.isBlank()) {

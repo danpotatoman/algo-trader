@@ -1,5 +1,8 @@
 package com.algotrader.config;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Immutable configuration describing a trading strategy.
  *
@@ -26,12 +29,13 @@ public final class TradingStrategyConfig {
     /**
      * Constructs a {@code TradingStrategyConfig}.
      */
+    @JsonCreator
     public TradingStrategyConfig(
-            String strategyId,
-            String strategyType,
-            String description,
-            String version,
-            Parameters parameters
+            @JsonProperty("strategyId") String strategyId,
+            @JsonProperty("strategyType") String strategyType,
+            @JsonProperty("description") String description,
+            @JsonProperty("version") String version,
+            @JsonProperty("parameters") Parameters parameters
     ) {
         if (strategyId == null || strategyId.isBlank()) {
             throw new IllegalArgumentException(
@@ -129,9 +133,10 @@ public final class TradingStrategyConfig {
          * @param confidenceThreshold minimum confidence required to trade
          * @param buyQuantity quantity to trade when conditions are met
          */
+        @JsonCreator
         public Parameters(
-                double confidenceThreshold,
-                double buyQuantity
+                @JsonProperty("confidenceThreshold") double confidenceThreshold,
+                @JsonProperty("buyQuantity") double buyQuantity
         ) {
             if (confidenceThreshold < 0.0
                     || confidenceThreshold > 1.0) {

@@ -1,7 +1,7 @@
 package com.algotrader.trader;
 
 import com.algotrader.data.dataobjects.TradeRecommendation;
-import com.algotrader.data.log.TradeExecutionLog;
+import com.algotrader.data.log.TradingCycleLog.ActionLog;
 import com.algotrader.prediction.interpretation.PredictionInterpreter;
 
 /**
@@ -34,7 +34,7 @@ public interface TradeExecutor {
      * @return a TradeExecutionLog describing the execution result
      * @throws IllegalArgumentException if {@code recommendation} is null
      */
-    TradeExecutionLog handleRecommendation(
+    ActionLog handleRecommendation(
             TradeRecommendation recommendation
     );
 }

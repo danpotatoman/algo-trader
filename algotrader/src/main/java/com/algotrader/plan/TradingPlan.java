@@ -1,5 +1,7 @@
 package com.algotrader.plan;
 
+import java.time.Instant;
+
 import com.algotrader.data.TimeInterval;
 
 /**
@@ -12,6 +14,7 @@ import com.algotrader.data.TimeInterval;
  *     <li>What model and strategy configuration to use</li>
  *     <li>Whether execution is live or historical</li>
  *     <li>How much historical data each cycle requires</li>
+ *     <li>Where historical traversal should begin</li>
  * </ul>
  *
  * <p>This class is intended to be lightweight and serializable so that
@@ -30,6 +33,11 @@ public final class TradingPlan {
     private final int batchSize;
 
     /**
+     * Starting timestamp for historical traversal.
+     */
+    private final Instant startingTimestamp; //TODO: rethink if this belongs in a TradingPlan
+
+    /**
      * Whether the trading plan operates on live market data.
      *
      * <p>If false, the plan is assumed to operate on historical/static data.
@@ -45,6 +53,7 @@ public final class TradingPlan {
      * @param ticker ticker symbol to trade
      * @param interval market data interval
      * @param batchSize number of candles required per prediction batch
+     * @param startingTimestamp starting timestamp for historical traversal
      * @param liveMode whether the plan operates on live data
      */
     public TradingPlan(
@@ -54,6 +63,7 @@ public final class TradingPlan {
             String ticker,
             TimeInterval interval,
             int batchSize,
+            Instant startingTimestamp,
             boolean liveMode
     ) {
         if (planId == null || planId.isBlank()) {
@@ -92,6 +102,12 @@ public final class TradingPlan {
             );
         }
 
+        if (startingTimestamp == null) {
+            throw new IllegalArgumentException(
+                    "Starting timestamp cannot be null."
+            );
+        }
+
         this.planId = planId;
         this.modelId = modelId;
         this.strategyId = strategyId;
@@ -100,6 +116,8 @@ public final class TradingPlan {
         this.interval = interval;
 
         this.batchSize = batchSize;
+        this.startingTimestamp = startingTimestamp;
+
         this.liveMode = liveMode;
     }
 
@@ -158,6 +176,15 @@ public final class TradingPlan {
     }
 
     /**
+     * Returns the starting timestamp for traversal.
+     *
+     * @return the starting timestamp
+     */
+    public Instant getStartingTimestamp() {
+        return startingTimestamp;
+    }
+
+    /**
      * Returns whether this plan operates on live market data.
      *
      * @return true if live mode, false if historical/static mode
@@ -175,6 +202,7 @@ public final class TradingPlan {
                 ", ticker='" + ticker + '\'' +
                 ", interval=" + interval +
                 ", batchSize=" + batchSize +
+                ", startingTimestamp=" + startingTimestamp +
                 ", liveMode=" + liveMode +
                 '}';
     }

@@ -6,11 +6,12 @@ import java.util.List;
 import com.algotrader.data.cache.DataCacheException;
 import com.algotrader.data.cache.SlidingWindowProvider;
 import com.algotrader.data.dataobjects.DataBatch;
-import com.algotrader.data.log.TradeExecutionLog;
 import com.algotrader.data.log.TradingCycleLog;
+import com.algotrader.data.log.TradingCycleLog.ActionLog;
 import com.algotrader.data.dataobjects.TradeRecommendation;
 import com.algotrader.data.log.TradingCycleLogger;
-import com.algotrader.data.trader.TradeExecutor;
+import com.algotrader.plan.TradingPlan;
+import com.algotrader.trader.TradeExecutor;
 import com.algotrader.prediction.PredictionProviderException;
 import com.algotrader.strategy.TradingStrategy;
 
@@ -26,6 +27,7 @@ import com.algotrader.strategy.TradingStrategy;
  */
 public class TradingCycleRunner {
 
+    private final TradingPlan tradingPlan;
     private final SlidingWindowProvider dataProvider;
     private final TradingStrategy tradingStrategy;
     private final TradeExecutor tradeExecutor;
@@ -33,12 +35,16 @@ public class TradingCycleRunner {
     private final String ticker;
 
     public TradingCycleRunner(
+            TradingPlan tradingPlan,
             SlidingWindowProvider dataProvider,
             TradingStrategy tradingStrategy,
             TradeExecutor tradeExecutor,
-            TradingCycleLogger tradeLogger,
-            String ticker
+            TradingCycleLogger tradeLogger
     ) {
+        if (tradingPlan == null) {
+            throw new IllegalArgumentException("TradingPlan cannot be null.");
+        }
+
         if (dataProvider == null) {
             throw new IllegalArgumentException("SlidingWindowProvider cannot be null.");
         }
@@ -55,15 +61,12 @@ public class TradingCycleRunner {
             throw new IllegalArgumentException("TradeLogger cannot be null.");
         }
 
-        if (ticker == null || ticker.isBlank()) {
-            throw new IllegalArgumentException("Ticker cannot be null or blank.");
-        }
-
+        this.tradingPlan = tradingPlan;
         this.dataProvider = dataProvider;
         this.tradingStrategy = tradingStrategy;
         this.tradeExecutor = tradeExecutor;
         this.tradeLogger = tradeLogger;
-        this.ticker = ticker.toUpperCase();
+        this.ticker = dataProvider.getTicker().toUpperCase();
     }
 
     /**
@@ -83,7 +86,9 @@ public class TradingCycleRunner {
      *
      * @return whether a trading cycle was run
      */
-    public boolean runTradingCycle() {
+    public boolean runTradingCycle() {//TODO: add a stopping condition?
+        long startNanos = System.nanoTime();
+
         try {
             DataBatch batch = dataProvider.nextWindow();
 
@@ -98,18 +103,45 @@ public class TradingCycleRunner {
             List<TradeRecommendation> recommendations =
                     tradingStrategy.generateRecommendations(batch);
 
-            List<TradeExecutionLog> tradeExecutionLogs =
-                    new ArrayList<>();
+            List<ActionLog> actionLogs = new ArrayList<>();
 
             for (TradeRecommendation recommendation : recommendations) {
-                TradeExecutionLog log =
+                ActionLog actionLog =
                         tradeExecutor.handleRecommendation(recommendation);
 
-                tradeExecutionLogs.add(log);
+                actionLogs.add(actionLog);
             }
 
-            // TODO: Construct TradingCycleLog object here.
-            TradingCycleLog tradingCycleLog = new;
+            long cycleDurationMillis =
+                    java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(
+                            System.nanoTime() - startNanos
+                    );
+
+            TradingCycleLog.Metadata metadata =
+                    new TradingCycleLog.Metadata(
+                            tradingPlan.getTicker(),
+                            tradingPlan.getInterval(),
+                            tradingPlan.getModelId(),
+                            tradingPlan.getPlanId(),
+                            tradingPlan.isLiveMode()
+                    );
+
+            String cycleId = String.format(
+                    "cycle-%s-%s-%s",
+                    batch.getFinalTimestamp(),
+                    tradingPlan.getTicker(),
+                    tradingPlan.getInterval()
+            );
+
+            TradingCycleLog tradingCycleLog =
+                    new TradingCycleLog(
+                            cycleId,
+                            batch.getFinalTimestamp(),
+                            cycleDurationMillis,
+                            metadata,
+                            tradingPlan.getStrategyId(),
+                            actionLogs
+                    );
 
             tradeLogger.log(tradingCycleLog);
 

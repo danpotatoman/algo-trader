@@ -2,7 +2,7 @@ package com.algotrader.trader;
 
 import com.algotrader.data.cache.PriceProvider;
 import com.algotrader.data.dataobjects.TradeRecommendation;
-import com.algotrader.data.log.TradeExecutionLog;
+import com.algotrader.data.log.TradingCycleLog.ActionLog;
 
 /**
  * A {@link TradeExecutor} implementation that simulates trades using a
@@ -12,7 +12,7 @@ import com.algotrader.data.log.TradeExecutionLog;
  * {@link PriceProvider} to look up ticker prices at the recommendation's
  * timestamp and simulates execution.
  *
- * <p>The resulting {@link TradeExecutionLog} stores the executed trade price.
+ * <p>The resulting {@link ActionLog} stores the executed trade price.
  */
 public class CSVPaperTrader implements TradeExecutor {
 
@@ -38,13 +38,13 @@ public class CSVPaperTrader implements TradeExecutor {
      * Simulates execution of a single trade recommendation.
      *
      * @param recommendation the recommendation to simulate
-     * @return a TradeExecutionLog describing the simulated execution
+     * @return an ActionLog describing the simulated execution
      *
      * @throws IllegalArgumentException if recommendation is null
      * @throws RuntimeException if required price data cannot be found
      */
     @Override
-    public TradeExecutionLog handleRecommendation(
+    public ActionLog handleRecommendation(
             TradeRecommendation recommendation
     ) {
         if (recommendation == null) {
@@ -56,13 +56,14 @@ public class CSVPaperTrader implements TradeExecutor {
         try {
             double executionPrice = priceProvider.getTickerPrice(
                     recommendation.getTicker(),
-
                     recommendation.getTimestamp()
             ).price();
 
-            return new TradeExecutionLog(
-                    recommendation,
-                    executionPrice
+            return new ActionLog(
+                    recommendation.getAction().name(),
+                    recommendation.getTimestamp(),
+                    executionPrice,
+                    recommendation.getQuantity()
             );
 
         } catch (RuntimeException e) {

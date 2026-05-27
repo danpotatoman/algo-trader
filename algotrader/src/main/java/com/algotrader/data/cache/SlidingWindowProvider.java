@@ -81,4 +81,8 @@ public class SlidingWindowProvider {
 
         return batch;
     }
+
+    public String getTicker() {
+        return ticker;
+    }
 }
