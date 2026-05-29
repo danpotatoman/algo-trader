@@ -3,7 +3,6 @@ package com.algotrader.strategy;
 import java.util.List;
 
 import com.algotrader.data.dataobjects.DataBatch;
-import com.algotrader.data.dataobjects.TradeRecommendation;
 import com.algotrader.prediction.PredictionProviderException;
 
 /**
@@ -12,14 +11,14 @@ import com.algotrader.prediction.PredictionProviderException;
  * <p>A {@code TradingStrategy} encapsulates the process of:
  * <ol>
  *     <li>Generating a model prediction from market data</li>
- *     <li>Interpreting that prediction into actionable trade recommendations</li>
+ *     <li>Interpreting that prediction into executable round-trip trades</li>
  * </ol>
  *
  * <p>This interface represents the model-dependent portion of the
  * trading pipeline:
  *
  * <pre>
- * DataBatch -> Prediction -> List&lt;TradeRecommendation&gt;
+ * DataBatch -> Prediction -> List&lt;RoundTripTrade&gt;
  * </pre>
  *
  * <p>Different implementations may use:
@@ -35,16 +34,19 @@ import com.algotrader.prediction.PredictionProviderException;
 public interface TradingStrategy {
 
     /**
-     * Generates trade recommendations from the supplied market data batch.
+     * Generates round-trip trades from the supplied market data batch.
+     *
+     * <p>The returned trades represent complete entry and exit plans.
+     * Implementations may return an empty list if no trade opportunities
+     * are identified.
      *
      * @param batch the market data batch used for prediction
-     * @return generated trade recommendations (possibly empty),
-     *         always sorted chronologically
+     * @return generated round-trip trades (possibly empty)
      *
      * @throws IllegalArgumentException if batch is null
      * @throws PredictionProviderException if prediction generation fails
      */
-    List<TradeRecommendation> generateRecommendations(
+    List<RoundTripTrade> generateTrades(
             DataBatch batch
     ) throws PredictionProviderException;
 }

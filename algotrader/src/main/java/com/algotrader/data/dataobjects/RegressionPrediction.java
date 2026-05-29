@@ -1,8 +1,6 @@
 package com.algotrader.data.dataobjects;
 
 import java.time.Instant;
-
-import com.algotrader.data.dataobjects.DataBatch;
 import com.algotrader.data.TimeInterval;
 
 

@@ -40,7 +40,8 @@ class PredictResponse(BaseModel):
 model = StockCNN()
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-model_path = os.path.join(BASE_DIR, "saved_models", "stock_cnn.pt")
+MODEL_ID = "cnn-v1"
+model_path = os.path.join(BASE_DIR, "saved_models", f"{MODEL_ID}.pt")
 model.load_state_dict(torch.load(model_path, map_location="cpu"))
 
 model.eval()
@@ -49,8 +50,8 @@ model.eval()
 def root():
     return {"status": "running"}
 
-@app.post("/predict", response_model=PredictResponse)
-def predict(request: PredictRequest):
+@app.post("/predict/cnn-v1", response_model=PredictResponse)
+def predict_cnn_v1(request: PredictRequest):
     ohlcv = np.array(request.data, dtype=np.float32)
 
     print(f"[INPUT] ticker={request.ticker}, raw_shape={ohlcv.shape}")
@@ -76,15 +77,10 @@ def predict(request: PredictRequest):
 
     with torch.no_grad():
         output = model(x)
-
-        print("Raw output:", output)
-        print("Output shape:", output.shape)
-
         prob_up = torch.sigmoid(output).item()
 
     pred = 1 if prob_up >= 0.5 else 0
     conf = prob_up if pred == 1 else 1 - prob_up
-
     label = "UP" if pred == 1 else "DOWN"
 
     print(f"[DECISION] ticker={request.ticker}, pred={label}, conf={conf:.4f}")

@@ -1,9 +1,11 @@
 package com.algotrader;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
 import com.algotrader.config.ModelConfigLoader;
+import com.algotrader.config.TradingPlan;
 import com.algotrader.config.TradingStrategyConfigLoader;
 import com.algotrader.data.TimeInterval;
 import com.algotrader.data.cache.CachedPriceProvider;
@@ -12,7 +14,8 @@ import com.algotrader.data.cache.SlidingWindowProviderFactory;
 import com.algotrader.data.log.JSONTradingCycleLogger;
 import com.algotrader.data.log.TradingCycleLogger;
 import com.algotrader.data.source.CSVOHLCVSource;
-import com.algotrader.plan.TradingPlan;
+import com.algotrader.market.MarketCalendar;
+import com.algotrader.market.UsMarketCalendar2026Loader;
 import com.algotrader.prediction.PredictionProviderFactory;
 import com.algotrader.strategy.TradingStrategyFactory;
 import com.algotrader.service.TradingCycleRunner;
@@ -31,7 +34,8 @@ public class Main {
                 "AAPL",
                 TimeInterval.FIVE_MINUTES,
                 10,
-                Instant.parse("2026-05-25T10:00:00Z"),
+                Duration.ofMinutes(5),
+                Instant.parse("2026-05-18T14:20:00Z"),
                 false
         );
 
@@ -56,9 +60,13 @@ public class Main {
         PredictionProviderFactory predictionProviderFactory =
                 new PredictionProviderFactory();
 
+        UsMarketCalendar2026Loader calendarLoader = new UsMarketCalendar2026Loader();
+        MarketCalendar calendar = calendarLoader.load();
+
         TradingStrategyFactory tradingStrategyFactory =
                 new TradingStrategyFactory(
-                        predictionProviderFactory
+                        predictionProviderFactory,
+                        calendar
                 );
 
         TradeExecutor tradeExecutor =

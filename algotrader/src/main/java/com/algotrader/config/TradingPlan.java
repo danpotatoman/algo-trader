@@ -1,6 +1,7 @@
-package com.algotrader.plan;
+package com.algotrader.config;
 
 import java.time.Instant;
+import java.time.Duration;
 
 import com.algotrader.data.TimeInterval;
 
@@ -21,7 +22,7 @@ import com.algotrader.data.TimeInterval;
  * trading plans can be loaded from configuration files, persisted,
  * logged, or reconstructed later.
  */
-public final class TradingPlan {
+public final class TradingPlan { //TODO: need to load this from a config
 
     private final String planId;
     private final String modelId;
@@ -29,8 +30,9 @@ public final class TradingPlan {
 
     private final String ticker;
     private final TimeInterval interval;
-
     private final int batchSize;
+
+    private final Duration minTimeBeforeClose;
 
     /**
      * Starting timestamp for historical traversal.
@@ -63,6 +65,7 @@ public final class TradingPlan {
             String ticker,
             TimeInterval interval,
             int batchSize,
+            Duration minTimeBeforeClose,
             Instant startingTimestamp,
             boolean liveMode
     ) {
@@ -90,6 +93,12 @@ public final class TradingPlan {
             );
         }
 
+        if (minTimeBeforeClose == null) {
+            throw new IllegalArgumentException(
+                    "minTimeBeforeClose cannot be null."
+            );
+        }
+
         if (interval == null) {
             throw new IllegalArgumentException(
                     "TimeInterval cannot be null."
@@ -114,8 +123,9 @@ public final class TradingPlan {
 
         this.ticker = ticker.toUpperCase();
         this.interval = interval;
-
         this.batchSize = batchSize;
+
+        this.minTimeBeforeClose = minTimeBeforeClose;
         this.startingTimestamp = startingTimestamp;
 
         this.liveMode = liveMode;
@@ -173,6 +183,10 @@ public final class TradingPlan {
      */
     public int getBatchSize() {
         return batchSize;
+    }
+
+    public Duration getMinTimeBeforeClose() {
+        return minTimeBeforeClose;
     }
 
     /**

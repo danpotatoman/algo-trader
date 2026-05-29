@@ -2,13 +2,13 @@ package com.algotrader.service;
 
 import com.algotrader.config.ModelConfig;
 import com.algotrader.config.ModelConfigLoader;
+import com.algotrader.config.TradingPlan;
 import com.algotrader.config.TradingStrategyConfig;
 import com.algotrader.config.TradingStrategyConfigLoader;
 import com.algotrader.data.cache.SlidingWindowProvider;
 import com.algotrader.data.cache.SlidingWindowProviderFactory;
 import com.algotrader.data.log.TradingCycleLogger;
 import com.algotrader.trader.TradeExecutor;
-import com.algotrader.plan.TradingPlan;
 import com.algotrader.strategy.TradingStrategy;
 import com.algotrader.strategy.TradingStrategyFactory;
 
@@ -27,7 +27,7 @@ public final class TradingCycleRunnerFactory {
 
     public TradingCycleRunnerFactory(
             ModelConfigLoader modelConfigLoader,
-            TradingStrategyConfigLoader strategyConfigLoader,
+            TradingStrategyConfigLoader strategyConfigLoader, //TODO: enforce that prediction type (regression/classification) aligns for modelconfig and strategyconfig
             SlidingWindowProviderFactory slidingWindowProviderFactory,
             TradingStrategyFactory tradingStrategyFactory,
             TradeExecutor tradeExecutor,
@@ -110,7 +110,8 @@ public final class TradingCycleRunnerFactory {
         TradingStrategy tradingStrategy =
                 tradingStrategyFactory.create(
                         modelConfig,
-                        strategyConfig
+                        strategyConfig,
+                        tradingPlan
                 );
 
         return new TradingCycleRunner(

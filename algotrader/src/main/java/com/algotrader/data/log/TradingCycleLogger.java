@@ -1,7 +1,5 @@
 package com.algotrader.data.log;
 
-import com.algotrader.data.log.TradingCycleLog;
-
 /**
  * Responsible for logging or persisting {@link TradingCycleLog} objects.
  *

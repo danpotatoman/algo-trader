@@ -1,0 +1,24 @@
+{
+  "cycleId" : "cycle-2026-05-19T14:50:00Z-AAPL-FIVE_MINUTES",
+  "timestamp" : "2026-05-19T14:50:00Z",
+  "cycleDurationMillis" : 4,
+  "metadata" : {
+    "ticker" : "AAPL",
+    "interval" : "FIVE_MINUTES",
+    "modelId" : "cnn-v1",
+    "planId" : "aapl-cnn-v1-5m",
+    "liveMode" : false
+  },
+  "strategyId" : "threshold-strategy-v1",
+  "actions" : [ {
+    "action" : "BUY",
+    "timestamp" : "2026-05-19T14:50:00Z",
+    "price" : 296.81500244140625,
+    "quantity" : 1.0
+  }, {
+    "action" : "SELL",
+    "timestamp" : "2026-05-19T15:00:00Z",
+    "price" : 297.42999267578125,
+    "quantity" : 1.0
+  } ]
+}

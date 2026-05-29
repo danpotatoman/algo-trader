@@ -5,17 +5,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import com.algotrader.data.dataobjects.ClassificationPrediction;
-import com.algotrader.data.dataobjects.TradeRecommendation;
+import com.algotrader.strategy.RoundTripTrade;
 
 public class SimpleClassificationPredictionInterpreter
         implements PredictionInterpreter<ClassificationPrediction> {
 
     private final double k;
     private final int horizonMinutes;
+    private final String strategyId;
 
     public SimpleClassificationPredictionInterpreter(
             double k,
-            int horizonMinutes
+            int horizonMinutes,
+            String strategyId
     ) {
         if (k < 0.0 || k > 1.0) {
             throw new IllegalArgumentException(
@@ -29,12 +31,19 @@ public class SimpleClassificationPredictionInterpreter
             );
         }
 
+        if (strategyId == null || strategyId.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Strategy ID cannot be null or blank."
+            );
+        }
+
         this.k = k;
         this.horizonMinutes = horizonMinutes;
+        this.strategyId = strategyId;
     }
 
     @Override
-    public List<TradeRecommendation> getRecommendations(
+    public List<RoundTripTrade> getTrades(
             ClassificationPrediction prediction
     ) {
         if (prediction == null) {
@@ -43,43 +52,35 @@ public class SimpleClassificationPredictionInterpreter
             );
         }
 
+        if (!prediction.predictsUp()
+                || prediction.getConfidence() < k) {
+            return List.of();
+        }
+
         String ticker = prediction.getTicker();
 
-        Instant buyTime = prediction.getFinalTimestamp();
+        Instant entryTime = prediction.getFinalTimestamp();
 
-        if (buyTime == null) {
+        if (entryTime == null) {
             throw new IllegalArgumentException(
                     "Prediction final timestamp cannot be null."
             );
         }
 
-        Instant sellTime = buyTime.plus(
+        Instant exitTime = entryTime.plus(
                 horizonMinutes,
                 ChronoUnit.MINUTES
         );
 
-        double quantity =
-                prediction.predictsUp()
-                && prediction.getConfidence() >= k
-                        ? 1.0
-                        : 0.0;
-
-        TradeRecommendation buy = new TradeRecommendation(
+        RoundTripTrade trade = new RoundTripTrade(
                 ticker,
-                TradeRecommendation.Action.BUY,
+                1,
+                entryTime,
+                exitTime,
                 prediction.getConfidence(),
-                quantity,
-                buyTime
+                strategyId
         );
 
-        TradeRecommendation sell = new TradeRecommendation(
-                ticker,
-                TradeRecommendation.Action.SELL,
-                prediction.getConfidence(),
-                quantity,
-                sellTime
-        );
-
-        return List.of(buy, sell);
+        return List.of(trade);
     }
 }

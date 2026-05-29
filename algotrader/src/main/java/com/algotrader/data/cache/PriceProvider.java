@@ -2,7 +2,6 @@ package com.algotrader.data.cache;
 
 import java.time.Instant;
 
-import com.algotrader.data.TimeInterval;
 import com.algotrader.data.dataobjects.MarketPrice;
 
 /**

@@ -1,6 +1,6 @@
 package com.algotrader.data.cache;
 
-import com.algotrader.plan.TradingPlan;
+import com.algotrader.config.TradingPlan;
 
 /**
  * Factory for constructing {@link SlidingWindowProvider} instances

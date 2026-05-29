@@ -1,0 +1,14 @@
+{
+  "cycleId" : "cycle-2026-05-19T15:10:00Z-AAPL-FIVE_MINUTES",
+  "timestamp" : "2026-05-19T15:10:00Z",
+  "cycleDurationMillis" : 4,
+  "metadata" : {
+    "ticker" : "AAPL",
+    "interval" : "FIVE_MINUTES",
+    "modelId" : "cnn-v1",
+    "planId" : "aapl-cnn-v1-5m",
+    "liveMode" : false
+  },
+  "strategyId" : "threshold-strategy-v1",
+  "actions" : [ ]
+}

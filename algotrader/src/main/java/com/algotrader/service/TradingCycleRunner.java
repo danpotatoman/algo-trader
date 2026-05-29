@@ -3,6 +3,7 @@ package com.algotrader.service;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.algotrader.config.TradingPlan;
 import com.algotrader.data.cache.DataCacheException;
 import com.algotrader.data.cache.SlidingWindowProvider;
 import com.algotrader.data.dataobjects.DataBatch;
@@ -10,9 +11,9 @@ import com.algotrader.data.log.TradingCycleLog;
 import com.algotrader.data.log.TradingCycleLog.ActionLog;
 import com.algotrader.data.dataobjects.TradeRecommendation;
 import com.algotrader.data.log.TradingCycleLogger;
-import com.algotrader.plan.TradingPlan;
 import com.algotrader.trader.TradeExecutor;
 import com.algotrader.prediction.PredictionProviderException;
+import com.algotrader.strategy.RoundTripTrade;
 import com.algotrader.strategy.TradingStrategy;
 
 /**
@@ -73,9 +74,13 @@ public class TradingCycleRunner {
      * Runs trading cycles until no more historical data is available.
      */
     public void runAllTradingCycles() {
+        int totalCycles = 0;
+        System.out.println("Running all trading cycles...");
         while (runTradingCycle()) {
             // Continue until the data provider has no more windows.
+            totalCycles++;
         }
+        System.out.println("Ran for " + totalCycles + " cycles.");
     }
 
     /**
@@ -86,7 +91,7 @@ public class TradingCycleRunner {
      *
      * @return whether a trading cycle was run
      */
-    public boolean runTradingCycle() {//TODO: add a stopping condition?
+    public boolean runTradingCycle() { // TODO: add a stopping condition?
         long startNanos = System.nanoTime();
 
         try {
@@ -100,16 +105,20 @@ public class TradingCycleRunner {
                 );
             }
 
-            List<TradeRecommendation> recommendations =
-                    tradingStrategy.generateRecommendations(batch);
+            List<RoundTripTrade> trades =
+                    tradingStrategy.generateTrades(batch);
 
             List<ActionLog> actionLogs = new ArrayList<>();
 
-            for (TradeRecommendation recommendation : recommendations) {
-                ActionLog actionLog =
-                        tradeExecutor.handleRecommendation(recommendation);
+            for (RoundTripTrade trade : trades) {
+                for (TradeRecommendation recommendation
+                        : trade.toRecommendations()) {
 
-                actionLogs.add(actionLog);
+                    ActionLog actionLog =
+                            tradeExecutor.handleRecommendation(recommendation);
+
+                    actionLogs.add(actionLog);
+                }
             }
 
             long cycleDurationMillis =
@@ -149,6 +158,7 @@ public class TradingCycleRunner {
 
         } catch (DataCacheException e) {
             System.out.println("No more historical data available for " + ticker);
+            System.out.println(e.getMessage());
             return false;
 
         } catch (PredictionProviderException e) {
