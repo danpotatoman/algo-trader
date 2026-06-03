@@ -2,6 +2,7 @@ package com.algotrader.data.source;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import com.algotrader.data.TimeInterval;
 import com.algotrader.data.cache.CSVLoader;
@@ -97,6 +98,15 @@ public class CSVOHLCVSource implements OHLCVSource {
                                 + ", timestamp "
                                 + timestamp
                 ));
+    }
+
+    @Override //TODO: implement
+    public Optional<Instant> getNextTimestamp(String ticker, TimeInterval interval, Instant timestamp) {
+        return null;
+    }
+    @Override //TODO: implement
+    public List<StampedOHLCV> loadRange(String ticker, TimeInterval interval, Instant startTime, Instant endTime){
+        return null;
     }
 
     /**

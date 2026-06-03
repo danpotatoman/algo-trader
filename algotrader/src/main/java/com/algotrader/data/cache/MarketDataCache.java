@@ -2,109 +2,74 @@ package com.algotrader.data.cache;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.Set;
 import java.util.TreeMap;
 
 import com.algotrader.data.TimeInterval;
-import com.algotrader.data.dataobjects.DataBatch;
 import com.algotrader.data.dataobjects.MarketDataKey;
-import com.algotrader.data.dataobjects.MarketPrice;
 import com.algotrader.data.dataobjects.StampedOHLCV;
+import com.algotrader.data.provider.MarketDataProvider;
 import com.algotrader.data.source.OHLCVSource;
 
 /**
- * Caches OHLCV market data loaded from one or more {@link OHLCVSource}s.
+ * Caches OHLCV market data loaded from a single {@link OHLCVSource}.
  *
- * <p>This class owns caching, timestamp navigation, and batch construction.
- * It does not know how individual sources retrieve their data.
+ * <p>This class provides range-based access to market data while avoiding
+ * redundant source queries. It does not construct batches, perform
+ * sliding-window traversal, or manage trading-cycle execution.
  */
 public class MarketDataCache implements MarketDataProvider {
 
-    private final List<OHLCVSource> sources;
+    private final OHLCVSource source;
 
-    private final Map<String,
-            Map<TimeInterval,
-                    NavigableMap<Instant, StampedOHLCV>>> rows = new HashMap<>();
+    private final Map<MarketDataKey, CacheEntry> cache = new HashMap<>();
 
-    /**
-     * Tracks ticker/interval pairs for which all file-based sources
-     * have already been checked.
-     */
-    private final Set<MarketDataKey> checkedFileBasedKeys = new HashSet<>();
-
-    public MarketDataCache(List<OHLCVSource> sources) {
-        if (sources == null || sources.isEmpty()) {
-            throw new IllegalArgumentException("Sources cannot be null or empty.");
+    public MarketDataCache(OHLCVSource source) {
+        if (source == null) {
+            throw new IllegalArgumentException("Source cannot be null.");
         }
 
-        if (sources.stream().anyMatch(source -> source == null)) {
-            throw new IllegalArgumentException("Sources cannot contain null values.");
-        }
-
-        this.sources = List.copyOf(sources);
+        this.source = source;
     }
 
     @Override
-    public DataBatch requestBatch(
+    public List<StampedOHLCV> requestRange(
             String ticker,
             TimeInterval interval,
-            int batchSize,
-            Instant closingTimestamp
+            Instant startTime,
+            Instant endTime
     ) throws DataCacheException {
 
-        validateRequest(ticker, interval, batchSize);
-
-        if (closingTimestamp == null) {
-            throw new DataCacheException("Closing timestamp cannot be null.");
-        }
+        validateRangeRequest(ticker, interval, startTime, endTime);
 
         String normalizedTicker = ticker.toUpperCase();
+        MarketDataKey key = new MarketDataKey(normalizedTicker, interval);
 
-        ensureRowsLoaded(normalizedTicker, interval);
-
-        NavigableMap<Instant, StampedOHLCV> matchingRows =
-                getRowsFor(normalizedTicker, interval);
-
-        if (!matchingRows.containsKey(closingTimestamp)) {
-            throw new DataCacheException(
-                    "No candle found for ticker " + normalizedTicker
-                            + ", interval " + interval
-                            + ", timestamp " + closingTimestamp
-            );
-        }
-
-        NavigableMap<Instant, StampedOHLCV> rowsUpToClosingTimestamp =
-                matchingRows.headMap(closingTimestamp, true);
-
-        List<StampedOHLCV> batchRows = new ArrayList<>(
-                rowsUpToClosingTimestamp
-                        .descendingMap()
-                        .values()
-                        .stream()
-                        .limit(batchSize)
-                        .toList()
+        CacheEntry entry = cache.computeIfAbsent(
+                key,
+                ignored -> new CacheEntry()
         );
 
-        if (batchRows.size() < batchSize) {
-            throw new DataCacheException(
-                    "Not enough data before timestamp " + closingTimestamp
-                            + " to build batch of size " + batchSize
-            );
-        }
+        ensureRangeLoaded(
+                entry,
+                normalizedTicker,
+                interval,
+                startTime,
+                endTime
+        );
 
-        Collections.reverse(batchRows);
-
-        return new DataBatch(interval, batchRows);
+        return new ArrayList<>(
+                entry.rows
+                        .subMap(startTime, true, endTime, true)
+                        .values()
+        );
     }
 
     @Override
-    public Instant getNextTimestamp(
+    public StampedOHLCV requestRow(
             String ticker,
             TimeInterval interval,
             Instant timestamp
@@ -114,146 +79,151 @@ public class MarketDataCache implements MarketDataProvider {
             throw new DataCacheException("Timestamp cannot be null.");
         }
 
-        validateRequest(ticker, interval, 1);
+        List<StampedOHLCV> rows = requestRange(
+                ticker,
+                interval,
+                timestamp,
+                timestamp
+        );
 
-        String normalizedTicker = ticker.toUpperCase();
-
-        ensureRowsLoaded(normalizedTicker, interval);
-
-        NavigableMap<Instant, StampedOHLCV> rowsByTimestamp =
-                getRowsFor(normalizedTicker, interval);
-
-        Map.Entry<Instant, StampedOHLCV> nextEntry =
-                rowsByTimestamp.higherEntry(timestamp);
-
-        if (nextEntry == null) {
+        if (rows.isEmpty()) {
             throw new DataCacheException(
-                    "No timestamp exists after " + timestamp
-                            + " for ticker " + normalizedTicker
-                            + " and interval " + interval
-            );
-        }
-
-        return nextEntry.getKey();
-    }
-
-    public MarketPrice getTickerPrice(
-            String ticker,
-            TimeInterval interval,
-            Instant timestamp
-    ) {
-        if (timestamp == null) {
-            throw new IllegalArgumentException("Timestamp cannot be null.");
-        }
-
-        try {
-            validateRequest(ticker, interval, 1);
-
-            String normalizedTicker = ticker.toUpperCase();
-
-            ensureRowsLoaded(normalizedTicker, interval);
-
-            NavigableMap<Instant, StampedOHLCV> rowsByTimestamp =
-                    getRowsFor(normalizedTicker, interval);
-
-            StampedOHLCV row = rowsByTimestamp.get(timestamp);
-
-            if (row == null) {
-                throw new IllegalArgumentException(
-                        "No market price found for ticker "
-                                + normalizedTicker
-                                + ", interval "
-                                + interval
-                                + ", timestamp "
-                                + timestamp
-                );
-            }
-
-            return new MarketPrice(
-                    normalizedTicker,
-                    row.close(),
-                    row.timestamp()
-            );
-
-        } catch (DataCacheException e) {
-            throw new IllegalArgumentException(
-                    "Could not get market price for ticker "
-                            + ticker
+                    "No candle found for ticker "
+                            + ticker.toUpperCase()
                             + ", interval "
                             + interval
                             + ", timestamp "
-                            + timestamp,
-                    e
+                            + timestamp
             );
         }
+
+        return rows.get(0);
     }
 
-    private void ensureRowsLoaded(
+    private void ensureRangeLoaded(
+            CacheEntry entry,
             String ticker,
-            TimeInterval interval
+            TimeInterval interval,
+            Instant startTime,
+            Instant endTime
     ) throws DataCacheException {
 
-        MarketDataKey key = new MarketDataKey(ticker, interval);
-        boolean fileSourcesAlreadyChecked = checkedFileBasedKeys.contains(key);
+        List<TimeRange> missingRanges = findMissingRanges(
+                entry.loadedRanges,
+                new TimeRange(startTime, endTime)
+        );
 
-        for (OHLCVSource source : sources) {
-            if (fileSourcesAlreadyChecked && source.isFileBased()) {
+        for (TimeRange missingRange : missingRanges) {
+            List<StampedOHLCV> loadedRows = source.loadRange(
+                    ticker,
+                    interval,
+                    missingRange.start(),
+                    missingRange.end()
+            );
+
+            if (loadedRows != null) {
+                for (StampedOHLCV row : loadedRows) {
+                    entry.rows.put(row.timestamp(), row);
+                }
+            }
+
+            /*
+             * Mark the requested missing range as loaded even if the source
+             * returned no rows. This prevents repeated queries for weekends,
+             * holidays, or genuinely empty ranges.
+             */
+            entry.loadedRanges.add(missingRange);
+            entry.loadedRanges.sort(TimeRange::compareByStart);
+            entry.loadedRanges = mergeRanges(entry.loadedRanges);
+        }
+    }
+
+    private List<TimeRange> findMissingRanges(
+            List<TimeRange> loadedRanges,
+            TimeRange requestedRange
+    ) {
+        List<TimeRange> missingRanges = new ArrayList<>();
+
+        Instant cursor = requestedRange.start();
+
+        List<TimeRange> sortedLoadedRanges = new ArrayList<>(loadedRanges);
+        sortedLoadedRanges.sort(TimeRange::compareByStart);
+
+        for (TimeRange loadedRange : sortedLoadedRanges) {
+            if (loadedRange.end().isBefore(cursor)) {
                 continue;
             }
 
-            List<StampedOHLCV> loadedRows = source.loadRows(ticker, interval);
-
-            if (loadedRows == null || loadedRows.isEmpty()) {
-                continue;
+            if (loadedRange.start().isAfter(requestedRange.end())) {
+                break;
             }
 
-            mergeRows(ticker, interval, loadedRows);
+            if (loadedRange.start().isAfter(cursor)) {
+                missingRanges.add(
+                        new TimeRange(
+                                cursor,
+                                minInstant(
+                                        loadedRange.start(),
+                                        requestedRange.end()
+                                )
+                        )
+                );
+            }
+
+            if (loadedRange.end().isAfter(cursor)) {
+                cursor = loadedRange.end();
+            }
+
+            if (!cursor.isBefore(requestedRange.end())) {
+                return missingRanges;
+            }
         }
 
-        if (!fileSourcesAlreadyChecked) {
-            checkedFileBasedKeys.add(key);
+        if (cursor.isBefore(requestedRange.end())
+                || cursor.equals(requestedRange.start())) {
+            missingRanges.add(
+                    new TimeRange(
+                            cursor,
+                            requestedRange.end()
+                    )
+            );
         }
+
+        return missingRanges;
     }
 
-    private void mergeRows(
+    private List<TimeRange> mergeRanges(List<TimeRange> ranges) {
+        if (ranges.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<TimeRange> sortedRanges = new ArrayList<>(ranges);
+        sortedRanges.sort(TimeRange::compareByStart);
+
+        List<TimeRange> merged = new ArrayList<>();
+        TimeRange current = sortedRanges.get(0);
+
+        for (int i = 1; i < sortedRanges.size(); i++) {
+            TimeRange next = sortedRanges.get(i);
+
+            if (current.overlapsOrTouches(next)) {
+                current = current.merge(next);
+            } else {
+                merged.add(current);
+                current = next;
+            }
+        }
+
+        merged.add(current);
+
+        return merged;
+    }
+
+    private void validateRangeRequest(
             String ticker,
             TimeInterval interval,
-            List<StampedOHLCV> loadedRows
-    ) {
-        NavigableMap<Instant, StampedOHLCV> rowsByTimestamp = rows
-                .computeIfAbsent(ticker, ignored -> new HashMap<>())
-                .computeIfAbsent(interval, ignored -> new TreeMap<>());
-
-        for (StampedOHLCV row : loadedRows) {
-            rowsByTimestamp.put(row.timestamp(), row);
-        }
-    }
-
-    private NavigableMap<Instant, StampedOHLCV> getRowsFor(
-            String ticker,
-            TimeInterval interval
-    ) {
-        Map<TimeInterval, NavigableMap<Instant, StampedOHLCV>> rowsByInterval =
-                rows.get(ticker);
-
-        if (rowsByInterval == null) {
-            return new TreeMap<>();
-        }
-
-        NavigableMap<Instant, StampedOHLCV> rowsByTimestamp =
-                rowsByInterval.get(interval);
-
-        if (rowsByTimestamp == null) {
-            return new TreeMap<>();
-        }
-
-        return rowsByTimestamp;
-    }
-
-    private void validateRequest(
-            String ticker,
-            TimeInterval interval,
-            int batchSize
+            Instant startTime,
+            Instant endTime
     ) throws DataCacheException {
 
         if (ticker == null || ticker.isBlank()) {
@@ -264,16 +234,67 @@ public class MarketDataCache implements MarketDataProvider {
             throw new DataCacheException("Interval cannot be null.");
         }
 
-        if (batchSize <= 0) {
-            throw new DataCacheException("Batch size must be positive.");
+        if (startTime == null) {
+            throw new DataCacheException("Start time cannot be null.");
+        }
+
+        if (endTime == null) {
+            throw new DataCacheException("End time cannot be null.");
+        }
+
+        if (startTime.isAfter(endTime)) {
+            throw new DataCacheException(
+                    "Start time cannot be after end time."
+            );
         }
     }
 
+    private static Instant minInstant(Instant a, Instant b) {
+        return a.isBefore(b) ? a : b;
+    }
+
     public int getTotalRows() {
-        return rows.values()
+        return cache.values()
                 .stream()
-                .flatMap(intervalMap -> intervalMap.values().stream())
-                .mapToInt(NavigableMap::size)
+                .mapToInt(entry -> entry.rows.size())
                 .sum();
+    }
+
+    private static class CacheEntry {
+
+        private final NavigableMap<Instant, StampedOHLCV> rows =
+                new TreeMap<>();
+
+        private List<TimeRange> loadedRanges =
+                new ArrayList<>();
+    }
+
+    private record TimeRange(
+            Instant start,
+            Instant end
+    ) {
+
+        private static int compareByStart(
+                TimeRange first,
+                TimeRange second
+        ) {
+            return first.start.compareTo(second.start);
+        }
+
+        private boolean overlapsOrTouches(TimeRange other) {
+            return !this.end.isBefore(other.start)
+                    && !other.end.isBefore(this.start);
+        }
+
+        private TimeRange merge(TimeRange other) {
+            return new TimeRange(
+                    minInstant(this.start, other.start),
+                    maxInstant(this.end, other.end)
+            );
+        }
+
+        private static Instant maxInstant(Instant a, Instant b) {
+            return a.isAfter(b) ? a : b;
+        }
     }
 }

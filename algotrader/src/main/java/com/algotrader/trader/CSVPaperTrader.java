@@ -1,8 +1,9 @@
 package com.algotrader.trader;
 
-import com.algotrader.data.cache.PriceProvider;
+import com.algotrader.data.cache.DataCacheException;
 import com.algotrader.data.dataobjects.TradeRecommendation;
 import com.algotrader.data.log.TradingCycleLog.ActionLog;
+import com.algotrader.data.provider.PriceProvider;
 
 /**
  * A {@link TradeExecutor} implementation that simulates trades using a
@@ -41,7 +42,7 @@ public class CSVPaperTrader implements TradeExecutor {
      * @return an ActionLog describing the simulated execution
      *
      * @throws IllegalArgumentException if recommendation is null
-     * @throws RuntimeException if required price data cannot be found
+     * @throws DataCacheException if required price data cannot be found
      */
     @Override
     public ActionLog handleRecommendation(
@@ -66,7 +67,7 @@ public class CSVPaperTrader implements TradeExecutor {
                     recommendation.getQuantity()
             );
 
-        } catch (RuntimeException e) {
+        } catch (DataCacheException e) {
             throw new RuntimeException(
                     "Failed to simulate trade recommendation: "
                             + recommendation,

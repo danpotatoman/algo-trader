@@ -1,24 +1,26 @@
-package com.algotrader.data.cache;
+package com.algotrader.data.provider;
 
 import java.time.Instant;
 
 import com.algotrader.data.TimeInterval;
+import com.algotrader.data.cache.DataCacheException;
 import com.algotrader.data.dataobjects.MarketPrice;
+import com.algotrader.data.dataobjects.StampedOHLCV;
 
 /**
  * A {@link PriceProvider} implementation backed by a
- * {@link MarketDataCache}.
+ * {@link MarketDataProvider}.
  *
  * <p>This provider uses a fixed {@link TimeInterval} configured at
  * construction time. All price lookups are delegated to the underlying
- * cache using that interval.
+ * provider using that interval.
  *
  * <p>This is useful when a trading system or strategy operates entirely
  * on a single interval and should not need to repeatedly specify it.
  */
 public class CachedPriceProvider implements PriceProvider {
 
-    private final MarketDataCache marketDataCache;
+    private final MarketDataProvider marketDataProvider;
     private final TimeInterval interval;
 
     /**
@@ -30,10 +32,10 @@ public class CachedPriceProvider implements PriceProvider {
      * @throws IllegalArgumentException if either argument is null
      */
     public CachedPriceProvider(
-            MarketDataCache marketDataCache,
+            MarketDataProvider marketDataProvider,
             TimeInterval interval
     ) {
-        if (marketDataCache == null) {
+        if (marketDataProvider == null) {
             throw new IllegalArgumentException(
                     "MarketDataCache cannot be null."
             );
@@ -45,7 +47,7 @@ public class CachedPriceProvider implements PriceProvider {
             );
         }
 
-        this.marketDataCache = marketDataCache;
+        this.marketDataProvider = marketDataProvider;
         this.interval = interval;
     }
 
@@ -61,11 +63,17 @@ public class CachedPriceProvider implements PriceProvider {
     public MarketPrice getTickerPrice(
             String ticker,
             Instant timestamp
-    ) {
-        return marketDataCache.getTickerPrice(
+    ) throws DataCacheException {
+        StampedOHLCV row = marketDataProvider.requestRow(
                 ticker,
                 interval,
                 timestamp
+        );
+
+        return new MarketPrice(
+                ticker.toUpperCase(),
+                row.close(),
+                row.timestamp()
         );
     }
 

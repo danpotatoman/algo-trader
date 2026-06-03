@@ -1,6 +1,7 @@
-package com.algotrader.data.cache;
+package com.algotrader.data.provider;
 
 import com.algotrader.config.TradingPlan;
+import com.algotrader.data.cache.DataCacheException;
 
 /**
  * Factory for constructing {@link SlidingWindowProvider} instances
@@ -27,6 +28,7 @@ public class SlidingWindowProviderFactory {
      *
      * @param tradingPlan the trading plan configuration
      * @return a configured SlidingWindowProvider
+     * @throws DataCacheException if the required market data cannot be loaded
      */
     public SlidingWindowProvider create(
             TradingPlan tradingPlan
@@ -38,11 +40,12 @@ public class SlidingWindowProviderFactory {
         }
 
         return new SlidingWindowProvider(
+                marketDataProvider,
                 tradingPlan.getTicker(),
                 tradingPlan.getInterval(),
                 tradingPlan.getBatchSize(),
                 tradingPlan.getStartingTimestamp(),
-                marketDataProvider
+                tradingPlan.getEndingTimestamp()
         );
     }
 }

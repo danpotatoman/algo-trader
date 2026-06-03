@@ -1,5 +1,5 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.configuration.updateBuildConfiguration": "automatic",
     "git.enabled": true,
     "git.autorefresh": true,
     "git.showUntrackedFiles": true,

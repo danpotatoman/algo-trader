@@ -1,7 +1,7 @@
 {
   "cycleId" : "cycle-2026-05-18T16:35:00Z-AAPL-FIVE_MINUTES",
   "timestamp" : "2026-05-18T16:35:00Z",
-  "cycleDurationMillis" : 6,
+  "cycleDurationMillis" : 3,
   "metadata" : {
     "ticker" : "AAPL",
     "interval" : "FIVE_MINUTES",

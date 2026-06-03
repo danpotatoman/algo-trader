@@ -5,10 +5,17 @@ import com.algotrader.config.ModelConfigLoader;
 import com.algotrader.config.TradingPlan;
 import com.algotrader.config.TradingStrategyConfig;
 import com.algotrader.config.TradingStrategyConfigLoader;
-import com.algotrader.data.cache.SlidingWindowProvider;
-import com.algotrader.data.cache.SlidingWindowProviderFactory;
 import com.algotrader.data.log.TradingCycleLogger;
+import com.algotrader.data.provider.CachedPriceProvider;
+import com.algotrader.data.provider.MarketDataProvider;
+import com.algotrader.data.provider.PriceProvider;
+import com.algotrader.data.provider.SlidingWindowProvider;
+import com.algotrader.data.provider.SlidingWindowProviderFactory;
+import com.algotrader.market.MarketCalendar;
+import com.algotrader.market.UsMarketCalendar2026Loader;
+import com.algotrader.prediction.PredictionProviderFactory;
 import com.algotrader.trader.TradeExecutor;
+import com.algotrader.trader.validation.PriceAvailabilityValidator;
 import com.algotrader.strategy.TradingStrategy;
 import com.algotrader.strategy.TradingStrategyFactory;
 
@@ -24,38 +31,13 @@ public final class TradingCycleRunnerFactory {
     private final TradingStrategyFactory tradingStrategyFactory;
     private final TradeExecutor tradeExecutor;
     private final TradingCycleLogger tradingCycleLogger;
+    private final MarketDataProvider marketDataProvider;
 
     public TradingCycleRunnerFactory(
-            ModelConfigLoader modelConfigLoader,
-            TradingStrategyConfigLoader strategyConfigLoader, //TODO: enforce that prediction type (regression/classification) aligns for modelconfig and strategyconfig
-            SlidingWindowProviderFactory slidingWindowProviderFactory,
-            TradingStrategyFactory tradingStrategyFactory,
             TradeExecutor tradeExecutor,
-            TradingCycleLogger tradingCycleLogger
+            TradingCycleLogger tradingCycleLogger,
+            MarketDataProvider marketDataProvider
     ) {
-        if (modelConfigLoader == null) {
-            throw new IllegalArgumentException(
-                    "ModelConfigLoader cannot be null."
-            );
-        }
-
-        if (strategyConfigLoader == null) {
-            throw new IllegalArgumentException(
-                    "TradingStrategyConfigLoader cannot be null."
-            );
-        }
-
-        if (slidingWindowProviderFactory == null) {
-            throw new IllegalArgumentException(
-                    "SlidingWindowProviderFactory cannot be null."
-            );
-        }
-
-        if (tradingStrategyFactory == null) {
-            throw new IllegalArgumentException(
-                    "TradingStrategyFactory cannot be null."
-            );
-        }
 
         if (tradeExecutor == null) {
             throw new IllegalArgumentException(
@@ -69,10 +51,28 @@ public final class TradingCycleRunnerFactory {
             );
         }
 
-        this.modelConfigLoader = modelConfigLoader;
-        this.strategyConfigLoader = strategyConfigLoader;
-        this.slidingWindowProviderFactory = slidingWindowProviderFactory;
-        this.tradingStrategyFactory = tradingStrategyFactory;
+        this.modelConfigLoader =
+                new ModelConfigLoader();
+
+        this.strategyConfigLoader =
+                new TradingStrategyConfigLoader(); //TODO: enforce that prediction type (regression/classification) aligns for modelconfig and strategyconfig
+
+        this.slidingWindowProviderFactory =
+                new SlidingWindowProviderFactory(marketDataProvider);
+
+        PredictionProviderFactory predictionProviderFactory =
+                new PredictionProviderFactory();
+
+        UsMarketCalendar2026Loader calendarLoader = new UsMarketCalendar2026Loader();
+        MarketCalendar calendar = calendarLoader.load();
+
+        this.tradingStrategyFactory =
+                new TradingStrategyFactory(
+                        predictionProviderFactory,
+                        calendar
+                );
+
+        this.marketDataProvider = marketDataProvider;
         this.tradeExecutor = tradeExecutor;
         this.tradingCycleLogger = tradingCycleLogger;
     }
@@ -114,11 +114,16 @@ public final class TradingCycleRunnerFactory {
                         tradingPlan
                 );
 
+        PriceProvider priceProvider = new CachedPriceProvider(marketDataProvider, tradingPlan.getInterval());
+
+        PriceAvailabilityValidator priceAvailabilityValidator = new PriceAvailabilityValidator(priceProvider); //TODO: maybe its own factory with a create(TradingPlan p) method
+
         return new TradingCycleRunner(
                 tradingPlan,
                 dataProvider,
                 tradingStrategy,
                 tradeExecutor,
+                priceAvailabilityValidator,
                 tradingCycleLogger
         );
     }

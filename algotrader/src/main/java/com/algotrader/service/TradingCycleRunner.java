@@ -2,16 +2,18 @@ package com.algotrader.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.algotrader.config.TradingPlan;
 import com.algotrader.data.cache.DataCacheException;
-import com.algotrader.data.cache.SlidingWindowProvider;
 import com.algotrader.data.dataobjects.DataBatch;
 import com.algotrader.data.log.TradingCycleLog;
 import com.algotrader.data.log.TradingCycleLog.ActionLog;
+import com.algotrader.data.provider.SlidingWindowProvider;
 import com.algotrader.data.dataobjects.TradeRecommendation;
 import com.algotrader.data.log.TradingCycleLogger;
 import com.algotrader.trader.TradeExecutor;
+import com.algotrader.trader.validation.PriceAvailabilityValidator;
 import com.algotrader.prediction.PredictionProviderException;
 import com.algotrader.strategy.RoundTripTrade;
 import com.algotrader.strategy.TradingStrategy;
@@ -32,14 +34,17 @@ public class TradingCycleRunner {
     private final SlidingWindowProvider dataProvider;
     private final TradingStrategy tradingStrategy;
     private final TradeExecutor tradeExecutor;
+    private final PriceAvailabilityValidator priceAvailabilityValidator;
     private final TradingCycleLogger tradeLogger;
     private final String ticker;
+    private final boolean liveMode = false;
 
     public TradingCycleRunner(
             TradingPlan tradingPlan,
             SlidingWindowProvider dataProvider,
             TradingStrategy tradingStrategy,
             TradeExecutor tradeExecutor,
+            PriceAvailabilityValidator priceAvailabilityValidator,
             TradingCycleLogger tradeLogger
     ) {
         if (tradingPlan == null) {
@@ -66,18 +71,34 @@ public class TradingCycleRunner {
         this.dataProvider = dataProvider;
         this.tradingStrategy = tradingStrategy;
         this.tradeExecutor = tradeExecutor;
+        this.priceAvailabilityValidator = priceAvailabilityValidator;
         this.tradeLogger = tradeLogger;
-        this.ticker = dataProvider.getTicker().toUpperCase();
+        this.ticker = tradingPlan.getTicker().toUpperCase();
+    }
+
+    /**
+     * Initializes the trading cycle runner and loads any required
+     * market data before trading cycles begin.
+     *
+     * @throws DataCacheException if market data cannot be loaded
+     */
+    public void initialize() throws DataCacheException {
+        dataProvider.initialize();
     }
 
     /**
      * Runs trading cycles until no more historical data is available.
      */
     public void runAllTradingCycles() {
+        if (!dataProvider.isInitialized()) {
+            throw new IllegalStateException(
+                    "TradingCycleRunner must be initialized before "
+                            + "running trading cycles."
+            );
+        }
         int totalCycles = 0;
         System.out.println("Running all trading cycles...");
         while (runTradingCycle()) {
-            // Continue until the data provider has no more windows.
             totalCycles++;
         }
         System.out.println("Ran for " + totalCycles + " cycles.");
@@ -94,23 +115,31 @@ public class TradingCycleRunner {
     public boolean runTradingCycle() { // TODO: add a stopping condition?
         long startNanos = System.nanoTime();
 
+        Optional<DataBatch> maybeBatch =
+                dataProvider.nextWindow();
+
+        if (maybeBatch.isEmpty()) {
+            return false;
+        }
+
+        DataBatch batch = maybeBatch.get();
+
         try {
-            DataBatch batch = dataProvider.nextWindow();
-
-            if (!batch.getTicker().equalsIgnoreCase(ticker)) {
-                throw new IllegalStateException(
-                        "Expected ticker " + ticker
-                                + " but received batch for "
-                                + batch.getTicker()
-                );
-            }
-
             List<RoundTripTrade> trades =
                     tradingStrategy.generateTrades(batch);
 
             List<ActionLog> actionLogs = new ArrayList<>();
 
             for (RoundTripTrade trade : trades) {
+
+                if (!priceAvailabilityValidator.pricesExist(trade)) {
+                    System.out.println(
+                            "Skipping trade due to unavailable prices: "
+                                    + trade
+                    );
+                    continue;
+                }
+
                 for (TradeRecommendation recommendation
                         : trade.toRecommendations()) {
 
@@ -132,7 +161,7 @@ public class TradingCycleRunner {
                             tradingPlan.getInterval(),
                             tradingPlan.getModelId(),
                             tradingPlan.getPlanId(),
-                            tradingPlan.isLiveMode()
+                            liveMode
                     );
 
             String cycleId = String.format(
@@ -155,11 +184,6 @@ public class TradingCycleRunner {
             tradeLogger.log(tradingCycleLog);
 
             return true;
-
-        } catch (DataCacheException e) {
-            System.out.println("No more historical data available for " + ticker);
-            System.out.println(e.getMessage());
-            return false;
 
         } catch (PredictionProviderException e) {
             throw new RuntimeException(

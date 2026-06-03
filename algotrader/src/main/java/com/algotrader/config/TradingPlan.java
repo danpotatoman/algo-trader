@@ -6,21 +6,7 @@ import java.time.Duration;
 import com.algotrader.data.TimeInterval;
 
 /**
- * Immutable high-level configuration describing a trading setup.
- *
- * <p>A {@code TradingPlan} defines:
- * <ul>
- *     <li>What ticker to trade</li>
- *     <li>What interval to operate on</li>
- *     <li>What model and strategy configuration to use</li>
- *     <li>Whether execution is live or historical</li>
- *     <li>How much historical data each cycle requires</li>
- *     <li>Where historical traversal should begin</li>
- * </ul>
- *
- * <p>This class is intended to be lightweight and serializable so that
- * trading plans can be loaded from configuration files, persisted,
- * logged, or reconstructed later.
+ * Immutable high-level configuration describing a trading setup on historical data.
  */
 public final class TradingPlan { //TODO: need to load this from a config
 
@@ -37,14 +23,9 @@ public final class TradingPlan { //TODO: need to load this from a config
     /**
      * Starting timestamp for historical traversal.
      */
-    private final Instant startingTimestamp; //TODO: rethink if this belongs in a TradingPlan
+    private final Instant startingTimestamp;
 
-    /**
-     * Whether the trading plan operates on live market data.
-     *
-     * <p>If false, the plan is assumed to operate on historical/static data.
-     */
-    private final boolean liveMode;
+    private final Instant endingTimestamp;
 
     /**
      * Constructs a {@code TradingPlan}.
@@ -56,7 +37,6 @@ public final class TradingPlan { //TODO: need to load this from a config
      * @param interval market data interval
      * @param batchSize number of candles required per prediction batch
      * @param startingTimestamp starting timestamp for historical traversal
-     * @param liveMode whether the plan operates on live data
      */
     public TradingPlan(
             String planId,
@@ -67,7 +47,7 @@ public final class TradingPlan { //TODO: need to load this from a config
             int batchSize,
             Duration minTimeBeforeClose,
             Instant startingTimestamp,
-            boolean liveMode
+            Instant endingTimestamp
     ) {
         if (planId == null || planId.isBlank()) {
             throw new IllegalArgumentException(
@@ -117,6 +97,12 @@ public final class TradingPlan { //TODO: need to load this from a config
             );
         }
 
+        if (endingTimestamp == null) {
+            throw new IllegalArgumentException(
+                    "Ending timestamp cannot be null."
+            );
+        }
+
         this.planId = planId;
         this.modelId = modelId;
         this.strategyId = strategyId;
@@ -127,8 +113,8 @@ public final class TradingPlan { //TODO: need to load this from a config
 
         this.minTimeBeforeClose = minTimeBeforeClose;
         this.startingTimestamp = startingTimestamp;
+        this.endingTimestamp = endingTimestamp;
 
-        this.liveMode = liveMode;
     }
 
     /**
@@ -199,12 +185,12 @@ public final class TradingPlan { //TODO: need to load this from a config
     }
 
     /**
-     * Returns whether this plan operates on live market data.
+     * Returns the ending timestamp for traversal.
      *
-     * @return true if live mode, false if historical/static mode
+     * @return the ending timestamp
      */
-    public boolean isLiveMode() {
-        return liveMode;
+    public Instant getEndingTimestamp() {
+        return endingTimestamp;
     }
 
     @Override
@@ -217,7 +203,7 @@ public final class TradingPlan { //TODO: need to load this from a config
                 ", interval=" + interval +
                 ", batchSize=" + batchSize +
                 ", startingTimestamp=" + startingTimestamp +
-                ", liveMode=" + liveMode +
+                ", endingTimestamp=" + endingTimestamp +
                 '}';
     }
 }

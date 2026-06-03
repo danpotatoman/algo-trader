@@ -2,22 +2,17 @@ package com.algotrader;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 
-import com.algotrader.config.ModelConfigLoader;
 import com.algotrader.config.TradingPlan;
-import com.algotrader.config.TradingStrategyConfigLoader;
 import com.algotrader.data.TimeInterval;
-import com.algotrader.data.cache.CachedPriceProvider;
+import com.algotrader.data.cache.DataCacheException;
 import com.algotrader.data.cache.MarketDataCache;
-import com.algotrader.data.cache.SlidingWindowProviderFactory;
 import com.algotrader.data.log.JSONTradingCycleLogger;
 import com.algotrader.data.log.TradingCycleLogger;
-import com.algotrader.data.source.CSVOHLCVSource;
-import com.algotrader.market.MarketCalendar;
-import com.algotrader.market.UsMarketCalendar2026Loader;
-import com.algotrader.prediction.PredictionProviderFactory;
-import com.algotrader.strategy.TradingStrategyFactory;
+import com.algotrader.data.provider.CachedPriceProvider;
+import com.algotrader.data.source.SQLiteOHLCVSource;
+import com.algotrader.database.OHLCVRepository;
+import com.algotrader.database.SQLiteOHLCVRepository;
 import com.algotrader.service.TradingCycleRunner;
 import com.algotrader.service.TradingCycleRunnerFactory;
 import com.algotrader.trader.CSVPaperTrader;
@@ -36,38 +31,15 @@ public class Main {
                 10,
                 Duration.ofMinutes(5),
                 Instant.parse("2026-05-18T14:20:00Z"),
-                false
+                Instant.parse("2026-06-01T19:55:00Z")
         );
+
+        OHLCVRepository repository = new SQLiteOHLCVRepository("data/ohlcv.db");
 
         MarketDataCache marketDataCache =
             new MarketDataCache(
-                    List.of(
-                            new CSVOHLCVSource("data/ohlcv")
-                    )
+                        new SQLiteOHLCVSource(repository)
             );
-
-        SlidingWindowProviderFactory slidingWindowProviderFactory =
-                new SlidingWindowProviderFactory(
-                        marketDataCache
-                );
-
-        ModelConfigLoader modelConfigLoader =
-                new ModelConfigLoader();
-
-        TradingStrategyConfigLoader strategyConfigLoader =
-                new TradingStrategyConfigLoader();
-
-        PredictionProviderFactory predictionProviderFactory =
-                new PredictionProviderFactory();
-
-        UsMarketCalendar2026Loader calendarLoader = new UsMarketCalendar2026Loader();
-        MarketCalendar calendar = calendarLoader.load();
-
-        TradingStrategyFactory tradingStrategyFactory =
-                new TradingStrategyFactory(
-                        predictionProviderFactory,
-                        calendar
-                );
 
         TradeExecutor tradeExecutor =
             new CSVPaperTrader(
@@ -82,19 +54,21 @@ public class Main {
 
         TradingCycleRunnerFactory tradingCycleRunnerFactory =
                 new TradingCycleRunnerFactory(
-                        modelConfigLoader,
-                        strategyConfigLoader,
-                        slidingWindowProviderFactory,
-                        tradingStrategyFactory,
                         tradeExecutor,
-                        tradingCycleLogger
+                        tradingCycleLogger,
+                        marketDataCache
                 );
 
         TradingCycleRunner tradingCycleRunner =
                 tradingCycleRunnerFactory.create(
                         tradingPlan
                 );
-
+        
+        try {
+                tradingCycleRunner.initialize();
+        } catch (DataCacheException e) {
+                System.out.println("TradingCycleRunner initialization failed.");
+        }
         tradingCycleRunner.runAllTradingCycles();
     }
 }
