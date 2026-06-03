@@ -24,7 +24,7 @@ public final class TradingStrategyConfig {
     private final String description;
     private final String version;
 
-    private final Parameters parameters;
+    private final StrategyParameters parameters;
 
     /**
      * Constructs a {@code TradingStrategyConfig}.
@@ -35,7 +35,7 @@ public final class TradingStrategyConfig {
             @JsonProperty("strategyType") String strategyType,
             @JsonProperty("description") String description,
             @JsonProperty("version") String version,
-            @JsonProperty("parameters") Parameters parameters
+            @JsonProperty("parameters") StrategyParameters parameters
     ) {
         if (strategyId == null || strategyId.isBlank()) {
             throw new IllegalArgumentException(
@@ -115,14 +115,14 @@ public final class TradingStrategyConfig {
      *
      * @return strategy parameters
      */
-    public Parameters getParameters() {
+    public StrategyParameters getParameters() {
         return parameters;
     }
 
     /**
      * Immutable strategy parameter configuration.
      */
-    public static final class Parameters {
+    public static final class StrategyParameters {
 
         private final double confidenceThreshold;
         private final double buyQuantity;
@@ -134,7 +134,7 @@ public final class TradingStrategyConfig {
          * @param buyQuantity quantity to trade when conditions are met
          */
         @JsonCreator
-        public Parameters(
+        public StrategyParameters(
                 @JsonProperty("confidenceThreshold") double confidenceThreshold,
                 @JsonProperty("buyQuantity") double buyQuantity
         ) {

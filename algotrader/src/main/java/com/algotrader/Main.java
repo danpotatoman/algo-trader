@@ -3,7 +3,8 @@ package com.algotrader;
 import java.time.Duration;
 import java.time.Instant;
 
-import com.algotrader.config.TradingPlan;
+import com.algotrader.config.TradingSessionConfig;
+import com.algotrader.config.TradingSessionConfigLoader;
 import com.algotrader.data.TimeInterval;
 import com.algotrader.data.cache.DataCacheException;
 import com.algotrader.data.cache.MarketDataCache;
@@ -22,17 +23,9 @@ public class Main {
 
     public static void main(String[] args) {
 
-        TradingPlan tradingPlan = new TradingPlan(
-                "aapl-cnn-v1-5m",
-                "cnn-v1",
-                "threshold-strategy-v1",
-                "AAPL",
-                TimeInterval.FIVE_MINUTES,
-                10,
-                Duration.ofMinutes(5),
-                Instant.parse("2026-05-18T14:20:00Z"),
-                Instant.parse("2026-06-01T19:55:00Z")
-        );
+        TradingSessionConfigLoader tradingSessionConfigLoader = new TradingSessionConfigLoader();
+
+        TradingSessionConfig sessionConfig = tradingSessionConfigLoader.load("aapl-cnn-v1.json");
 
         OHLCVRepository repository = new SQLiteOHLCVRepository("data/ohlcv.db");
 
@@ -44,8 +37,8 @@ public class Main {
         TradeExecutor tradeExecutor =
             new CSVPaperTrader(
                     new CachedPriceProvider(
-                            marketDataCache,
-                            tradingPlan.getInterval()
+                            marketDataCache, //TODO: get this in a fectory
+                            sessionConfig.getInterval()
                     )
             );
 
@@ -61,7 +54,7 @@ public class Main {
 
         TradingCycleRunner tradingCycleRunner =
                 tradingCycleRunnerFactory.create(
-                        tradingPlan
+                        sessionConfig
                 );
         
         try {

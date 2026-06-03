@@ -1,6 +1,7 @@
 package com.algotrader.prediction;
 
 import com.algotrader.config.ModelConfig;
+import com.algotrader.config.ResolvedTradingPlan;
 import com.algotrader.prediction.api.PythonPredictionClient;
 import com.algotrader.prediction.provider.PythonClassificationPredictionProvider;
 import com.algotrader.prediction.provider.PythonRegressionPredictionProvider;
@@ -21,8 +22,10 @@ public final class PredictionProviderFactory {
      */
     public ClassificationPredictionProvider
             createClassificationProvider(
-                    ModelConfig modelConfig
+                    ResolvedTradingPlan tradingPlan
             ) {
+
+        ModelConfig modelConfig = tradingPlan.getModelConfig();
 
         validateModelConfig(modelConfig, "CLASSIFICATION");
 

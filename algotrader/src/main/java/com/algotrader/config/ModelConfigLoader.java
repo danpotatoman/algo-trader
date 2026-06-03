@@ -66,7 +66,7 @@ public class ModelConfigLoader {
 
         } catch (IOException e) {
             throw new RuntimeException(
-                    "Failed to load model config from: " + configPath,
+                    "Failed to load model config from: " + configPath, //TODO: custom exception for config loaders
                     e
             );
         }

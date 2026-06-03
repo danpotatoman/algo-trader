@@ -1,8 +1,6 @@
 package com.algotrader.strategy;
 
-import com.algotrader.config.ModelConfig;
-import com.algotrader.config.TradingPlan;
-import com.algotrader.config.TradingStrategyConfig;
+import com.algotrader.config.ResolvedTradingPlan;
 import com.algotrader.data.dataobjects.ClassificationPrediction;
 import com.algotrader.market.MarketCalendar;
 import com.algotrader.prediction.ClassificationPredictionProvider;
@@ -41,41 +39,21 @@ public final class TradingStrategyFactory {
     }
 
     public TradingStrategy create(
-            ModelConfig modelConfig,
-            TradingStrategyConfig strategyConfig,
-            TradingPlan tradingPlan
+            ResolvedTradingPlan tradingPlan
     ) {
-        if (modelConfig == null) {
-            throw new IllegalArgumentException(
-                    "ModelConfig cannot be null."
-            );
-        }
-
-        if (strategyConfig == null) {
-            throw new IllegalArgumentException(
-                    "TradingStrategyConfig cannot be null."
-            );
-        }
-
         if (tradingPlan == null) {
             throw new IllegalArgumentException(
                     "TradingPlan cannot be null."
             );
         }
 
-        String predictionType =
-                modelConfig.getPredictionType().toUpperCase();
+        String predictionType = tradingPlan.getPredictionType().toUpperCase();
 
-        String strategyType =
-                strategyConfig.getStrategyType().toUpperCase();
+        String strategyType = tradingPlan.getStrategyType().toUpperCase();
 
         if (predictionType.equals("CLASSIFICATION")
                 && strategyType.equals("THRESHOLD_CLASSIFICATION")) {
-            return createThresholdClassificationStrategy(
-                    modelConfig,
-                    strategyConfig,
-                    tradingPlan
-            );
+            return createThresholdClassificationStrategy(tradingPlan);
         }
 
         throw new IllegalArgumentException(
@@ -87,22 +65,18 @@ public final class TradingStrategyFactory {
     }
 
     private TradingStrategy createThresholdClassificationStrategy(
-            ModelConfig modelConfig,
-            TradingStrategyConfig strategyConfig,
-            TradingPlan tradingPlan
+            ResolvedTradingPlan tradingPlan
     ) {
         ClassificationPredictionProvider provider =
                 predictionProviderFactory.createClassificationProvider(
-                        modelConfig
+                        tradingPlan
                 );
 
         PredictionInterpreter<ClassificationPrediction> interpreter =
                 new SimpleClassificationPredictionInterpreter(
-                        strategyConfig.getParameters()
-                                .getConfidenceThreshold(),
-                        modelConfig.getOutput()
-                                .getHorizonMinutes(),
-                        strategyConfig.getStrategyId()
+                        tradingPlan.getConfidenceThreshold(),
+                        tradingPlan.getHorizonMinutes(),
+                        tradingPlan.getStrategyId()
                 );
 
         RoundTripTradeValidator tradeValidator =

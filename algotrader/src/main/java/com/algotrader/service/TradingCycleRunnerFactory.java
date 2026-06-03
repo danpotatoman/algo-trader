@@ -2,7 +2,8 @@ package com.algotrader.service;
 
 import com.algotrader.config.ModelConfig;
 import com.algotrader.config.ModelConfigLoader;
-import com.algotrader.config.TradingPlan;
+import com.algotrader.config.ResolvedTradingPlan;
+import com.algotrader.config.TradingSessionConfig;
 import com.algotrader.config.TradingStrategyConfig;
 import com.algotrader.config.TradingStrategyConfigLoader;
 import com.algotrader.data.log.TradingCycleLogger;
@@ -80,27 +81,29 @@ public final class TradingCycleRunnerFactory {
     /**
      * Creates a {@link TradingCycleRunner} from a trading plan.
      *
-     * @param tradingPlan the trading plan configuration
+     * @param sessionConfig the session configuration
      * @return a configured trading cycle runner
      */
     public TradingCycleRunner create(
-            TradingPlan tradingPlan
+            TradingSessionConfig sessionConfig
     ) {
-        if (tradingPlan == null) {
+        if (sessionConfig == null) {
             throw new IllegalArgumentException(
-                    "TradingPlan cannot be null."
+                    "TradingSessionConfig cannot be null."
             );
         }
 
         ModelConfig modelConfig =
                 modelConfigLoader.load(
-                        tradingPlan.getModelId()
+                        sessionConfig.getModelId()
                 );
 
         TradingStrategyConfig strategyConfig =
                 strategyConfigLoader.load(
-                        tradingPlan.getStrategyId()
+                        sessionConfig.getStrategyId()
                 );
+        
+        ResolvedTradingPlan tradingPlan = new ResolvedTradingPlan(sessionConfig, modelConfig, strategyConfig);
 
         SlidingWindowProvider dataProvider =
                 slidingWindowProviderFactory.create(
@@ -109,8 +112,6 @@ public final class TradingCycleRunnerFactory {
 
         TradingStrategy tradingStrategy =
                 tradingStrategyFactory.create(
-                        modelConfig,
-                        strategyConfig,
                         tradingPlan
                 );
 

@@ -1,0 +1,12 @@
+{
+  "planId": "aapl-cnn-v1",
+  "modelId": "cnn-v1",
+  "strategyId": "threshold-strategy-v1",
+
+  "ticker": "AAPL",
+
+  "minTimeBeforeClose": "PT30M",
+
+  "startingTimestamp": "2025-01-02T09:35:00Z",
+  "endingTimestamp": "2025-03-31T20:00:00Z"
+}

@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.algotrader.config.TradingPlan;
+import com.algotrader.config.ResolvedTradingPlan;
+import com.algotrader.data.TimeInterval;
 import com.algotrader.data.cache.DataCacheException;
 import com.algotrader.data.dataobjects.DataBatch;
 import com.algotrader.data.log.TradingCycleLog;
@@ -30,42 +31,35 @@ import com.algotrader.strategy.TradingStrategy;
  */
 public class TradingCycleRunner {
 
-    private final TradingPlan tradingPlan;
+    private final ResolvedTradingPlan tradingPlan;
     private final SlidingWindowProvider dataProvider;
     private final TradingStrategy tradingStrategy;
     private final TradeExecutor tradeExecutor;
     private final PriceAvailabilityValidator priceAvailabilityValidator;
     private final TradingCycleLogger tradeLogger;
     private final String ticker;
+    private final TimeInterval interval;
+    private final String sessionId;
+    private final String modelId;
+    private final String strategyId;
     private final boolean liveMode = false;
 
     public TradingCycleRunner(
-            TradingPlan tradingPlan,
+            ResolvedTradingPlan tradingPlan,
             SlidingWindowProvider dataProvider,
             TradingStrategy tradingStrategy,
             TradeExecutor tradeExecutor,
             PriceAvailabilityValidator priceAvailabilityValidator,
             TradingCycleLogger tradeLogger
     ) {
-        if (tradingPlan == null) {
-            throw new IllegalArgumentException("TradingPlan cannot be null.");
-        }
-
-        if (dataProvider == null) {
-            throw new IllegalArgumentException("SlidingWindowProvider cannot be null.");
-        }
-
-        if (tradingStrategy == null) {
-            throw new IllegalArgumentException("TradingStrategy cannot be null.");
-        }
-
-        if (tradeExecutor == null) {
-            throw new IllegalArgumentException("TradeExecutor cannot be null.");
-        }
-
-        if (tradeLogger == null) {
-            throw new IllegalArgumentException("TradeLogger cannot be null.");
-        }
+        validateConstructorArgs(
+            tradingPlan,
+            dataProvider,
+            tradingStrategy,
+            tradeExecutor,
+            priceAvailabilityValidator,
+            tradeLogger
+        );
 
         this.tradingPlan = tradingPlan;
         this.dataProvider = dataProvider;
@@ -74,6 +68,10 @@ public class TradingCycleRunner {
         this.priceAvailabilityValidator = priceAvailabilityValidator;
         this.tradeLogger = tradeLogger;
         this.ticker = tradingPlan.getTicker().toUpperCase();
+        this.interval = tradingPlan.getInterval();
+        this.sessionId = tradingPlan.getSessionId();
+        this.modelId = tradingPlan.getModelId();
+        this.strategyId = tradingPlan.getStrategyId();
     }
 
     /**
@@ -112,7 +110,7 @@ public class TradingCycleRunner {
      *
      * @return whether a trading cycle was run
      */
-    public boolean runTradingCycle() { // TODO: add a stopping condition?
+    public boolean runTradingCycle() {
         long startNanos = System.nanoTime();
 
         Optional<DataBatch> maybeBatch =
@@ -157,18 +155,18 @@ public class TradingCycleRunner {
 
             TradingCycleLog.Metadata metadata =
                     new TradingCycleLog.Metadata(
-                            tradingPlan.getTicker(),
-                            tradingPlan.getInterval(),
-                            tradingPlan.getModelId(),
-                            tradingPlan.getPlanId(),
+                            ticker,
+                            interval,
+                            modelId,
+                            sessionId,
                             liveMode
                     );
 
             String cycleId = String.format(
                     "cycle-%s-%s-%s",
                     batch.getFinalTimestamp(),
-                    tradingPlan.getTicker(),
-                    tradingPlan.getInterval()
+                    ticker,
+                    interval
             );
 
             TradingCycleLog tradingCycleLog =
@@ -177,7 +175,7 @@ public class TradingCycleRunner {
                             batch.getFinalTimestamp(),
                             cycleDurationMillis,
                             metadata,
-                            tradingPlan.getStrategyId(),
+                            strategyId,
                             actionLogs
                     );
 
@@ -199,7 +197,31 @@ public class TradingCycleRunner {
         }
     }
 
-    public String getTicker() {
-        return ticker;
+    private static void validateConstructorArgs(
+            ResolvedTradingPlan tradingPlan,
+            SlidingWindowProvider dataProvider,
+            TradingStrategy tradingStrategy,
+            TradeExecutor tradeExecutor,
+            PriceAvailabilityValidator priceAvailabilityValidator,
+            TradingCycleLogger tradeLogger) {
+        if (tradingPlan == null) {
+            throw new IllegalArgumentException("ResolvedTradingPlan cannot be null.");
+        }
+
+        if (dataProvider == null) {
+            throw new IllegalArgumentException("SlidingWindowProvider cannot be null.");
+        }
+
+        if (tradingStrategy == null) {
+            throw new IllegalArgumentException("TradingStrategy cannot be null.");
+        }
+
+        if (tradeExecutor == null) {
+            throw new IllegalArgumentException("TradeExecutor cannot be null.");
+        }
+
+        if (tradeLogger == null) {
+            throw new IllegalArgumentException("TradeLogger cannot be null.");
+        }
     }
 }

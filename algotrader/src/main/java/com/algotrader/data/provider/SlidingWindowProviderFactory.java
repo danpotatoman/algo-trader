@@ -1,6 +1,6 @@
 package com.algotrader.data.provider;
 
-import com.algotrader.config.TradingPlan;
+import com.algotrader.config.ResolvedTradingPlan;
 import com.algotrader.data.cache.DataCacheException;
 
 /**
@@ -31,7 +31,7 @@ public class SlidingWindowProviderFactory {
      * @throws DataCacheException if the required market data cannot be loaded
      */
     public SlidingWindowProvider create(
-            TradingPlan tradingPlan
+            ResolvedTradingPlan tradingPlan
     ) {
         if (tradingPlan == null) {
             throw new IllegalArgumentException(
