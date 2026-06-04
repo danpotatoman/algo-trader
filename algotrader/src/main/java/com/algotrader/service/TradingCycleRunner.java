@@ -4,20 +4,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.algotrader.config.ResolvedTradingPlan;
-import com.algotrader.data.TimeInterval;
-import com.algotrader.data.cache.DataCacheException;
-import com.algotrader.data.dataobjects.DataBatch;
-import com.algotrader.data.log.TradingCycleLog;
-import com.algotrader.data.log.TradingCycleLog.ActionLog;
-import com.algotrader.data.provider.SlidingWindowProvider;
-import com.algotrader.data.dataobjects.TradeRecommendation;
-import com.algotrader.data.log.TradingCycleLogger;
-import com.algotrader.trader.TradeExecutor;
-import com.algotrader.trader.validation.PriceAvailabilityValidator;
-import com.algotrader.prediction.PredictionProviderException;
-import com.algotrader.strategy.RoundTripTrade;
-import com.algotrader.strategy.TradingStrategy;
+import com.algotrader.decision.dataobjects.RoundTripTrade;
+import com.algotrader.decision.dataobjects.TradeRecommendation;
+import com.algotrader.decision.prediction.provider.PredictionProviderException;
+import com.algotrader.decision.strategy.TradeGenerator;
+import com.algotrader.execution.TradeExecutor;
+import com.algotrader.execution.validation.PriceAvailabilityValidator;
+import com.algotrader.logging.TradingCycleLog;
+import com.algotrader.logging.TradingCycleLogger;
+import com.algotrader.logging.TradingCycleLog.ActionLog;
+import com.algotrader.marketdata.cache.DataCacheException;
+import com.algotrader.marketdata.model.DataBatch;
+import com.algotrader.marketdata.model.TimeInterval;
+import com.algotrader.marketdata.provider.SlidingWindowProvider;
+import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
  * Runs historical trading cycles for a single ticker.
@@ -31,9 +31,8 @@ import com.algotrader.strategy.TradingStrategy;
  */
 public class TradingCycleRunner {
 
-    private final ResolvedTradingPlan tradingPlan;
     private final SlidingWindowProvider dataProvider;
-    private final TradingStrategy tradingStrategy;
+    private final TradeGenerator tradeGenerator;
     private final TradeExecutor tradeExecutor;
     private final PriceAvailabilityValidator priceAvailabilityValidator;
     private final TradingCycleLogger tradeLogger;
@@ -47,7 +46,7 @@ public class TradingCycleRunner {
     public TradingCycleRunner(
             ResolvedTradingPlan tradingPlan,
             SlidingWindowProvider dataProvider,
-            TradingStrategy tradingStrategy,
+            TradeGenerator tradeGenerator,
             TradeExecutor tradeExecutor,
             PriceAvailabilityValidator priceAvailabilityValidator,
             TradingCycleLogger tradeLogger
@@ -55,15 +54,14 @@ public class TradingCycleRunner {
         validateConstructorArgs(
             tradingPlan,
             dataProvider,
-            tradingStrategy,
+            tradeGenerator,
             tradeExecutor,
             priceAvailabilityValidator,
             tradeLogger
         );
 
-        this.tradingPlan = tradingPlan;
         this.dataProvider = dataProvider;
-        this.tradingStrategy = tradingStrategy;
+        this.tradeGenerator = tradeGenerator;
         this.tradeExecutor = tradeExecutor;
         this.priceAvailabilityValidator = priceAvailabilityValidator;
         this.tradeLogger = tradeLogger;
@@ -124,7 +122,7 @@ public class TradingCycleRunner {
 
         try {
             List<RoundTripTrade> trades =
-                    tradingStrategy.generateTrades(batch);
+                    tradeGenerator.generateTrades(batch);
 
             List<ActionLog> actionLogs = new ArrayList<>();
 
@@ -200,7 +198,7 @@ public class TradingCycleRunner {
     private static void validateConstructorArgs(
             ResolvedTradingPlan tradingPlan,
             SlidingWindowProvider dataProvider,
-            TradingStrategy tradingStrategy,
+            TradeGenerator tradeGenerator,
             TradeExecutor tradeExecutor,
             PriceAvailabilityValidator priceAvailabilityValidator,
             TradingCycleLogger tradeLogger) {
@@ -212,8 +210,8 @@ public class TradingCycleRunner {
             throw new IllegalArgumentException("SlidingWindowProvider cannot be null.");
         }
 
-        if (tradingStrategy == null) {
-            throw new IllegalArgumentException("TradingStrategy cannot be null.");
+        if (tradeGenerator == null) {
+            throw new IllegalArgumentException("TradeGenerator cannot be null.");
         }
 
         if (tradeExecutor == null) {

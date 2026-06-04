@@ -2,23 +2,22 @@ package com.algotrader.service;
 
 import com.algotrader.config.ModelConfig;
 import com.algotrader.config.ModelConfigLoader;
-import com.algotrader.config.ResolvedTradingPlan;
+import com.algotrader.config.TradeGeneratorConfig;
 import com.algotrader.config.TradingSessionConfig;
-import com.algotrader.config.TradingStrategyConfig;
-import com.algotrader.config.TradingStrategyConfigLoader;
-import com.algotrader.data.log.TradingCycleLogger;
-import com.algotrader.data.provider.CachedPriceProvider;
-import com.algotrader.data.provider.MarketDataProvider;
-import com.algotrader.data.provider.PriceProvider;
-import com.algotrader.data.provider.SlidingWindowProvider;
-import com.algotrader.data.provider.SlidingWindowProviderFactory;
-import com.algotrader.market.MarketCalendar;
-import com.algotrader.market.UsMarketCalendar2026Loader;
-import com.algotrader.prediction.PredictionProviderFactory;
-import com.algotrader.trader.TradeExecutor;
-import com.algotrader.trader.validation.PriceAvailabilityValidator;
-import com.algotrader.strategy.TradingStrategy;
-import com.algotrader.strategy.TradingStrategyFactory;
+import com.algotrader.config.TradeGeneratorConfigLoader;
+import com.algotrader.decision.prediction.provider.PredictionProviderFactory;
+import com.algotrader.decision.strategy.TradeGenerator;
+import com.algotrader.decision.strategy.TradeGeneratorFactory;
+import com.algotrader.execution.HistoricalPaperTradeExecutor;
+import com.algotrader.execution.TradeExecutor;
+import com.algotrader.execution.validation.PriceAvailabilityValidator;
+import com.algotrader.logging.TradingCycleLogger;
+import com.algotrader.marketcalendar.UsMarketCalendar2026Loader;
+import com.algotrader.marketdata.provider.MarketDataProvider;
+import com.algotrader.marketdata.provider.PriceProvider;
+import com.algotrader.marketdata.provider.SlidingWindowProvider;
+import com.algotrader.marketdata.provider.SlidingWindowProviderFactory;
+import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
  * Factory for constructing {@link TradingCycleRunner} instances from
@@ -27,24 +26,18 @@ import com.algotrader.strategy.TradingStrategyFactory;
 public final class TradingCycleRunnerFactory {
 
     private final ModelConfigLoader modelConfigLoader;
-    private final TradingStrategyConfigLoader strategyConfigLoader;
+    private final TradeGeneratorConfigLoader tradeGeneratorConfigLoader;
     private final SlidingWindowProviderFactory slidingWindowProviderFactory;
-    private final TradingStrategyFactory tradingStrategyFactory;
+    private final TradeGeneratorFactory tradeGeneratorFactory;
     private final TradeExecutor tradeExecutor;
     private final TradingCycleLogger tradingCycleLogger;
-    private final MarketDataProvider marketDataProvider;
+    private final PriceAvailabilityValidator priceAvailabilityValidator;
 
     public TradingCycleRunnerFactory(
-            TradeExecutor tradeExecutor,
-            TradingCycleLogger tradingCycleLogger,
-            MarketDataProvider marketDataProvider
+            MarketDataProvider marketDataProvider,
+            PriceProvider priceProvider,
+            TradingCycleLogger tradingCycleLogger
     ) {
-
-        if (tradeExecutor == null) {
-            throw new IllegalArgumentException(
-                    "TradeExecutor cannot be null."
-            );
-        }
 
         if (tradingCycleLogger == null) {
             throw new IllegalArgumentException(
@@ -52,29 +45,40 @@ public final class TradingCycleRunnerFactory {
             );
         }
 
+        if (marketDataProvider == null) {
+            throw new IllegalArgumentException(
+                    "MarketDataProvider cannot be null."
+            );
+        }
+
+        if (priceProvider == null) {
+            throw new IllegalArgumentException(
+                    "PriceProvider cannot be null."
+            );
+        }
+
         this.modelConfigLoader =
                 new ModelConfigLoader();
 
-        this.strategyConfigLoader =
-                new TradingStrategyConfigLoader(); //TODO: enforce that prediction type (regression/classification) aligns for modelconfig and strategyconfig
+        this.tradeGeneratorConfigLoader =
+                new TradeGeneratorConfigLoader();
 
         this.slidingWindowProviderFactory =
-                new SlidingWindowProviderFactory(marketDataProvider);
+                new SlidingWindowProviderFactory(marketDataProvider);      
 
-        PredictionProviderFactory predictionProviderFactory =
-                new PredictionProviderFactory();
-
-        UsMarketCalendar2026Loader calendarLoader = new UsMarketCalendar2026Loader();
-        MarketCalendar calendar = calendarLoader.load();
-
-        this.tradingStrategyFactory =
-                new TradingStrategyFactory(
-                        predictionProviderFactory,
-                        calendar
+        this.tradeGeneratorFactory =
+                new TradeGeneratorFactory(
+                        new PredictionProviderFactory(),
+                        new UsMarketCalendar2026Loader().load()
                 );
+        
+        this.tradeExecutor =
+                new HistoricalPaperTradeExecutor(
+                        priceProvider
+                );
+        
+        this.priceAvailabilityValidator = new PriceAvailabilityValidator(priceProvider);
 
-        this.marketDataProvider = marketDataProvider;
-        this.tradeExecutor = tradeExecutor;
         this.tradingCycleLogger = tradingCycleLogger;
     }
 
@@ -98,8 +102,8 @@ public final class TradingCycleRunnerFactory {
                         sessionConfig.getModelId()
                 );
 
-        TradingStrategyConfig strategyConfig =
-                strategyConfigLoader.load(
+        TradeGeneratorConfig strategyConfig =
+                tradeGeneratorConfigLoader.load(
                         sessionConfig.getStrategyId()
                 );
         
@@ -110,19 +114,15 @@ public final class TradingCycleRunnerFactory {
                         tradingPlan
                 );
 
-        TradingStrategy tradingStrategy =
-                tradingStrategyFactory.create(
+        TradeGenerator tradeGenerator =
+                tradeGeneratorFactory.create(
                         tradingPlan
                 );
-
-        PriceProvider priceProvider = new CachedPriceProvider(marketDataProvider, tradingPlan.getInterval());
-
-        PriceAvailabilityValidator priceAvailabilityValidator = new PriceAvailabilityValidator(priceProvider); //TODO: maybe its own factory with a create(TradingPlan p) method
 
         return new TradingCycleRunner(
                 tradingPlan,
                 dataProvider,
-                tradingStrategy,
+                tradeGenerator,
                 tradeExecutor,
                 priceAvailabilityValidator,
                 tradingCycleLogger

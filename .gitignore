@@ -33,6 +33,7 @@ Thumbs.db
 # Model/data artifacts
 saved_models/
 data/cache/
+data/ohlcv/
 
 # Environment variables
 .env

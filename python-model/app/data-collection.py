@@ -8,7 +8,7 @@ TICKERS = [
     "XOM", "UNH", "COST", "SPY", "QQQ"
 ]
 INTERVAL = "5m"
-PERIOD = "20d"
+PERIOD = "60d"
 DATA_DIR = Path("data/ohlcv")
 
 def filename_for(ticker: str, interval: str) -> Path:

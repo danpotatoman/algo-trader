@@ -2,7 +2,7 @@ package com.algotrader.config;
 
 import java.util.List;
 
-import com.algotrader.data.TimeInterval;
+import com.algotrader.marketdata.model.TimeInterval;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
