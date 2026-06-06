@@ -7,7 +7,7 @@ import com.algotrader.marketdata.model.DataBatch;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public final class PythonClassificationPredictionProvider
-        implements ClassificationPredictionProvider {
+        implements PredictionProvider<ClassificationPrediction> {
 
     private final PythonPredictionClient client;
 
@@ -24,7 +24,7 @@ public final class PythonClassificationPredictionProvider
     }
 
     @Override
-    public ClassificationPrediction makePrediction( //TODO this whole class should be generic, this method shoulld be: public <T> makePrediction
+    public ClassificationPrediction makePrediction(
             DataBatch batch
     ) throws PredictionProviderException {
         if (batch == null) {

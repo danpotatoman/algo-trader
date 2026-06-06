@@ -1,4 +1,4 @@
-package com.algotrader.decision.strategy;
+package com.algotrader.decision.interpreter;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

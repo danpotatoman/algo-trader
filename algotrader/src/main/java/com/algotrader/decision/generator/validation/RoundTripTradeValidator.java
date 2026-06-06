@@ -1,4 +1,4 @@
-package com.algotrader.decision.strategy.validation;
+package com.algotrader.decision.generator.validation;
 
 import java.time.Duration;
 import java.time.Instant;

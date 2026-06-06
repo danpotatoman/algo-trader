@@ -7,7 +7,7 @@ import com.algotrader.marketdata.model.DataBatch;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public final class PythonRegressionPredictionProvider
-        implements RegressionPredictionProvider {
+        implements PredictionProvider<RegressionPrediction> {
 
     private final PythonPredictionClient client;
 

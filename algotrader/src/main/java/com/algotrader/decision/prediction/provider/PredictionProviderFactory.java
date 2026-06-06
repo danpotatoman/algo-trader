@@ -1,6 +1,8 @@
 package com.algotrader.decision.prediction.provider;
 
 import com.algotrader.config.ModelConfig;
+import com.algotrader.decision.dataobjects.ClassificationPrediction;
+import com.algotrader.decision.dataobjects.RegressionPrediction;
 import com.algotrader.decision.prediction.api.PythonPredictionClient;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
@@ -38,7 +40,7 @@ public final class PredictionProviderFactory {
      * @throws IllegalArgumentException if the trading plan references a model
      *         that is not configured for classification predictions
      */
-    public ClassificationPredictionProvider createClassificationProvider( //TODO: return PredictionProvider<ClassificationPrediction>
+    public PredictionProvider<ClassificationPrediction> createClassificationProvider(
             ResolvedTradingPlan tradingPlan
         ) {
 
@@ -66,7 +68,7 @@ public final class PredictionProviderFactory {
      * @throws IllegalArgumentException if the model is not configured for
      *         regression predictions
      */
-    public RegressionPredictionProvider createRegressionProvider( //TODO: return PredictionProvider<RegressionPrediction>
+    public PredictionProvider<RegressionPrediction> createRegressionProvider(
             ModelConfig modelConfig
         ) {
 

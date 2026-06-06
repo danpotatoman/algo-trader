@@ -1,4 +1,4 @@
-package com.algotrader.decision.strategy;
+package com.algotrader.decision.interpreter;
 
 import java.util.List;
 

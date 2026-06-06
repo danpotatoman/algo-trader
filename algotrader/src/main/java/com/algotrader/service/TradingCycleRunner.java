@@ -6,8 +6,8 @@ import java.util.Optional;
 
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.decision.dataobjects.TradeRecommendation;
+import com.algotrader.decision.generator.TradeGenerator;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
-import com.algotrader.decision.strategy.TradeGenerator;
 import com.algotrader.execution.TradeExecutor;
 import com.algotrader.execution.validation.PriceAvailabilityValidator;
 import com.algotrader.logging.TradingCycleLog;

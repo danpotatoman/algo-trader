@@ -1,57 +1,55 @@
-package com.algotrader.decision.strategy;
+package com.algotrader.decision.generator;
 
 import java.util.List;
 
-import com.algotrader.decision.dataobjects.ClassificationPrediction;
+import com.algotrader.decision.dataobjects.ModelPrediction;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
-import com.algotrader.decision.prediction.provider.ClassificationPredictionProvider;
+import com.algotrader.decision.generator.validation.RoundTripTradeValidator;
+import com.algotrader.decision.interpreter.PredictionInterpreter;
+import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
-import com.algotrader.decision.strategy.validation.RoundTripTradeValidator;
 import com.algotrader.marketdata.model.DataBatch;
 
 /**
- * Trade generator that converts classification model predictions into valid
+ * Generic trade generator that converts model predictions into valid
  * round-trip trades.
  *
- * <p>This generator represents the classification-based trading pipeline:
- * it requests a {@link ClassificationPrediction} for a market data batch,
- * passes that prediction to a {@link PredictionInterpreter}, and filters the
- * resulting {@link RoundTripTrade} objects through a
- * {@link RoundTripTradeValidator}.
+ * <p>This generator represents the common trading pipeline: it requests a
+ * model prediction for a market data batch, passes that prediction to a
+ * {@link PredictionInterpreter}, and filters the resulting
+ * {@link RoundTripTrade} objects through a {@link RoundTripTradeValidator}.
  *
  * <p>This class is intentionally focused on orchestration. Prediction logic,
- * trade interpretation, and market-session validation are delegated to the
+ * prediction interpretation, and market-session validation are delegated to the
  * injected dependencies.
  *
- * <p>Classification-based trade generation was part of the project's earlier
- * prediction pipeline and remains useful for experimentation and backwards
- * compatibility.
+ * @param <T> concrete prediction type produced and interpreted by this generator
  */
-public final class ClassificationTradeGenerator implements TradeGenerator {
+public final class GenericTradeGenerator<T extends ModelPrediction>
+        implements TradeGenerator {
 
-    private final ClassificationPredictionProvider predictionProvider;
-    private final PredictionInterpreter<ClassificationPrediction> interpreter;
+    private final PredictionProvider<T> predictionProvider;
+    private final PredictionInterpreter<T> interpreter;
     private final RoundTripTradeValidator tradeValidator;
 
     /**
-     * Creates a classification trade generator.
+     * Creates a generic trade generator.
      *
-     * @param predictionProvider provider used to obtain classification predictions
-     *        from market data
+     * @param predictionProvider provider used to obtain predictions from market data
      * @param interpreter component that converts predictions into proposed
      *        round-trip trades
      * @param tradeValidator validator used to reject trades that violate market
      *        calendar constraints
      * @throws IllegalArgumentException if any dependency is null
      */
-    public ClassificationTradeGenerator(
-            ClassificationPredictionProvider predictionProvider,
-            PredictionInterpreter<ClassificationPrediction> interpreter,
+    public GenericTradeGenerator(
+            PredictionProvider<T> predictionProvider,
+            PredictionInterpreter<T> interpreter,
             RoundTripTradeValidator tradeValidator
     ) {
         if (predictionProvider == null) {
             throw new IllegalArgumentException(
-                    "ClassificationPredictionProvider cannot be null."
+                    "PredictionProvider cannot be null."
             );
         }
 
@@ -75,9 +73,8 @@ public final class ClassificationTradeGenerator implements TradeGenerator {
     /**
      * Generates valid round-trip trades from a market data batch.
      *
-     * <p>The method requests a classification prediction, interprets it into
-     * proposed trades, and returns only those trades accepted by the configured
-     * validator.
+     * <p>The method requests a prediction, interprets it into proposed trades,
+     * and returns only those trades accepted by the configured validator.
      *
      * @param batch market data batch used as model input
      * @return valid round-trip trades generated from the prediction
@@ -86,7 +83,7 @@ public final class ClassificationTradeGenerator implements TradeGenerator {
      */
     @Override
     public List<RoundTripTrade> generateTrades(
-        DataBatch batch
+            DataBatch batch
     ) throws PredictionProviderException {
         if (batch == null) {
             throw new IllegalArgumentException(
@@ -94,8 +91,7 @@ public final class ClassificationTradeGenerator implements TradeGenerator {
             );
         }
 
-        ClassificationPrediction prediction =
-                predictionProvider.makePrediction(batch);
+        T prediction = predictionProvider.makePrediction(batch);
 
         return interpreter.getTrades(prediction)
                 .stream()

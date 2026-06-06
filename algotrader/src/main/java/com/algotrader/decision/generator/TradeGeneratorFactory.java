@@ -1,9 +1,11 @@
-package com.algotrader.decision.strategy;
+package com.algotrader.decision.generator;
 
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
-import com.algotrader.decision.prediction.provider.ClassificationPredictionProvider;
+import com.algotrader.decision.generator.validation.RoundTripTradeValidator;
+import com.algotrader.decision.interpreter.PredictionInterpreter;
+import com.algotrader.decision.interpreter.ThresholdClassificationPredictionInterpreter;
+import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderFactory;
-import com.algotrader.decision.strategy.validation.RoundTripTradeValidator;
 import com.algotrader.marketcalendar.MarketCalendar;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
@@ -75,7 +77,6 @@ public final class TradeGeneratorFactory {
         }
 
         String predictionType = tradingPlan.getPredictionType().toUpperCase();
-
         String strategyType = tradingPlan.getStrategyType().toUpperCase();
 
         if (predictionType.equals("CLASSIFICATION")
@@ -100,8 +101,8 @@ public final class TradeGeneratorFactory {
      */
     private TradeGenerator createThresholdClassificationStrategy(
             ResolvedTradingPlan tradingPlan
-    ) {
-        ClassificationPredictionProvider provider =
+        ) {
+        PredictionProvider<ClassificationPrediction> provider =
                 predictionProviderFactory.createClassificationProvider(
                         tradingPlan
                 );
@@ -119,7 +120,7 @@ public final class TradeGeneratorFactory {
                         tradingPlan.getMinTimeBeforeClose()
                 );
 
-        return new ClassificationTradeGenerator(
+        return new GenericTradeGenerator<>(
                 provider,
                 interpreter,
                 tradeValidator
