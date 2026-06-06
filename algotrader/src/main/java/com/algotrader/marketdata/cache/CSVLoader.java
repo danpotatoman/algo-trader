@@ -14,11 +14,14 @@ import com.algotrader.marketdata.model.StampedOHLCV;
 import com.algotrader.marketdata.model.TimeInterval;
 
 /**
- * Utility class responsible for loading OHLCV candlestick data from CSV files
- * located on the classpath.
+ * Legacy utility for loading OHLCV candlestick data from classpath CSV files.
  *
- * <p>CSV files are expected to reside in a resource directory (e.g. {@code src/test/resources})
- * and follow the naming convention:
+ * <p>This class reads CSV files from a configured classpath resource
+ * directory and parses them into {@link StampedOHLCV} objects. It was used by
+ * the earlier file-based market data pipeline before market data was moved
+ * toward SQL-backed storage.
+ *
+ * <p>CSV files are expected to follow the naming convention:
  *
  * <pre>
  * ticker_interval_ohlcv.csv
@@ -30,22 +33,21 @@ import com.algotrader.marketdata.model.TimeInterval;
  * timestamp,open,high,low,close,volume
  * </pre>
  *
- * <p>This class is responsible only for reading and parsing CSV data into
- * {@link StampedOHLCV} objects. It performs no caching or batching logic.
+ * <p>This class performs only file loading and parsing. It does not provide
+ * caching, batching, indexing, or database-backed access.
+ *
+ * <p><b>TODO:</b> Remove this class if the project no longer supports
+ * classpath CSV market data loading.
  */
 public class CSVLoader {
 
-    /**
-     * Root directory (on the classpath) where CSV files are located.
-     * For example: {@code "test-data"}.
-     */
     private final String dataDirectory;
 
     /**
-     * Constructs a CSVLoader with a given classpath resource directory.
+     * Creates a CSV loader for a classpath resource directory.
      *
-     * @param dataDirectory the root directory (relative to the classpath)
-     *                      containing CSV files
+     * @param dataDirectory root directory relative to the classpath containing
+     *        CSV files
      * @throws IllegalArgumentException if {@code dataDirectory} is null or blank
      */
     public CSVLoader(String dataDirectory) {
@@ -57,10 +59,10 @@ public class CSVLoader {
     }
 
     /**
-     * Loads a CSV file and parses it into a list of {@link StampedOHLCV} objects.
+     * Loads a CSV file and parses it into stamped OHLCV rows.
      *
-     * <p>The file is resolved from the classpath using the configured
-     * {@code dataDirectory}.
+     * <p>This method resolves files from the classpath, not from an arbitrary
+     * filesystem path.
      *
      * @param fileName the name of the CSV file (e.g. {@code "aapl_5m_ohlcv.csv"})
      * @param ticker the ticker symbol associated with the data

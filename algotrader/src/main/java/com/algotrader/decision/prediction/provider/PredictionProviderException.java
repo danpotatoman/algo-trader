@@ -1,23 +1,27 @@
 package com.algotrader.decision.prediction.provider;
 
 /**
- * Exception thrown when a prediction provider fails to generate
- * a prediction.
+ * Exception indicating that a {@link PredictionProvider} was unable to
+ * generate a prediction.
  *
- * <p>This may occur due to:
+ * <p>This exception serves as the primary checked exception for the
+ * prediction layer, allowing prediction-related failures to be reported
+ * without exposing implementation-specific exceptions to higher layers
+ * of the application.
+ *
+ * <p>Typical causes include:
  * <ul>
- *     <li>HTTP/API communication failures</li>
- *     <li>Invalid or malformed responses</li>
- *     <li>Model server errors</li>
- *     <li>Serialization/deserialization issues</li>
+ *     <li>Communication failures with external model services</li>
+ *     <li>Invalid or malformed prediction responses</li>
+ *     <li>Model endpoint errors</li>
+ *     <li>Serialization or deserialization failures</li>
  *     <li>Prediction validation failures</li>
  * </ul>
  */
 public class PredictionProviderException extends Exception {
 
     /**
-     * Constructs a {@code PredictionProviderException}
-     * with the specified detail message.
+     * Creates a prediction provider exception with the specified detail message.
      *
      * @param message the detail message
      */
@@ -26,8 +30,8 @@ public class PredictionProviderException extends Exception {
     }
 
     /**
-     * Constructs a {@code PredictionProviderException}
-     * with the specified detail message and cause.
+     * Creates a prediction provider exception with the specified detail message
+     * and underlying cause.
      *
      * @param message the detail message
      * @param cause the underlying cause
@@ -37,8 +41,7 @@ public class PredictionProviderException extends Exception {
     }
 
     /**
-     * Constructs a {@code PredictionProviderException}
-     * with the specified cause.
+     * Creates a prediction provider exception with the specified underlying cause.
      *
      * @param cause the underlying cause
      */

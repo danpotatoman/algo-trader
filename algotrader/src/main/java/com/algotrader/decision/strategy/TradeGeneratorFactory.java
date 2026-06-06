@@ -8,14 +8,33 @@ import com.algotrader.marketcalendar.MarketCalendar;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
- * Factory for constructing {@link TradeGenerator} instances from model,
- * strategy, and trading plan configuration.
+ * Factory for constructing {@link TradeGenerator} instances from resolved
+ * trading configuration.
+ *
+ * <p>This factory selects the appropriate trade generation pipeline based on
+ * the prediction type and strategy type declared by a
+ * {@link ResolvedTradingPlan}.
+ *
+ * <p>Created trade generators are assembled from a prediction provider, a
+ * prediction interpreter, and a round-trip trade validator.
+ *
+ * <p><b>TODO:</b> This factory currently supports only the classification
+ * threshold strategy. Add regression-based trade generator construction as
+ * regression strategy support is completed.
  */
 public final class TradeGeneratorFactory {
 
     private final PredictionProviderFactory predictionProviderFactory;
     private final MarketCalendar marketCalendar;
 
+    /**
+     * Creates a trade generator factory.
+     *
+     * @param predictionProviderFactory factory used to construct prediction
+     *        providers
+     * @param marketCalendar market calendar used to validate generated trades
+     * @throws IllegalArgumentException if any dependency is null
+     */
     public TradeGeneratorFactory(
             PredictionProviderFactory predictionProviderFactory,
             MarketCalendar marketCalendar
@@ -36,12 +55,22 @@ public final class TradeGeneratorFactory {
         this.marketCalendar = marketCalendar;
     }
 
+    /**
+     * Creates a trade generator for the supplied resolved trading plan.
+     *
+     * @param tradingPlan resolved trading plan containing model, strategy, and
+     *        session configuration
+     * @return a trade generator matching the configured prediction and strategy
+     *         types
+     * @throws IllegalArgumentException if {@code tradingPlan} is null or if the
+     *         configured prediction/strategy combination is unsupported
+     */
     public TradeGenerator create(
             ResolvedTradingPlan tradingPlan
     ) {
         if (tradingPlan == null) {
             throw new IllegalArgumentException(
-                    "TradingPlan cannot be null."
+                    "ResolvedTradingPlan cannot be null."
             );
         }
 
@@ -62,6 +91,13 @@ public final class TradeGeneratorFactory {
         );
     }
 
+    /**
+     * Creates the classification threshold trade generation pipeline.
+     *
+     * @param tradingPlan resolved trading plan containing the required strategy
+     *        parameters
+     * @return a configured classification trade generator
+     */
     private TradeGenerator createThresholdClassificationStrategy(
             ResolvedTradingPlan tradingPlan
     ) {
@@ -71,7 +107,7 @@ public final class TradeGeneratorFactory {
                 );
 
         PredictionInterpreter<ClassificationPrediction> interpreter =
-                new SimpleClassificationPredictionInterpreter(
+                new ThresholdClassificationPredictionInterpreter(
                         tradingPlan.getConfidenceThreshold(),
                         tradingPlan.getHorizonMinutes(),
                         tradingPlan.getStrategyId()

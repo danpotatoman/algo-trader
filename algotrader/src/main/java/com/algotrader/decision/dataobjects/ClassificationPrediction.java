@@ -6,19 +6,22 @@ import com.algotrader.marketdata.model.DataBatch;
 import com.algotrader.marketdata.model.TimeInterval;
 
 /**
- * Represents the combined result of a model prediction on a specific data batch.
+ * Immutable classification prediction produced by a model for a specific
+ * market data batch.
  *
- * <p>A {@code PredictionResult} bundles:
+ * <p>A {@code ClassificationPrediction} combines:
  * <ul>
- *     <li>The input {@link DataBatch} used for the prediction</li>
- *     <li>The resulting {@link PredictionScore} produced by the model</li>
+ *     <li>The {@link DataBatch} used as model input</li>
+ *     <li>The resulting {@link ClassificationScore} produced by the model</li>
  * </ul>
  *
- * <p>This class serves as the interface between the model layer and the
- * strategy layer (e.g. {@code PredictionInterpreter}). It provides convenient
- * access to both raw data context and prediction metadata.
+ * <p>This class serves as the primary output of the classification prediction
+ * layer. It preserves both the prediction result and the market data context
+ * from which that prediction was generated.
  *
- * <p>This class is immutable.
+ * <p>The prediction and batch are required to reference the same ticker
+ * symbol, ensuring that prediction results remain consistent with their
+ * underlying input data.
  */
 public final class ClassificationPrediction implements ModelPrediction {
 
@@ -26,20 +29,20 @@ public final class ClassificationPrediction implements ModelPrediction {
     private final ClassificationScore score;
 
     /**
-     * Constructs a {@code PredictionResult}.
+     * Creates a classification prediction from a model input batch and
+     * classification score.
      *
-     * @param batch the input data batch used for the prediction
-     * @param score the prediction score produced by the model
-     *
-     * @throws IllegalArgumentException if either argument is null
-     *                                  or if ticker mismatch occurs
+     * @param batch the market data batch used as model input
+     * @param score the classification score produced by the model
+     * @throws IllegalArgumentException if either argument is null or if the
+     *         batch and score refer to different ticker symbols
      */
     public ClassificationPrediction(DataBatch batch, ClassificationScore score) {
         if (batch == null) {
             throw new IllegalArgumentException("DataBatch cannot be null");
         }
         if (score == null) {
-            throw new IllegalArgumentException("PredictionScore cannot be null");
+            throw new IllegalArgumentException("ClassificationScore cannot be null");
         }
 
         String batchTicker = batch.getTicker();
@@ -66,7 +69,7 @@ public final class ClassificationPrediction implements ModelPrediction {
     }
 
     /**
-     * Returns the underlying {@link PredictionScore}.
+     * Returns the underlying {@link ClassificationScore}.
      *
      * @return the prediction score
      */
@@ -74,88 +77,49 @@ public final class ClassificationPrediction implements ModelPrediction {
         return score;
     }
 
-    /**
-     * Returns the ticker associated with this prediction.
-     *
-     * @return the ticker symbol, or null if the batch is empty
-     */
     public String getTicker() {
         return score.getTicker();
     }
 
-    /**
-     * Returns the prediction value (e.g. 0 = down, 1 = up).
-     *
-     * @return the predicted class
-     */
     public int getPrediction() {
         return score.getPrediction();
     }
 
-    /**
-     * Returns the confidence of the prediction.
-     *
-     * @return the confidence score in [0.0, 1.0]
-     */
     public double getConfidence() {
         return score.getConfidence();
     }
 
-    /**
-     * Returns the prediction label.
-     *
-     * @return the human-readable label
-     */
     public String getLabel() {
         return score.getLabel();
     }
 
-    /**
-     * Returns whether the model predicts upward movement.
-     *
-     * @return true if prediction == 1
-     */
     public boolean predictsUp() {
         return score.predictsUp();
     }
 
-    /**
-     * Returns whether the model predicts downward movement.
-     *
-     * @return true if prediction == 0
-     */
     public boolean predictsDown() {
         return score.predictsDown();
     }
 
-    /**
-     * Returns the timestamp of the final candle in the batch.
-     *
-     * @return the batch's final timestamp, or null if empty
-     */
     public Instant getFinalTimestamp() {
         return batch.getFinalTimestamp();
     }
 
-    /**
-     * Returns the size of the batch used for the prediction.
-     *
-     * @return the number of rows in the batch
-     */
     public int getBatchSize() {
         return batch.getBatchSize();
     }
 
-    /**
-     * Returns the time interval associated with the underlying data batch.
-     *
-     * @return the batch time interval
-     */
     public TimeInterval getInterval() {
         return batch.getInterval();
     }
 
-     @Override
+    /**
+     * Returns a concise human-readable description of this prediction suitable
+     * for logging and diagnostic output.
+     *
+     * @return a summary of the prediction result
+     */
+    @Override
     public String summary() {
         return "ClassificationPrediction{" +
                 "ticker=" + getTicker() +

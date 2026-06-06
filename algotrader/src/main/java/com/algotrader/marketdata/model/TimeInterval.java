@@ -5,12 +5,13 @@ package com.algotrader.marketdata.model;
  *
  * <p>Each interval defines:
  * <ul>
- *     <li>A resolution string used by external APIs (e.g. Finnhub)</li>
+ *     <li>A resolution string used by external APIs</li>
  *     <li>The duration of the interval in seconds</li>
  * </ul>
  *
  * <p>This enum is used throughout the system to ensure consistent handling
- * of time-based data across data ingestion, buffering, and model input.
+ * of time-based market data across data ingestion, caching, batching,
+ * prediction, and execution workflows.
  *
  * <p>Examples:
  * <ul>
@@ -40,14 +41,7 @@ public enum TimeInterval {
     ONE_DAY("D", 24 * 60 * 60);
 
     /**
-     * Resolution string used by the Finnhub API to represent this interval.
-     *
-     * <p>Examples:
-     * <ul>
-     *     <li>{@code "1"} for 1-minute</li>
-     *     <li>{@code "5"} for 5-minute</li>
-     *     <li>{@code "D"} for daily</li>
-     * </ul>
+     * Resolution string used by external market data providers.
      */
     private final String finnhubResolution;
 
@@ -57,11 +51,10 @@ public enum TimeInterval {
     private final int seconds;
 
     /**
-     * Constructs a {@code TimeInterval} with a Finnhub resolution string
-     * and a duration in seconds.
+     * Creates a time interval definition.
      *
-     * @param finnhubResolution the resolution string used by the Finnhub API
-     * @param seconds the duration of the interval in seconds
+     * @param finnhubResolution provider-specific resolution string
+     * @param seconds interval duration in seconds
      */
     TimeInterval(String finnhubResolution, int seconds) {
         this.finnhubResolution = finnhubResolution;
@@ -69,9 +62,12 @@ public enum TimeInterval {
     }
 
     /**
-     * Returns the Finnhub API resolution string for this interval.
+     * Returns the resolution string used by compatible market data providers.
      *
-     * @return the resolution string (e.g. {@code "1"}, {@code "5"}, {@code "D"})
+     * @return provider-specific resolution string
+     *
+     * TODO: Consider renaming this method if the project adopts
+     * different market data providers.
      */
     public String getFinnhubResolution() {
         return finnhubResolution;

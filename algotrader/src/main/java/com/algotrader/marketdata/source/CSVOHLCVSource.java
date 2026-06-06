@@ -10,20 +10,33 @@ import com.algotrader.marketdata.model.StampedOHLCV;
 import com.algotrader.marketdata.model.TimeInterval;
 
 /**
- * An {@link OHLCVSource} implementation that loads OHLCV candlestick data
- * from CSV files.
+ * Legacy {@link OHLCVSource} implementation that loads OHLCV data from
+ * classpath CSV files.
  *
- * <p>CSV files are expected to be located under the configured data directory
- * and must follow the naming convention:
+ * <p>This source was part of the original file-based market data pipeline,
+ * where historical candles were read from CSV resources using
+ * {@link CSVLoader}. The project has since moved toward a cache/source
+ * architecture backed by more robust data storage, so this class should be
+ * treated as legacy infrastructure.
+ *
+ * <p>CSV files are expected to follow the naming convention:
  *
  * <pre>
  * ticker_interval_ohlcv.csv
  * </pre>
  *
- * Example:
+ * <p>For example:
+ *
  * <pre>
  * aapl_5m_ohlcv.csv
  * </pre>
+ *
+ * <p><b>TODO:</b> Remove this class if CSV-backed OHLCV loading is no longer
+ * supported.
+ *
+ * <p><b>TODO:</b> This class does not currently implement all
+ * {@link OHLCVSource} methods and should not be used in the current market
+ * data pipeline without completing or removing those methods.
  */
 public class CSVOHLCVSource implements OHLCVSource {
 
@@ -71,7 +84,7 @@ public class CSVOHLCVSource implements OHLCVSource {
      * @param interval the candlestick interval
      * @param timestamp the timestamp of the requested candle
      * @return the matching OHLCV row
-     * @throws DataBufferException if the CSV file cannot be loaded or parsed,
+     * @throws DataCacheException if the CSV file cannot be loaded or parsed,
      *         or if no matching row exists
      */
     @Override
@@ -100,13 +113,24 @@ public class CSVOHLCVSource implements OHLCVSource {
                 ));
     }
 
+    /**
+     * Legacy placeholder. Next timestamp retrieval is not implemented for this CSV source.
+     *
+     * @throws UnsupportedOperationException if called
+     */
     @Override //TODO: implement
     public Optional<Instant> getNextTimestamp(String ticker, TimeInterval interval, Instant timestamp) {
-        return null;
+        throw new UnsupportedOperationException("Next timestamp retrieval is not implemented for this CSV source.");
     }
-    @Override //TODO: implement
+
+    /**
+     * Legacy placeholder. Range loading is not implemented for this CSV source.
+     *
+     * @throws UnsupportedOperationException if called
+     */
+    @Override
     public List<StampedOHLCV> loadRange(String ticker, TimeInterval interval, Instant startTime, Instant endTime){
-        return null;
+        throw new UnsupportedOperationException("Range loading is not implemented for this CSV source.");
     }
 
     /**

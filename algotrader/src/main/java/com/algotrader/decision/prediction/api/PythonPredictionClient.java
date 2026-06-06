@@ -12,13 +12,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Thin HTTP client for requesting predictions from a Python model endpoint.
+ * Thin HTTP client for sending prediction requests to a Python model service.
  *
- * <p>This class is transport-focused. It serializes a {@link DataBatch},
- * sends it to one configured endpoint, and returns the raw JSON response.
+ * <p>This class is transport-focused. It converts a {@link DataBatch} into a
+ * {@link PredictRequest}, serializes it as JSON, sends it to one configured
+ * prediction endpoint, and returns the raw JSON response.
  *
- * <p>Prediction-specific parsing should be handled by the prediction provider,
- * not by this client.
+ * <p>This client intentionally does not interpret prediction semantics.
+ * Classification-specific or regression-specific parsing should be handled
+ * by higher-level prediction provider classes.
  */
 public final class PythonPredictionClient {
 
@@ -26,6 +28,12 @@ public final class PythonPredictionClient {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a prediction client for a single model endpoint.
+     *
+     * @param endpoint HTTP endpoint used to request predictions
+     * @throws IllegalArgumentException if {@code endpoint} is null or blank
+     */
     public PythonPredictionClient(String endpoint) {
         if (endpoint == null || endpoint.isBlank()) {
             throw new IllegalArgumentException(
@@ -41,11 +49,14 @@ public final class PythonPredictionClient {
     /**
      * Sends a prediction request to the configured Python endpoint.
      *
-     * @param batch the market data batch to send
-     * @return the raw JSON response body
-     * @throws IllegalArgumentException if batch is null
-     * @throws PredictionProviderException if serialization, request, or response
-     *         parsing fails
+     * <p>The supplied batch is converted into a feature matrix using
+     * {@link DataBatch#toFeatureArray()} before being serialized and sent.
+     *
+     * @param batch market data batch to send to the model service
+     * @return raw JSON response returned by the prediction endpoint
+     * @throws IllegalArgumentException if {@code batch} is null
+     * @throws PredictionProviderException if request serialization, HTTP
+     *         communication, non-success responses, or response parsing fails
      */
     public JsonNode predict(DataBatch batch)
             throws PredictionProviderException {
@@ -102,6 +113,11 @@ public final class PythonPredictionClient {
         }
     }
 
+    /**
+     * Returns the endpoint used by this client.
+     *
+     * @return prediction endpoint URL
+     */
     public String getEndpoint() {
         return endpoint;
     }

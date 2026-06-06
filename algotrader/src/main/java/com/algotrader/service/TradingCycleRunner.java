@@ -20,14 +20,22 @@ import com.algotrader.marketdata.provider.SlidingWindowProvider;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
- * Runs historical trading cycles for a single ticker.
+ * Runs historical trading cycles for a resolved trading plan.
  *
- * <p>This service is intended for backtesting or CSV-based simulation.
- * It does not schedule future cycles or use concurrency. Each call to
- * {@link #runTradingCycle()} advances through the historical data by one
- * window and immediately executes all generated recommendations using
- * historical prices, even if those recommendations are timestamped in
- * the future relative to the current batch.
+ * <p>A {@code TradingCycleRunner} coordinates the main backtesting cycle:
+ * it requests the next market-data window, generates proposed trades,
+ * validates price availability, executes resulting recommendations, and
+ * writes a {@link TradingCycleLog}.
+ *
+ * <p>This runner is currently designed for historical simulation. It does
+ * not schedule future work, run concurrently, or interact with a live broker.
+ * Each call to {@link #runTradingCycle()} advances the sliding window by one
+ * step and processes any trades generated from that window immediately.
+ *
+ * <p><b>TODO:</b> Revisit the dependency on
+ * {@link PriceAvailabilityValidator}. Price availability may belong in the
+ * market data layer or execution layer once the missing-data contract is
+ * finalized.
  */
 public class TradingCycleRunner {
 
@@ -43,6 +51,21 @@ public class TradingCycleRunner {
     private final String strategyId;
     private final boolean liveMode = false;
 
+    /**
+     * Creates a trading cycle runner.
+     *
+     * @param tradingPlan resolved trading plan containing session, model, and
+     *        strategy metadata
+     * @param dataProvider sliding-window provider used to supply model input
+     *        batches
+     * @param tradeGenerator component that generates round-trip trades from
+     *        market data
+     * @param tradeExecutor executor used to simulate or perform trade actions
+     * @param priceAvailabilityValidator validator used to skip trades whose
+     *        required entry or exit prices are unavailable
+     * @param tradeLogger logger used to persist completed cycle results
+     * @throws IllegalArgumentException if any dependency is null
+     */
     public TradingCycleRunner(
             ResolvedTradingPlan tradingPlan,
             SlidingWindowProvider dataProvider,
@@ -73,17 +96,23 @@ public class TradingCycleRunner {
     }
 
     /**
-     * Initializes the trading cycle runner and loads any required
-     * market data before trading cycles begin.
+     * Initializes the runner by loading the market data required by the sliding
+     * window provider.
      *
-     * @throws DataCacheException if market data cannot be loaded
+     * <p>This method must be called before {@link #runTradingCycle()} or
+     * {@link #runAllTradingCycles()}.
+     *
+     * @throws DataCacheException if required market data cannot be loaded
      */
     public void initialize() throws DataCacheException {
         dataProvider.initialize();
     }
 
     /**
-     * Runs trading cycles until no more historical data is available.
+     * Runs trading cycles until no more complete data windows are available.
+     *
+     * @throws IllegalStateException if the runner has not been initialized
+     * @throws RuntimeException if any trading cycle fails
      */
     public void runAllTradingCycles() {
         if (!dataProvider.isInitialized()) {
@@ -103,10 +132,17 @@ public class TradingCycleRunner {
     /**
      * Runs one historical trading cycle.
      *
-     * <p>Returns {@code true} if a cycle was successfully run, and
-     * {@code false} if no more data was available.
+     * <p>If a complete data window is available, this method generates trades,
+     * skips trades with unavailable execution prices, executes the remaining
+     * recommendations, logs the completed cycle, and returns {@code true}.
      *
-     * @return whether a trading cycle was run
+     * <p>If no complete data window remains, no cycle is run and {@code false}
+     * is returned.
+     *
+     * @return {@code true} if a cycle was run; {@code false} if no data window
+     *         remains
+     * @throws RuntimeException if prediction generation, trade execution, or
+     *         cycle logging fails
      */
     public boolean runTradingCycle() {
         long startNanos = System.nanoTime();
@@ -220,6 +256,10 @@ public class TradingCycleRunner {
 
         if (tradeLogger == null) {
             throw new IllegalArgumentException("TradeLogger cannot be null.");
+        }
+
+        if (priceAvailabilityValidator == null) {
+            throw new IllegalArgumentException("PriceAvailabilityValidator cannot be null.");
         }
     }
 }

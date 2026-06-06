@@ -1,59 +1,37 @@
 package com.algotrader.decision.dataobjects;
 
 /**
- * Represents the prediction output from a machine learning model for a given ticker.
+ * Immutable binary classification result produced by a prediction model.
  *
- * <p>A {@code ClassificationScore} encapsulates:
- * <ul>
- *     <li>The ticker symbol associated with the prediction</li>
- *     <li>A binary prediction (e.g. 0 = down, 1 = up)</li>
- *     <li>A confidence score in the prediction</li>
- *     <li>A human-readable label describing the prediction</li>
- * </ul>
+ * <p>A {@code ClassificationScore} represents the model's prediction for a
+ * single ticker symbol. The prediction is binary, where {@code 1} represents
+ * an upward movement and {@code 0} represents a downward movement.
  *
- * <p>This class is immutable and validated upon construction to ensure all fields
- * are consistent and within expected ranges.
+ * <p>The confidence value represents the model's confidence in the predicted
+ * class and must be in the range {@code [0.0, 1.0]}. The label provides a
+ * human-readable description of the predicted class, such as {@code "UP"} or
+ * {@code "DOWN"}.
  *
- * <p>It is typically produced by the model API layer and consumed by a
- * trading component such as {@code Trader}.
+ * <p>This class is typically produced by the prediction provider layer and
+ * consumed by trade generation components.
  */
 public final class ClassificationScore {
 
-    /**
-     * The stock ticker symbol associated with this prediction.
-     */
     private final String ticker;
-
-    /**
-     * The predicted class (e.g. 0 = down, 1 = up).
-     */
     private final int prediction;
-
-    /**
-     * Confidence score for the prediction, typically in the range [0.0, 1.0].
-     */
     private final double confidence;
-
-    /**
-     * Human-readable label describing the prediction (e.g. "UP", "DOWN").
-     */
     private final String label;
 
     /**
-     * Constructs a new {@code ClassificationScore}.
+     * Creates a classification score.
      *
-     * @param ticker the stock ticker symbol
-     * @param prediction the predicted class (0 or 1)
-     * @param confidence the confidence score (must be between 0.0 and 1.0)
-     * @param label a human-readable label describing the prediction
-     *
-     * @throws IllegalArgumentException if any argument is invalid:
-     * <ul>
-     *     <li>{@code ticker} is null or blank</li>
-     *     <li>{@code prediction} is not 0 or 1</li>
-     *     <li>{@code confidence} is not in [0.0, 1.0]</li>
-     *     <li>{@code label} is null or blank</li>
-     * </ul>
+     * @param ticker ticker symbol associated with the prediction
+     * @param prediction predicted class, where {@code 1} means up and
+     *        {@code 0} means down
+     * @param confidence model confidence in the predicted class, in the range
+     *        {@code [0.0, 1.0]}
+     * @param label human-readable label describing the predicted class
+     * @throws IllegalArgumentException if any argument is invalid
      */
     public ClassificationScore(
             String ticker,
@@ -70,14 +48,9 @@ public final class ClassificationScore {
     }
 
     /**
-     * Validates the fields used to construct a {@code ClassificationScore}.
+     * Validates constructor arguments before a classification score is created.
      *
-     * @param ticker the ticker symbol
-     * @param prediction the predicted class
-     * @param confidence the confidence score
-     * @param label the prediction label
-     *
-     * @throws IllegalArgumentException if any value is invalid
+     * @throws IllegalArgumentException if any argument is invalid
      */
     private void validate(
             String ticker,
@@ -102,67 +75,40 @@ public final class ClassificationScore {
         }
     }
 
-    /**
-     * Returns the ticker symbol associated with this prediction.
-     *
-     * @return the ticker symbol
-     */
     public String getTicker() {
         return ticker;
     }
 
-    /**
-     * Returns the predicted class.
-     *
-     * @return the prediction (0 = down, 1 = up)
-     */
     public int getPrediction() {
         return prediction;
     }
 
-    /**
-     * Returns the confidence score for the prediction.
-     *
-     * @return the confidence value in the range [0.0, 1.0]
-     */
     public double getConfidence() {
         return confidence;
     }
 
-    /**
-     * Returns the human-readable label describing the prediction.
-     *
-     * @return the prediction label
-     */
     public String getLabel() {
         return label;
     }
 
     /**
-     * Returns whether the prediction indicates an upward movement.
+     * Returns whether the prediction indicates upward movement.
      *
-     * @return {@code true} if prediction == 1, otherwise {@code false}
+     * @return {@code true} if the predicted class is {@code 1}
      */
     public boolean predictsUp() {
         return prediction == 1;
     }
 
     /**
-     * Returns whether the prediction indicates a downward movement.
+     * Returns whether the prediction indicates downward movement.
      *
-     * @return {@code true} if prediction == 0, otherwise {@code false}
+     * @return {@code true} if the predicted class is {@code 0}
      */
     public boolean predictsDown() {
         return prediction == 0;
     }
 
-    /**
-     * Returns a human-readable string representation of this prediction.
-     *
-     * <p>Includes ticker, prediction, label, and confidence formatted as a percentage.
-     *
-     * @return a formatted string representation of this {@code ClassificationScore}
-     */
     @Override
     public String toString() {
         return String.format(

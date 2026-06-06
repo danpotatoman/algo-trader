@@ -11,19 +11,51 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * SQLite-backed implementation of {@link OHLCVRepository}.
+ *
+ * <p>This repository persists {@link StampedOHLCV} candles in a local SQLite
+ * database and provides lookup methods by ticker, interval, and timestamp.
+ *
+ * <p>The required {@code ohlcv} table is created automatically when the
+ * repository is constructed. Candles are uniquely identified by ticker,
+ * interval, and timestamp.
+ *
+ * <p>This class is the primary persistence implementation for historical
+ * OHLCV market data.
+ */
 public class SQLiteOHLCVRepository implements OHLCVRepository {
 
     private final String databaseUrl;
 
+    /**
+     * Creates a SQLite OHLCV repository backed by the given database file.
+     *
+     * @param databasePath path to the SQLite database file
+     */
     public SQLiteOHLCVRepository(String databasePath) {
         this.databaseUrl = "jdbc:sqlite:" + databasePath;
         initializeTable();
     }
 
+    /**
+     * Opens a new connection to the SQLite database.
+     *
+     * @return database connection
+     * @throws SQLException if the connection cannot be opened
+     */
     private Connection getConnection() throws SQLException {
         return DriverManager.getConnection(databaseUrl);
     }
 
+    /**
+     * Ensures that the OHLCV table exists.
+     *
+     * <p>This method is called during construction so callers do not need to run
+     * a separate database initialization step.
+     *
+     * @throws RuntimeException if the table cannot be created
+     */
     private void initializeTable() {
         String sql = """
             CREATE TABLE IF NOT EXISTS ohlcv (
@@ -51,6 +83,15 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         }
     }
 
+    /**
+     * Saves one OHLCV candle.
+     *
+     * <p>If a candle already exists for the same ticker, interval, and timestamp,
+     * the existing row is updated.
+     *
+     * @param candle candle to save
+     * @throws RuntimeException if the candle cannot be saved
+     */
     @Override
     public void save(StampedOHLCV candle) {
         String sql = """
@@ -85,6 +126,15 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         }
     }
 
+    /**
+     * Saves multiple OHLCV candles in a single batch transaction.
+     *
+     * <p>Existing rows with matching ticker, interval, and timestamp are updated.
+     * If the supplied list is null or empty, this method does nothing.
+     *
+     * @param candles candles to save
+     * @throws RuntimeException if the batch cannot be saved
+     */
     @Override
     public void saveAll(List<StampedOHLCV> candles) {
         if (candles == null || candles.isEmpty()) {
@@ -131,6 +181,14 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         }
     }
 
+    /**
+     * Finds one candle by its full primary key.
+     *
+     * @param ticker ticker symbol to query
+     * @param interval candle interval to query
+     * @param timestamp exact candle timestamp
+     * @return matching candle, or {@link Optional#empty()} if none exists
+     */
     @Override
     public Optional<StampedOHLCV> findByKey(
             String ticker,
@@ -165,6 +223,15 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         }
     }
 
+    /**
+     * Finds all candles within an inclusive timestamp range.
+     *
+     * @param ticker ticker symbol to query
+     * @param interval candle interval to query
+     * @param start inclusive range start
+     * @param end inclusive range end
+     * @return matching candles ordered by ascending timestamp
+     */
     @Override
     public List<StampedOHLCV> findRange(
             String ticker,
@@ -205,6 +272,13 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         }
     }
 
+    /**
+     * Finds all candles for a ticker and interval.
+     *
+     * @param ticker ticker symbol to query
+     * @param interval candle interval to query
+     * @return matching candles ordered by ascending timestamp
+     */
     @Override
     public List<StampedOHLCV> findAll(
             String ticker,
@@ -244,6 +318,13 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         }
     }
 
+    /**
+     * Finds the most recent candle for a ticker and interval.
+     *
+     * @param ticker ticker symbol to query
+     * @param interval candle interval to query
+     * @return latest candle, or {@link Optional#empty()} if none exists
+     */
     @Override
     public Optional<StampedOHLCV> findLatest(
             String ticker,
@@ -277,6 +358,14 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         }
     }
 
+    /**
+     * Finds the next available candle timestamp after the supplied timestamp.
+     *
+     * @param ticker ticker symbol to query
+     * @param interval candle interval to query
+     * @param timestamp timestamp after which to search
+     * @return next available timestamp, or {@link Optional#empty()} if none exists
+     */
     @Override
     public Optional<Instant> findNextTimestamp(
             String ticker,
@@ -321,6 +410,13 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         }
     }
 
+    /**
+     * Binds a candle's values to an insert/update statement.
+     *
+     * @param ps prepared statement to bind values into
+     * @param candle candle whose values should be bound
+     * @throws SQLException if statement binding fails
+     */
     private void bindCandle(
             PreparedStatement ps,
             StampedOHLCV candle
@@ -338,6 +434,13 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         ps.setDouble(8, ohlcv.volume());
     }
 
+    /**
+     * Maps the current result-set row to a {@link StampedOHLCV}.
+     *
+     * @param rs result set positioned at a valid OHLCV row
+     * @return mapped candle
+     * @throws SQLException if row mapping fails
+     */
     private StampedOHLCV mapRow(ResultSet rs) throws SQLException {
         OHLCV ohlcv = new OHLCV(
                 rs.getDouble("open"),

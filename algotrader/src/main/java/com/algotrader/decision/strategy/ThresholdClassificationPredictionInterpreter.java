@@ -7,14 +7,44 @@ import java.util.List;
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 
-public class SimpleClassificationPredictionInterpreter
+/**
+ * Classification-based trading strategy that enters a position when the
+ * model predicts a sufficiently confident upward move.
+ *
+ * <p>This interpreter generates a single round-trip trade when:
+ * <ul>
+ *     <li>The model predicts the positive class</li>
+ *     <li>The prediction confidence is at least the configured threshold
+ *         {@code k}</li>
+ * </ul>
+ *
+ * <p>When a trade is generated, the entry time is the timestamp of the
+ * final candle in the prediction batch and the exit time is calculated by
+ * adding the configured forecast horizon.
+ *
+ * <p>No trade is generated when the model predicts the negative class or
+ * when confidence falls below the configured threshold.
+ *
+ * <p>This strategy was developed for the project's original classification
+ * pipeline and serves as a simple baseline for converting binary model
+ * predictions into trading decisions.
+ */
+public final class ThresholdClassificationPredictionInterpreter
         implements PredictionInterpreter<ClassificationPrediction> {
 
     private final double k;
     private final int horizonMinutes;
     private final String strategyId;
 
-    public SimpleClassificationPredictionInterpreter(
+    /**
+     * Creates a threshold-based classification trading strategy.
+     *
+     * @param k minimum confidence required before a trade is generated
+     * @param horizonMinutes holding period of generated trades
+     * @param strategyId identifier associated with generated trades
+     * @throws IllegalArgumentException if any argument is invalid
+     */
+    public ThresholdClassificationPredictionInterpreter(
             double k,
             int horizonMinutes,
             String strategyId
@@ -42,6 +72,19 @@ public class SimpleClassificationPredictionInterpreter
         this.strategyId = strategyId;
     }
 
+    /**
+     * Generates a trade when the prediction indicates an upward move with
+     * sufficient confidence.
+     *
+     * <p>The generated trade enters immediately at the prediction timestamp and
+     * exits after the configured forecast horizon.
+     *
+     * @param prediction classification prediction to interpret
+     * @return a single trade if the prediction satisfies the strategy rules;
+     *         otherwise an empty list
+     * @throws IllegalArgumentException if {@code prediction} is null or its
+     *         final timestamp is null
+     */
     @Override
     public List<RoundTripTrade> getTrades(
             ClassificationPrediction prediction
@@ -74,7 +117,7 @@ public class SimpleClassificationPredictionInterpreter
 
         RoundTripTrade trade = new RoundTripTrade(
                 ticker,
-                1,
+                1,// TODO: Replace fixed quantity sizing with a dedicated position-sizing mechanism once trade sizing is separated from signal generation.
                 entryTime,
                 exitTime,
                 prediction.getConfidence(),

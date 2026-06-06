@@ -8,33 +8,49 @@ import com.algotrader.marketdata.model.StampedOHLCV;
 import com.algotrader.marketdata.model.TimeInterval;
 
 /**
- * Provides ordered OHLCV market data retrieval.
+ * Primary abstraction for retrieving historical market data.
  *
- * <p>Implementations may retrieve data from in-memory caches,
- * databases, files, APIs, or combinations thereof.
+ * <p>A {@code MarketDataProvider} supplies ordered OHLCV candlestick data
+ * for a specific ticker, interval, and time range.
  *
- * <p>This interface does not provide batching, sliding-window
- * traversal, prediction logic, or trading functionality.
+ * <p>Implementations may retrieve data from:
+ * <ul>
+ *     <li>In-memory caches</li>
+ *     <li>Databases</li>
+ *     <li>CSV or other file-based sources</li>
+ *     <li>Remote market data APIs</li>
+ *     <li>Hybrid combinations of the above</li>
+ * </ul>
+ *
+ * <p>This interface serves as the boundary between trading components and
+ * the underlying market data infrastructure.
+ *
+ * <p>This interface is intentionally limited to market data retrieval. It
+ * does not provide:
+ * <ul>
+ *     <li>Batching or sliding-window traversal</li>
+ *     <li>Prediction generation</li>
+ *     <li>Trading strategy logic</li>
+ *     <li>Trade execution</li>
+ * </ul>
  */
 public interface MarketDataProvider {
 
     /**
-     * Retrieves all available OHLCV rows for the specified ticker,
-     * interval, and time range.
+     * Retrieves all available OHLCV rows within the requested time range.
      *
      * <p>The start and end timestamps are inclusive.
      *
-     * <p>If no data exists within the requested range, an empty list
-     * is returned.
+     * <p>If no matching data exists, an empty list is returned.
      *
-     * <p>The returned rows are ordered by timestamp ascending.
+     * <p>The returned rows are ordered by ascending timestamp.
      *
-     * @param ticker the stock ticker symbol, e.g. {@code "AAPL"}
-     * @param interval the candlestick interval
-     * @param startTime the beginning of the requested range (inclusive)
-     * @param endTime the end of the requested range (inclusive)
-     * @return an ordered list of matching OHLCV rows
-     * @throws DataCacheException if the data cannot be retrieved
+     * @param ticker ticker symbol to query
+     * @param interval candle interval to query
+     * @param startTime inclusive range start
+     * @param endTime inclusive range end
+     * @return ordered OHLCV rows within the requested range
+     * @throws DataCacheException if the request cannot be satisfied
      */
     List<StampedOHLCV> requestRange(
             String ticker,
@@ -44,15 +60,18 @@ public interface MarketDataProvider {
     ) throws DataCacheException;
 
     /**
-     * Retrieves the OHLCV row for the specified ticker, interval,
-     * and timestamp.
+     * Retrieves a single OHLCV row at an exact timestamp.
      *
-     * @param ticker the stock ticker symbol, e.g. {@code "AAPL"}
-     * @param interval the candlestick interval
-     * @param timestamp the timestamp of the requested candle
-     * @return the matching OHLCV row
-     * @throws DataCacheException if the data cannot be retrieved
-     *         or no matching candle exists
+     * <p>The requested timestamp must exactly match the timestamp of an
+     * available candle. No interpolation, nearest-neighbor lookup, or interval
+     * conversion is performed.
+     *
+     * @param ticker ticker symbol to query
+     * @param interval candle interval to query
+     * @param timestamp exact candle timestamp
+     * @return matching OHLCV row
+     * @throws DataCacheException if the row cannot be retrieved or no matching
+     *         candle exists
      */
     StampedOHLCV requestRow(
             String ticker,

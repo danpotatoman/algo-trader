@@ -1,37 +1,41 @@
 package com.algotrader.execution;
 
 import com.algotrader.decision.dataobjects.TradeRecommendation;
-import com.algotrader.decision.strategy.PredictionInterpreter;
 import com.algotrader.logging.TradingCycleLog.ActionLog;
 
 /**
- * Responsible for handling and executing trade recommendations produced by a
- * {@link PredictionInterpreter}.
+ * Responsible for executing or simulating trade recommendations.
  *
  * <p>A {@code TradeExecutor} receives a {@link TradeRecommendation} and
- * determines how and when to act on it. This may include:
+ * determines how it should be processed. Implementations may:
  * <ul>
- *     <li>Scheduling trades for future execution</li>
- *     <li>Checking account state (positions, buying power, etc.)</li>
- *     <li>Executing trades via a broker or paper trading system</li>
- *     <li>Logging or simulating trade activity</li>
+ *     <li>Execute trades immediately</li>
+ *     <li>Schedule trades for future execution</li>
+ *     <li>Simulate execution using historical market data</li>
+ *     <li>Submit orders to a broker or exchange</li>
+ *     <li>Reject or filter recommendations based on execution constraints</li>
  * </ul>
  *
- * <p>This interface does not prescribe how recommendations are executed;
- * implementations may vary (e.g. immediate execution, scheduled execution,
- * simulation, or filtering).
+ * <p>This interface represents the execution layer of the trading pipeline:
+ *
+ * <pre>
+ * TradeRecommendation -> Execution -> ActionLog
+ * </pre>
+ *
+ * <p>The interface does not prescribe how recommendations are executed.
+ * Different implementations may support paper trading, backtesting, live
+ * broker integration, delayed execution, or other execution models.
  */
 public interface TradeExecutor {
 
     /**
      * Handles a single trade recommendation.
      *
-     * <p>The executor may execute the recommendation immediately, schedule
-     * it for future execution based on its timestamp, or ignore it
-     * depending on its internal logic and constraints.
+     * <p>The recommendation may be executed immediately, scheduled for later
+     * execution, simulated, or ignored depending on the implementation.
      *
-     * @param recommendation the trade recommendation to handle
-     * @return a TradeExecutionLog describing the execution result
+     * @param recommendation trade recommendation to handle
+     * @return an action log describing the resulting execution
      * @throws IllegalArgumentException if {@code recommendation} is null
      */
     ActionLog handleRecommendation(

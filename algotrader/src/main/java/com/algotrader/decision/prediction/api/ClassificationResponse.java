@@ -1,10 +1,19 @@
 package com.algotrader.decision.prediction.api;
 
 /**
- * Response payload returned by the Python classification model.
+ * Response payload returned by a classification prediction endpoint.
  *
- * <p>This object is deserialized from JSON returned by the
- * classification prediction endpoint.
+ * <p>This record represents the JSON response returned by the Python model
+ * service and serves as a transport object between the HTTP API layer and
+ * the application's prediction domain objects.
+ *
+ * <p>Instances are typically deserialized directly from endpoint responses
+ * before being converted into {@code ClassificationScore} objects.
+ *
+ * <p>This DTO exists primarily to support the project's original
+ * classification-based prediction pipeline. Newer models are expected to
+ * favor regression outputs, but classification support is retained for
+ * experimentation and backwards compatibility.
  *
  * <p>Expected JSON format:
  *
@@ -19,41 +28,31 @@ package com.algotrader.decision.prediction.api;
  */
 public record ClassificationResponse(
 
-        /**
-         * Ticker symbol associated with the prediction.
-         */
-        String ticker,
+    /** Ticker symbol associated with the prediction. */
+    String ticker,
 
-        /**
-         * Predicted class value.
-         *
-         * <p>Typically:
-         * <ul>
-         *     <li>1 = upward movement</li>
-         *     <li>0 = downward/no movement</li>
-         * </ul>
-         */
-        int prediction,
+    /**
+     * Predicted class value.
+     *
+     * <p>Current convention:
+     * <ul>
+     *     <li>{@code 1} = price expected to increase by at least the model's
+     *         configured threshold within the forecast horizon</li>
+     *     <li>{@code 0} = any other outcome</li>
+     * </ul>
+     *
+     * <p>The exact threshold and forecast horizon are model-dependent.
+     */
+    int prediction,
 
-        /**
-         * Model confidence for the prediction.
-         *
-         * <p>Expected range:
-         * <pre>
-         * [0.0, 1.0]
-         * </pre>
-         */
-        double confidence,
+    /**
+     * Model confidence associated with the predicted class.
+     *
+     * <p>Expected range: {@code [0.0, 1.0]}.
+     */
+    double confidence,
 
-        /**
-         * Human-readable prediction label.
-         *
-         * <p>Examples:
-         * <ul>
-         *     <li>"up"</li>
-         *     <li>"down"</li>
-         * </ul>
-         */
-        String label
+    /** Human-readable label describing the prediction. */
+    String label
 
 ) {}

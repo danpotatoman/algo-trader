@@ -3,11 +3,21 @@ package com.algotrader.marketdata.model;
 import java.time.Instant;
 
 /**
- * Represents a market price for a specific ticker at a specific timestamp.
+ * Represents a market price associated with a ticker and timestamp.
  *
- * @param ticker the ticker symbol
- * @param price the market price
- * @param timestamp the timestamp associated with the price
+ * <p>A {@code MarketPrice} is a lightweight value object used throughout the
+ * trading system when only a price lookup result is needed rather than a full
+ * OHLCV candle.
+ *
+ * <p>The meaning of the price depends on the component that produced it. For
+ * example, the current {@code MarketDataCache} implementation derives market
+ * prices from candle close values.
+ *
+ * <p>Ticker symbols are normalized to uppercase during construction.
+ *
+ * @param ticker ticker symbol associated with the price
+ * @param price market price value
+ * @param timestamp timestamp associated with the price
  */
 public record MarketPrice(
         String ticker,
@@ -15,6 +25,12 @@ public record MarketPrice(
         Instant timestamp
 ) {
 
+    /**
+     * Creates a market price.
+     *
+     * @throws IllegalArgumentException if the ticker is null or blank, if the
+     *         timestamp is null, price is NaN, or price is negative
+     */
     public MarketPrice {
 
         if (ticker == null || ticker.isBlank()) {
@@ -26,6 +42,18 @@ public record MarketPrice(
         if (timestamp == null) {
             throw new IllegalArgumentException(
                     "Timestamp cannot be null."
+            );
+        }
+
+        if (Double.isNaN(price)) {
+            throw new IllegalArgumentException(
+                    "Price cannot be NaN."
+            );
+        }
+
+        if (price < 0.0) {
+            throw new IllegalArgumentException(
+                    "Price cannot be negative."
             );
         }
 

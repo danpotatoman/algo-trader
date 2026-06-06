@@ -9,23 +9,28 @@ import com.algotrader.marketdata.model.StampedOHLCV;
 import com.algotrader.marketdata.model.TimeInterval;
 
 /**
- * Provides low-level OHLCV candlestick data retrieval.
+ * Low-level source of OHLCV candlestick data.
  *
- * <p>Implementations may retrieve data from CSV files, APIs,
- * databases, synthetic generators, or other sources.
+ * <p>An {@code OHLCVSource} represents a concrete data source such as a
+ * database, CSV file, external API, synthetic generator, or live market data
+ * feed.
  *
- * <p>This interface is intentionally lower-level than
- * MarketDataProvider and does not provide batching,
- * sliding-window traversal, caching, or price lookup logic.
+ * <p>This interface sits below {@link com.algotrader.marketdata.provider.MarketDataProvider}
+ * in the market data architecture. Implementations are responsible only for
+ * loading raw stamped OHLCV rows from their backing source.
+ *
+ * <p>This interface does not provide caching, batching, sliding-window
+ * traversal, prediction logic, or trade execution behavior. Those
+ * responsibilities belong to higher-level components.
  */
 public interface OHLCVSource {
 
         /**
-         * Retrieves all available OHLCV rows for a ticker and interval.
+         * Loads all available OHLCV rows for a ticker and interval.
          *
-         * @param ticker the stock ticker symbol, e.g. {@code "AAPL"}
-         * @param interval the candlestick interval
-         * @return all available matching OHLCV rows
+         * @param ticker ticker symbol to query
+         * @param interval candle interval to query
+         * @return all available matching rows
          * @throws DataCacheException if the data cannot be retrieved
          */
         List<StampedOHLCV> loadRows(
@@ -34,17 +39,16 @@ public interface OHLCVSource {
         ) throws DataCacheException;
 
         /**
-         * Retrieves all OHLCV rows within the specified time range.
+         * Loads all OHLCV rows within the requested time range.
          *
-         * <p>The returned rows must be ordered by timestamp ascending.
+         * <p>The start and end timestamps are inclusive. Returned rows should be
+         * ordered by ascending timestamp.
          *
-         * <p>The start and end timestamps are inclusive.
-         *
-         * @param ticker the stock ticker symbol, e.g. {@code "AAPL"}
-         * @param interval the candlestick interval
-         * @param startTimestamp the beginning of the requested range (inclusive)
-         * @param endTimestamp the end of the requested range (inclusive)
-         * @return all matching OHLCV rows ordered by timestamp
+         * @param ticker ticker symbol to query
+         * @param interval candle interval to query
+         * @param startTimestamp inclusive range start
+         * @param endTimestamp inclusive range end
+         * @return matching rows ordered by timestamp
          * @throws DataCacheException if the data cannot be retrieved
          */
         List<StampedOHLCV> loadRange(
@@ -55,14 +59,17 @@ public interface OHLCVSource {
         ) throws DataCacheException;
 
         /**
-         * Retrieves a single OHLCV row for a ticker, interval, and timestamp.
+         * Loads a single OHLCV row at an exact timestamp.
          *
-         * @param ticker the stock ticker symbol, e.g. {@code "AAPL"}
-         * @param interval the candlestick interval
-         * @param timestamp the timestamp of the requested candle
-         * @return the matching OHLCV row
-         * @throws DataCacheException if the data cannot be retrieved
-         *         or no matching candle exists
+         * <p>The timestamp must exactly match an available candle timestamp. No
+         * nearest-neighbor lookup or interpolation is performed.
+         *
+         * @param ticker ticker symbol to query
+         * @param interval candle interval to query
+         * @param timestamp exact candle timestamp
+         * @return matching OHLCV row
+         * @throws DataCacheException if the row cannot be retrieved or no matching
+         *         candle exists
          */
         StampedOHLCV loadRow(
                 String ticker,
@@ -70,6 +77,20 @@ public interface OHLCVSource {
                 Instant timestamp
         ) throws DataCacheException;
 
+        /**
+         * Returns the next available candle timestamp after the supplied timestamp.
+         *
+         * <p>This method is useful for traversing market data when calendar time
+         * does not map cleanly to available candle timestamps, such as around
+         * weekends, holidays, market closures, or missing data.
+         *
+         * @param ticker ticker symbol to query
+         * @param interval candle interval to query
+         * @param timestamp timestamp after which to search
+         * @return the next available timestamp, or {@link Optional#empty()} if none
+         *         exists
+         * @throws DataCacheException if the lookup cannot be performed
+         */
         Optional<Instant> getNextTimestamp(
                         String ticker,
                         TimeInterval interval,

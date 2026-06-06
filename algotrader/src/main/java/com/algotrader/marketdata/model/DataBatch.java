@@ -17,12 +17,12 @@ import java.util.List;
  *     <li>All rows are for the same time interval</li>
  * </ul>
  *
- * <p>This class is mutable and allows rows to be added incrementally while
- * maintaining consistency constraints.
+ * <p>This class is mutable and is typically populated by market data providers
+ * and sliding-window components before being passed to prediction models.
  *
- * <p>It is typically used as the input to a machine learning model, where the
- * OHLCV data can be accessed either as raw objects or converted into a
- * numerical array via {@link #toFeatureArray()}.
+ * <p>It serves as the primary model-input object within the trading system.
+ * Market data is accumulated into a {@code DataBatch} before being supplied to
+ * prediction providers.
  */
 public class DataBatch {
 
@@ -37,7 +37,10 @@ public class DataBatch {
     private final TimeInterval interval;
 
     /**
-     * Constructs an empty {@code DataBatch}.
+     * Constructs an empty data batch for a specific interval.
+     *
+     * @param interval interval shared by all rows in the batch
+     * @throws IllegalArgumentException if {@code interval} is null
      */
     public DataBatch(TimeInterval interval) {
         if (interval == null) {
@@ -48,10 +51,11 @@ public class DataBatch {
     }
 
     /**
-     * Constructs a {@code DataBatch} initialized with a single row.
+     * Constructs a data batch initialized with a single row.
      *
-     * @param row the initial {@link StampedOHLCV} entry
-     * @throws IllegalArgumentException if the row is invalid
+     * @param interval interval shared by all rows in the batch
+     * @param row initial row
+     * @throws IllegalArgumentException if any argument is invalid
      */
     public DataBatch(TimeInterval interval, StampedOHLCV row) {
         if (interval == null) {
@@ -64,13 +68,11 @@ public class DataBatch {
     }
 
     /**
-     * Constructs a {@code DataBatch} from a list of rows.
+     * Constructs a data batch from a collection of rows.
      *
-     * <p>Rows are added sequentially and validated to ensure they meet ordering
-     * and consistency requirements.
-     *
-     * @param rows the list of rows to initialize the batch with
-     * @throws IllegalArgumentException if the list is null or contains invalid data
+     * @param interval interval shared by all rows in the batch
+     * @param rows rows used to initialize the batch
+     * @throws IllegalArgumentException if any argument is invalid
      */
     public DataBatch(TimeInterval interval, List<StampedOHLCV> rows) {
         if (interval == null) {
@@ -173,13 +175,12 @@ public class DataBatch {
                 );
             }
         }
+
+        if (row.interval() != interval) {
+            throw new IllegalArgumentException("Row's interval must match with this DataBatch's interval.");
+        }
     }
 
-    /**
-     * Returns the ticker symbol associated with this batch.
-     *
-     * @return the ticker symbol, or {@code null} if the batch is empty
-     */
     public String getTicker() {
         if (rows.isEmpty()) {
             return null;
@@ -188,20 +189,10 @@ public class DataBatch {
         return rows.get(0).ticker();
     }
 
-    /**
-     * Returns the number of candles in the batch.
-     *
-     * @return the batch size
-     */
     public int getBatchSize() {
         return rows.size();
     }
 
-    /**
-     * Returns the {@code TimeInterval} shared by all rows in this DataBatch.
-     * 
-     * @return the {@code TimeInterval} of this DataBatch
-     */
     public TimeInterval getInterval() {
         return interval;
     }
@@ -219,11 +210,6 @@ public class DataBatch {
         return rows.get(rows.size() - 1).timestamp();
     }
 
-    /**
-     * Returns whether the batch contains no rows.
-     *
-     * @return {@code true} if the batch is empty, otherwise {@code false}
-     */
     public boolean isEmpty() {
         return rows.isEmpty();
     }
@@ -238,18 +224,25 @@ public class DataBatch {
     }
 
     /**
-     * Converts the batch into a 2D array of OHLCV values.
+     * Converts the batch into a model input matrix.
      *
-     * <p>The returned array has shape {@code [batchSize][5]}, where each row
-     * corresponds to a single candle and columns are ordered as:
+     * <p>The returned array has shape:
+     *
+     * <pre>
+     * [batchSize][5]
+     * </pre>
+     *
+     * with columns ordered as:
      *
      * <pre>
      * [open, high, low, close, volume]
      * </pre>
      *
-     * <p>This format is suitable for feeding into machine learning models.
+     * <p><b>Important:</b> The column ordering is part of the contract between
+     * the Java trading system and Python prediction models. Changes to this
+     * ordering require corresponding updates to model preprocessing logic.
      *
-     * @return a 2D array representation of the batch
+     * @return feature matrix representation of the batch
      */
     public double[][] toFeatureArray() {
         double[][] array = new double[rows.size()][5];
@@ -268,7 +261,11 @@ public class DataBatch {
     }
 
     /**
-     * @return a verbose string, meant for debugging
+     * Returns a verbose representation of the batch including every row.
+     *
+     * <p>Intended for debugging and diagnostic output.
+     *
+     * @return detailed string representation of the batch
      */
     public String toDetailedString() {
         StringBuilder sb = new StringBuilder(toString());

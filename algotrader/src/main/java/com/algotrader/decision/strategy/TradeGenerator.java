@@ -7,30 +7,28 @@ import com.algotrader.decision.prediction.provider.PredictionProviderException;
 import com.algotrader.marketdata.model.DataBatch;
 
 /**
- * High-level trading strategy abstraction.
+ * High-level abstraction for generating trades from market data.
  *
- * <p>A {@code TradeGenerator} encapsulates the process of:
- * <ol>
- *     <li>Generating a model prediction from market data</li>
- *     <li>Interpreting that prediction into executable round-trip trades</li>
- * </ol>
- *
- * <p>This interface represents the model-dependent portion of the
- * trading pipeline:
+ * <p>A {@code TradeGenerator} encapsulates the model-dependent decision
+ * pipeline:
  *
  * <pre>
- * DataBatch -> Prediction -> List&lt;RoundTripTrade&gt;
+ * DataBatch -> ModelPrediction -> List&lt;RoundTripTrade&gt;
  * </pre>
  *
- * <p>Different implementations may use:
- * <ul>
- *     <li>Classification or regression models</li>
- *     <li>Different prediction providers</li>
- *     <li>Different interpretation strategies</li>
- * </ul>
+ * <p>Implementations typically:
+ * <ol>
+ *     <li>Request a model prediction for the supplied market data</li>
+ *     <li>Interpret that prediction according to strategy rules</li>
+ *     <li>Return valid round-trip trades, or an empty list if no trade
+ *         opportunities are identified</li>
+ * </ol>
  *
- * <p>The trading service should depend on this abstraction rather
- * than directly coordinating providers and interpreters itself.
+ * <p>Different implementations may use different prediction providers,
+ * prediction types, interpretation strategies, or validation rules.
+ *
+ * <p>The trading service should depend on this abstraction rather than
+ * directly coordinating prediction providers and interpreters itself.
  */
 public interface TradeGenerator {
 
@@ -38,13 +36,12 @@ public interface TradeGenerator {
      * Generates round-trip trades from the supplied market data batch.
      *
      * <p>The returned trades represent complete entry and exit plans.
-     * Implementations may return an empty list if no trade opportunities
+     * Implementations may return an empty list if no valid trade opportunities
      * are identified.
      *
-     * @param batch the market data batch used for prediction
-     * @return generated round-trip trades (possibly empty)
-     *
-     * @throws IllegalArgumentException if batch is null
+     * @param batch market data batch used as model input
+     * @return generated round-trip trades, possibly empty
+     * @throws IllegalArgumentException if {@code batch} is null or invalid
      * @throws PredictionProviderException if prediction generation fails
      */
     List<RoundTripTrade> generateTrades(

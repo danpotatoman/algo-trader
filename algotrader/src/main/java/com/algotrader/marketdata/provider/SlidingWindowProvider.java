@@ -11,11 +11,19 @@ import com.algotrader.marketdata.model.StampedOHLCV;
 import com.algotrader.marketdata.model.TimeInterval;
 
 /**
- * Provides sequential sliding windows over an ordered range of OHLCV data.
+ * Provides sequential sliding windows over a loaded range of OHLCV data.
  *
- * <p>This class does not retrieve individual batches from the data provider.
- * Instead, it loads the requested range once during construction and then
- * iterates through that range in memory.
+ * <p>A {@code SlidingWindowProvider} requests an ordered range of market data
+ * from a {@link MarketDataProvider}, stores that range in memory, and then
+ * exposes overlapping {@link DataBatch} windows of a fixed size.
+ *
+ * <p>Each call to {@link #nextWindow()} advances the window by one row. For
+ * example, with a batch size of 3, rows {@code [0,1,2]} are returned first,
+ * followed by {@code [1,2,3]}, then {@code [2,3,4]}, and so on.
+ *
+ * <p>This class must be initialized by calling {@link #initialize()} before
+ * windows can be requested. Initialization is separated from construction so
+ * that data loading failures can be handled explicitly by callers.
  */
 public class SlidingWindowProvider {
 
@@ -30,8 +38,18 @@ public class SlidingWindowProvider {
     private int nextEndIndex;
     private boolean initialized;
 
-
-     public SlidingWindowProvider(
+    /**
+     * Creates a sliding window provider.
+     *
+     * @param marketDataProvider provider used to load the source OHLCV range
+     * @param ticker ticker symbol to load
+     * @param interval candle interval for the requested data
+     * @param batchSize number of rows in each generated window
+     * @param startTime inclusive start of the data range
+     * @param endTime inclusive end of the data range
+     * @throws IllegalArgumentException if any argument is invalid
+     */
+    public SlidingWindowProvider(
             MarketDataProvider marketDataProvider,
             String ticker,
             TimeInterval interval,
@@ -56,11 +74,12 @@ public class SlidingWindowProvider {
     /**
      * Returns the next full sliding window if one exists.
      *
-     * <p>Each returned window contains {@code batchSize} rows. Consecutive
-     * calls advance the window by one row.
+     * <p>Each returned window contains {@code batchSize} rows. Consecutive calls
+     * advance the window by one row.
      *
-     * @return the next {@link DataBatch}, or {@link Optional#empty()} if no
-     *         full window remains
+     * @return the next data batch, or {@link Optional#empty()} if no full window
+     *         remains
+     * @throws IllegalStateException if this provider has not been initialized
      */
     public Optional<DataBatch> nextWindow() {
         if (!initialized) {
@@ -104,8 +123,12 @@ public class SlidingWindowProvider {
     }
 
     /**
-     * Initializes this SlidingWinodwProvider, preparing it for nextWindow() calls.
-     * @throws DataCacheException
+     * Initializes this provider by loading the configured market data range.
+     *
+     * <p>This method must be called before {@link #nextWindow()}. Repeated calls
+     * after successful initialization have no effect.
+     *
+     * @throws DataCacheException if the configured data range cannot be loaded
      */
     public void initialize() throws DataCacheException {
         if (initialized) {
@@ -125,6 +148,11 @@ public class SlidingWindowProvider {
         this.initialized = true;
     }
 
+    /**
+     * Returns whether this provider has successfully loaded its source data.
+     *
+     * @return {@code true} if initialized; {@code false} otherwise
+     */
     public boolean isInitialized() {
         return initialized;
     }

@@ -8,8 +8,12 @@ import com.algotrader.marketdata.model.TimeInterval;
 /**
  * Immutable log object representing one completed trading cycle.
  *
- * <p>This class is intended to be serialized to JSON for persistence,
- * analytics, debugging, or replay.
+ * <p>A {@code TradingCycleLog} captures the identifying metadata, execution
+ * timing, strategy information, and executed actions produced during one run
+ * of the trading pipeline.
+ *
+ * <p>This object is intended to be serialized to JSON for persistence,
+ * debugging, auditing, backtest analysis, and future analytics workflows.
  */
 public final class TradingCycleLog {
 
@@ -23,6 +27,17 @@ public final class TradingCycleLog {
 
     private final List<ActionLog> actions;
 
+    /**
+     * Creates a trading cycle log.
+     *
+     * @param cycleId unique identifier for the completed cycle
+     * @param timestamp timestamp associated with the cycle
+     * @param cycleDurationMillis elapsed runtime of the cycle in milliseconds
+     * @param metadata configuration metadata for the cycle
+     * @param strategyId strategy used to generate trades
+     * @param actions executed trade actions produced by the cycle
+     * @throws IllegalArgumentException if any argument is invalid
+     */
     public TradingCycleLog(
             String cycleId,
             Instant timestamp,
@@ -103,7 +118,11 @@ public final class TradingCycleLog {
     }
 
     /**
-     * Immutable metadata describing the trading cycle configuration.
+     * Immutable metadata describing the configuration used for a trading cycle.
+     *
+     * <p>This metadata records the model, plan, ticker, interval, and execution
+     * mode associated with the cycle so logs can be analyzed without needing to
+     * reload the original configuration files.
      */
     public static final class Metadata {
 
@@ -115,6 +134,16 @@ public final class TradingCycleLog {
 
         private final boolean liveMode;
 
+    /**
+     * Creates trading cycle metadata.
+     *
+     * @param ticker ticker traded during the cycle
+     * @param interval market data interval used by the model
+     * @param modelId model used during the cycle
+     * @param planId trading plan or session identifier associated with the cycle
+     * @param liveMode whether the cycle was run in live mode
+     * @throws IllegalArgumentException if any argument is invalid
+     */
         public Metadata(
                 String ticker,
                 TimeInterval interval,
@@ -177,7 +206,10 @@ public final class TradingCycleLog {
     }
 
     /**
-     * Immutable representation of one executed trade action.
+     * Immutable log entry describing one executed trade action.
+     *
+     * <p>An action log records the action type, execution timestamp, execution
+     * price, and quantity for a single simulated or real trade action.
      */
     public static final class ActionLog {
 
@@ -188,6 +220,15 @@ public final class TradingCycleLog {
         private final double price;
         private final double quantity;
 
+        /**
+         * Creates an executed action log.
+         *
+         * @param action executed action, such as {@code BUY} or {@code SELL}
+         * @param timestamp execution timestamp
+         * @param price execution price
+         * @param quantity executed quantity
+         * @throws IllegalArgumentException if any argument is invalid
+         */
         public ActionLog(
                 String action,
                 Instant timestamp,

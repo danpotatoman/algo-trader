@@ -6,10 +6,23 @@ import java.time.Instant;
 /**
  * Immutable configuration describing a trading session.
  *
- * <p>A trading session specifies which model and strategy should be used,
- * what ticker should be traded, and the time range over which the session
- * should operate. Model-specific requirements such as interval, batch size,
- * and prediction endpoint are defined by the referenced ModelConfig.
+ * <p>A trading session defines one trading workload to be executed by the
+ * system. It specifies the ticker to trade, the prediction model to use,
+ * the trade generation strategy to use, the active time range for the
+ * session, and any market-close trading constraints.
+ *
+ * <p>This class references model and strategy configurations by ID rather
+ * than embedding them directly. At runtime, those IDs are resolved into
+ * concrete {@link ModelConfig} and {@link TradeGeneratorConfig} instances
+ * before the session is executed.
+ *
+ * <p>The {@code startingTimestamp} and {@code endingTimestamp} define when
+ * the session is allowed to operate. These timestamps apply to both
+ * backtesting and live trading sessions.
+ *
+ * <p>Model-specific requirements such as candle interval, batch size,
+ * feature definitions, and prediction endpoints are defined by the
+ * referenced {@link ModelConfig}.
  */
 public final class TradingSessionConfig {
 
@@ -25,6 +38,20 @@ public final class TradingSessionConfig {
     private final Instant startingTimestamp;
     private final Instant endingTimestamp;
 
+    /**
+     * Creates a trading session configuration.
+     *
+     * @param sessionId unique identifier for the trading session
+     * @param modelId identifier of the model configuration used by the session
+     * @param strategyId identifier of the trade generation strategy used by
+     *        the session
+     * @param ticker ticker symbol to trade
+     * @param minTimeBeforeClose minimum time remaining before market close
+     *        required to initiate new trades
+     * @param startingTimestamp earliest timestamp at which the session may run
+     * @param endingTimestamp timestamp after which the session may no longer run
+     * @throws IllegalArgumentException if any argument is invalid
+     */
     public TradingSessionConfig(
             String sessionId,
             String modelId,
@@ -55,6 +82,12 @@ public final class TradingSessionConfig {
         this.endingTimestamp = endingTimestamp;
     }
 
+    /**
+     * Validates constructor arguments before a trading session configuration
+     * is created.
+     *
+     * @throws IllegalArgumentException if any argument is invalid
+     */
     private static void validateConstructorArgs(
             String sessionId,
             String modelId,

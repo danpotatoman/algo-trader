@@ -6,13 +6,17 @@ import java.nio.file.Path;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Loads {@link TradeGeneratorConfig} objects from JSON config files.
+ * Loads {@link TradeGeneratorConfig} instances from JSON configuration files.
  *
- * <p>Strategy configs are expected to live at:
+ * <p>This loader resolves strategy IDs to files in a strategy configuration
+ * directory. By default, configs are expected at:
  *
  * <pre>
  * config/strategy/&lt;strategyId&gt;.json
  * </pre>
+ *
+ * <p>Each call to {@link #load(String)} reads and deserializes the matching
+ * JSON file from disk. This class does not currently cache loaded configs.
  */
 public class TradeGeneratorConfigLoader {
 
@@ -22,13 +26,25 @@ public class TradeGeneratorConfigLoader {
     private final Path strategyConfigDirectory;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Creates a loader that reads from the default strategy config directory:
+     *
+     * <pre>
+     * config/strategy
+     * </pre>
+     */
     public TradeGeneratorConfigLoader() {
         this(DEFAULT_STRATEGY_CONFIG_DIRECTORY);
     }
 
-    public TradeGeneratorConfigLoader(
-            Path strategyConfigDirectory
-    ) {
+    /**
+     * Creates a loader that reads strategy configs from the given directory.
+     *
+     * @param strategyConfigDirectory the directory containing strategy config
+     *        JSON files
+     * @throws IllegalArgumentException if {@code strategyConfigDirectory} is null
+     */
+    public TradeGeneratorConfigLoader(Path strategyConfigDirectory) {
         if (strategyConfigDirectory == null) {
             throw new IllegalArgumentException(
                     "Strategy config directory cannot be null."
@@ -40,7 +56,7 @@ public class TradeGeneratorConfigLoader {
     }
 
     /**
-     * Loads a strategy config by strategy ID.
+     * Loads a trade generator configuration by strategy ID.
      *
      * <p>For example, {@code load("threshold-strategy-v1")} reads:
      *
@@ -48,12 +64,13 @@ public class TradeGeneratorConfigLoader {
      * config/strategy/threshold-strategy-v1.json
      * </pre>
      *
-     * @param strategyId the strategy ID to load
-     * @return the loaded strategy config
+     * @param strategyId the strategy ID to load, without the {@code .json}
+     *        extension
+     * @return the deserialized trade generator configuration
+     * @throws IllegalArgumentException if {@code strategyId} is null or blank
+     * @throws RuntimeException if the config file cannot be read or deserialized
      */
-    public TradeGeneratorConfig load(
-            String strategyId
-    ) {
+    public TradeGeneratorConfig load(String strategyId) {
         if (strategyId == null || strategyId.isBlank()) {
             throw new IllegalArgumentException(
                     "Strategy ID cannot be null or blank."
@@ -79,7 +96,7 @@ public class TradeGeneratorConfigLoader {
     }
 
     /**
-     * Returns the directory this loader reads strategy configs from.
+     * Returns the directory this loader reads strategy configuration files from.
      *
      * @return the strategy config directory
      */

@@ -6,23 +6,31 @@ import com.algotrader.marketdata.cache.DataCacheException;
 import com.algotrader.marketdata.provider.PriceProvider;
 
 /**
- * A {@link TradeExecutor} implementation that simulates trades using a
- * provided historical or real-time price source.
+ * Trade executor that simulates trade execution using market data.
  *
- * <p>This paper trader does not place real trades. Instead, it uses a
- * {@link PriceProvider} to look up ticker prices at the recommendation's
- * timestamp and simulates execution.
+ * <p>This executor does not place real orders. Instead, it looks up the
+ * market price associated with a {@link TradeRecommendation} and records
+ * the result as an {@link ActionLog}.
  *
- * <p>The resulting {@link ActionLog} stores the executed trade price.
+ * <p>It is primarily intended for backtesting and simulation workflows,
+ * where historical market data is used to estimate trade execution prices.
+ *
+ * <p>The execution model is intentionally simple: trades are assumed to
+ * execute exactly at the market price returned by the configured
+ * {@link PriceProvider} for the recommendation timestamp.
+ *
+ * <p>No slippage, commissions, partial fills, liquidity constraints, or
+ * other real-world execution effects are currently modeled.
  */
 public class HistoricalPaperTradeExecutor implements TradeExecutor {
 
     private final PriceProvider priceProvider;
 
     /**
-     * Constructs a {@code HistoricalPaperTradeExecutor}.
+     * Creates a paper-trading executor.
      *
-     * @param priceProvider the price provider used to look up execution prices
+     * @param priceProvider price source used to determine simulated execution
+     *        prices
      * @throws IllegalArgumentException if {@code priceProvider} is null
      */
     public HistoricalPaperTradeExecutor(PriceProvider priceProvider) {
@@ -36,13 +44,15 @@ public class HistoricalPaperTradeExecutor implements TradeExecutor {
     }
 
     /**
-     * Simulates execution of a single trade recommendation.
+     * Simulates execution of a trade recommendation.
      *
-     * @param recommendation the recommendation to simulate
-     * @return an ActionLog describing the simulated execution
+     * <p>The recommendation is executed using the market price returned by the
+     * configured {@link PriceProvider} for the recommendation timestamp.
      *
-     * @throws IllegalArgumentException if recommendation is null
-     * @throws DataCacheException if required price data cannot be found
+     * @param recommendation recommendation to execute
+     * @return an action log describing the simulated execution
+     * @throws IllegalArgumentException if {@code recommendation} is null
+     * @throws RuntimeException if execution pricing data cannot be retrieved
      */
     @Override
     public ActionLog handleRecommendation(
@@ -53,7 +63,10 @@ public class HistoricalPaperTradeExecutor implements TradeExecutor {
                     "Recommendation cannot be null."
             );
         }
-
+/**
+ * TODO: Revisit error handling once the market data layer's missing-data
+ * contract is finalized.
+ */
         try {
             double executionPrice = priceProvider.getTickerPrice(
                     recommendation.getTicker(),

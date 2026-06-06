@@ -6,36 +6,34 @@ import com.algotrader.decision.dataobjects.ModelPrediction;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 
 /**
- * Converts model prediction results into complete round-trip trades.
+ * Strategy component that converts model predictions into proposed
+ * round-trip trades.
  *
- * <p>A {@code PredictionInterpreter} is responsible for strategy logic. It
- * examines a {@link ModelPrediction} and returns one or more
+ * <p>A {@code PredictionInterpreter} contains the decision-making logic of
+ * the trading system. It examines a {@link ModelPrediction} and determines
+ * whether any trading opportunities exist, returning zero or more
  * {@link RoundTripTrade} objects.
  *
- * <p>A round-trip trade represents a complete trading idea consisting of an
- * entry and exit of the same position. Implementations should avoid producing
- * trades that cannot reasonably be completed, such as trades whose exit would
- * occur outside market hours.
+ * <p>The interpreter is responsible for deciding <em>what</em> trades should
+ * be made, but not whether those trades are valid or how they are executed.
+ * Market-session validation, execution scheduling, broker interaction, and
+ * position management are handled by separate components.
  *
- * <p>The interpreter does not execute trades. It only determines which trades
- * should be attempted based on model output and strategy rules.
- *
- * <p>Actual execution, timing, account state checks, broker interaction, and
- * position management are handled by separate execution components.
+ * <p>Implementations may apply confidence thresholds, forecast analysis,
+ * risk controls, or other strategy-specific rules when generating trades.
  *
  * @param <T> the prediction type interpreted by this strategy
  */
 public interface PredictionInterpreter<T extends ModelPrediction> {
 
     /**
-     * Generates round-trip trades from a model prediction.
+     * Generates proposed round-trip trades from a model prediction.
      *
-     * <p>The returned trades represent complete entry/exit plans. An
-     * implementation may return an empty list if no trade opportunities are
-     * identified.
+     * <p>An implementation may return an empty list if the prediction does
+     * not satisfy the strategy's trading criteria.
      *
-     * @param prediction the prediction result used to generate trades
-     * @return a list of round-trip trades derived from the prediction
+     * @param prediction prediction to interpret
+     * @return proposed trades derived from the prediction
      * @throws IllegalArgumentException if {@code prediction} is null
      */
     List<RoundTripTrade> getTrades(T prediction);

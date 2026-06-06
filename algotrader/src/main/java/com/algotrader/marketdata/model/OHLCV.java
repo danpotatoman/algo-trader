@@ -1,8 +1,10 @@
 package com.algotrader.marketdata.model;
 
 /**
- * Represents a single candlestick of market data using the OHLCV format:
- * Open, High, Low, Close, and Volume.
+ * Immutable representation of a single OHLCV candlestick.
+ *
+ * <p>An {@code OHLCV} record captures the open, high, low, close, and volume
+ * values associated with a single market-data interval.
  *
  * <p>This record enforces basic financial data invariants:
  * <ul>
@@ -41,17 +43,10 @@ public record OHLCV(
     /**
      * Validates that the OHLCV values form a consistent candlestick.
      *
-     * <p>This compact constructor enforces:
-     * <ul>
-     *     <li>{@code high >= low}</li>
-     *     <li>{@code open ∈ [low, high]}</li>
-     *     <li>{@code close ∈ [low, high]}</li>
-     *     <li>{@code volume >= 0}</li>
-     * </ul>
-     *
-     * @throws IllegalArgumentException if any constraint is violated
+     * @throws IllegalArgumentException if any financial data invariant is
+     *         violated
      */
-    public OHLCV {
+    public OHLCV { //TODO: include validation for NaN and posInfinity/negInfinity
         if (high < low) {
             throw new IllegalArgumentException("High cannot be less than low.");
         }

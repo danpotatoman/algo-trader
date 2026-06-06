@@ -24,7 +24,7 @@ public final class PythonClassificationPredictionProvider
     }
 
     @Override
-    public ClassificationPrediction makePrediction(
+    public ClassificationPrediction makePrediction( //TODO this whole class should be generic, this method shoulld be: public <T> makePrediction
             DataBatch batch
     ) throws PredictionProviderException {
         if (batch == null) {

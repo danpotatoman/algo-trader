@@ -1,36 +1,43 @@
 package com.algotrader.marketdata.cache;
 
 /**
- * Exception thrown when an error occurs during data buffering operations.
+ * Legacy exception associated with the original data-buffering subsystem.
  *
- * <p>This exception is used to signal issues related to retrieving, loading,
- * or processing OHLCV data within {@link DataBuffer} implementations.
+ * <p>This exception was used by the project's earlier market data pipeline
+ * to report failures while loading, retrieving, or processing OHLCV data.
  *
- * <p>Typical causes include:
+ * <p>Typical causes included:
  * <ul>
- *     <li>Invalid request parameters (e.g. null ticker, invalid batch size)</li>
  *     <li>Missing or unreadable CSV files</li>
- *     <li>Malformed or invalid data within a CSV file</li>
- *     <li>Insufficient data to fulfill a batch request</li>
+ *     <li>Malformed market data</li>
+ *     <li>Insufficient data to satisfy a request</li>
+ *     <li>Failures during batch construction</li>
  * </ul>
+ *
+ * <p>The modern market data architecture uses
+ * {@link DataCacheException} instead. This class remains only for
+ * compatibility with legacy components.
+ *
+ * <p><b>TODO:</b> Remove this exception once all remaining references to the
+ * original data-buffering subsystem have been eliminated.
  */
 public class DataBufferException extends Exception {
 
     /**
-     * Constructs a new {@code DataBufferException} with the specified detail message.
+     * Creates a data buffer exception with the specified detail message.
      *
-     * @param message a descriptive message explaining the cause of the exception
+     * @param message detail message describing the failure
      */
     public DataBufferException(String message) {
         super(message);
     }
 
     /**
-     * Constructs a new {@code DataBufferException} with the specified detail message
-     * and underlying cause.
+     * Creates a data buffer exception with the specified detail message and
+     * underlying cause.
      *
-     * @param message a descriptive message explaining the cause of the exception
-     * @param cause the underlying exception that triggered this error
+     * @param message detail message describing the failure
+     * @param cause underlying cause of the failure
      */
     public DataBufferException(String message, Throwable cause) {
         super(message, cause);

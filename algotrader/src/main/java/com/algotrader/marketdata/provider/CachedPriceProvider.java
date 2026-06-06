@@ -8,27 +8,34 @@ import com.algotrader.marketdata.model.StampedOHLCV;
 import com.algotrader.marketdata.model.TimeInterval;
 
 /**
- * A {@link PriceProvider} implementation backed by a
+ * Legacy {@link PriceProvider} implementation backed by a
  * {@link MarketDataProvider}.
  *
- * <p>This provider uses a fixed {@link TimeInterval} configured at
- * construction time. All price lookups are delegated to the underlying
- * provider using that interval.
+ * <p>This adapter was originally introduced before
+ * {@code MarketDataCache} implemented {@link PriceProvider} directly.
+ * It converts OHLCV row lookups into {@link MarketPrice} objects by
+ * retrieving a candle from a fixed {@link TimeInterval} and returning
+ * its close price.
  *
- * <p>This is useful when a trading system or strategy operates entirely
- * on a single interval and should not need to repeatedly specify it.
+ * <p>The current architecture typically uses {@code MarketDataCache}
+ * directly as both a {@code MarketDataProvider} and
+ * {@code PriceProvider}, making this adapter largely unnecessary.
+ *
+ * <p><b>Legacy status:</b> Retained for compatibility with older code paths.
+ *
+ * <p><b>TODO:</b> Remove this class if no remaining components require
+ * interval-specific price lookup adaptation.
  */
-public class CachedPriceProvider implements PriceProvider {
+public final class CachedPriceProvider implements PriceProvider {
 
     private final MarketDataProvider marketDataProvider;
     private final TimeInterval interval;
 
     /**
-     * Constructs a {@code CachedPriceProvider}.
+     * Creates a legacy price-provider adapter for a fixed interval.
      *
-     * @param marketDataCache the backing market data cache
-     * @param interval the fixed interval used for all lookups
-     *
+     * @param marketDataProvider backing provider used to retrieve OHLCV rows
+     * @param interval interval used for all price lookups
      * @throws IllegalArgumentException if either argument is null
      */
     public CachedPriceProvider(
@@ -52,12 +59,15 @@ public class CachedPriceProvider implements PriceProvider {
     }
 
     /**
-     * Retrieves the market price for a ticker at the specified timestamp
-     * using this provider's configured interval.
+     * Retrieves the market price for a ticker at an exact timestamp.
      *
-     * @param ticker the ticker symbol to query
-     * @param timestamp the exact lookup timestamp
-     * @return market price information for the exact requested timestamp
+     * <p>The returned price is derived from the close value of the matching
+     * OHLCV candle retrieved from the backing provider.
+     *
+     * @param ticker ticker symbol to query
+     * @param timestamp exact timestamp to retrieve
+     * @return market price derived from the candle close
+     * @throws DataCacheException if the requested row cannot be retrieved
      */
     @Override
     public MarketPrice getTickerPrice(

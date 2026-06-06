@@ -20,8 +20,21 @@ import com.algotrader.marketdata.provider.SlidingWindowProviderFactory;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
- * Factory for constructing {@link TradingCycleRunner} instances from
- * {@link TradingPlan} configurations.
+ * Factory for constructing {@link TradingCycleRunner} instances from trading
+ * session configuration.
+ *
+ * <p>This factory wires together the components required to run a historical
+ * trading cycle, including configuration loading, sliding-window data access,
+ * trade generation, simulated execution, price availability checking, and
+ * cycle logging.
+ *
+ * <p>The supplied {@link TradingSessionConfig} references model and strategy
+ * configuration by ID. This factory loads those configs, combines them into a
+ * {@link ResolvedTradingPlan}, and uses that resolved plan to construct the
+ * runtime objects needed by the runner.
+ *
+ * <p><b>TODO:</b> Revisit the dependency on {@link PriceAvailabilityValidator}
+ * once the market data missing-price contract is redesigned.
  */
 public final class TradingCycleRunnerFactory {
 
@@ -33,6 +46,14 @@ public final class TradingCycleRunnerFactory {
     private final TradingCycleLogger tradingCycleLogger;
     private final PriceAvailabilityValidator priceAvailabilityValidator;
 
+    /**
+     * Creates a trading cycle runner factory.
+     *
+     * @param marketDataProvider provider used to supply historical OHLCV data
+     * @param priceProvider provider used to look up simulated execution prices
+     * @param tradingCycleLogger logger used to persist completed cycle logs
+     * @throws IllegalArgumentException if any dependency is null
+     */
     public TradingCycleRunnerFactory(
             MarketDataProvider marketDataProvider,
             PriceProvider priceProvider,
@@ -83,10 +104,16 @@ public final class TradingCycleRunnerFactory {
     }
 
     /**
-     * Creates a {@link TradingCycleRunner} from a trading plan.
+     * Creates a trading cycle runner from a trading session configuration.
      *
-     * @param sessionConfig the session configuration
-     * @return a configured trading cycle runner
+     * <p>The session's model and strategy IDs are resolved into concrete
+     * configuration objects before the runner is constructed.
+     *
+     * @param sessionConfig trading session configuration to run
+     * @return configured trading cycle runner
+     * @throws IllegalArgumentException if {@code sessionConfig} is null
+     * @throws RuntimeException if referenced model or strategy configuration
+     *         cannot be loaded
      */
     public TradingCycleRunner create(
             TradingSessionConfig sessionConfig

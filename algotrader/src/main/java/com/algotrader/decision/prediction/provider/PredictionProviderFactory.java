@@ -5,23 +5,42 @@ import com.algotrader.decision.prediction.api.PythonPredictionClient;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
- * Factory for constructing prediction providers from {@link ModelConfig}
- * definitions.
+ * Factory for constructing {@link PredictionProvider} instances from
+ * trading configuration.
+ *
+ * <p>This factory is responsible for selecting and creating the appropriate
+ * prediction provider implementation based on a model's configured
+ * prediction type.
+ *
+ * <p>Prediction providers act as the bridge between the trading system and
+ * machine learning models, converting market data into
+ * {@link com.algotrader.decision.dataobjects.ModelPrediction} instances.
+ *
+ * <p>The current implementation creates providers backed by Python model
+ * endpoints accessed through {@link PythonPredictionClient}.
  */
 public final class PredictionProviderFactory {
 
+    /**
+     * Creates a prediction provider factory.
+     */
     public PredictionProviderFactory() {}
 
-    /**
-     * Creates a classification prediction provider from the supplied model config.
+   /**
+     * Creates a classification prediction provider for the supplied trading plan.
      *
-     * @param modelConfig the model configuration
+     * <p>The referenced model configuration must declare a prediction type of
+     * {@code CLASSIFICATION}.
+     *
+     * @param tradingPlan resolved trading plan containing the model
+     *        configuration
      * @return a classification prediction provider
+     * @throws IllegalArgumentException if the trading plan references a model
+     *         that is not configured for classification predictions
      */
-    public ClassificationPredictionProvider
-            createClassificationProvider(
-                    ResolvedTradingPlan tradingPlan
-            ) {
+    public ClassificationPredictionProvider createClassificationProvider( //TODO: return PredictionProvider<ClassificationPrediction>
+            ResolvedTradingPlan tradingPlan
+        ) {
 
         ModelConfig modelConfig = tradingPlan.getModelConfig();
 
@@ -36,15 +55,20 @@ public final class PredictionProviderFactory {
     }
 
     /**
-     * Creates a regression prediction provider from the supplied model config.
+     * Creates a regression prediction provider from the supplied model
+     * configuration.
      *
-     * @param modelConfig the model configuration
+     * <p>The supplied model configuration must declare a prediction type of
+     * {@code REGRESSION}.
+     *
+     * @param modelConfig regression model configuration
      * @return a regression prediction provider
+     * @throws IllegalArgumentException if the model is not configured for
+     *         regression predictions
      */
-    public RegressionPredictionProvider
-            createRegressionProvider(
-                    ModelConfig modelConfig
-            ) {
+    public RegressionPredictionProvider createRegressionProvider( //TODO: return PredictionProvider<RegressionPrediction>
+            ModelConfig modelConfig
+        ) {
 
         validateModelConfig(modelConfig, "REGRESSION");
 
@@ -57,11 +81,13 @@ public final class PredictionProviderFactory {
     }
 
     /**
-     * Validates that the supplied model config matches the expected
-     * prediction type.
+     * Validates that a model configuration declares the expected prediction
+     * type.
      *
-     * @param modelConfig the model config to validate
-     * @param expectedPredictionType the required prediction type
+     * @param modelConfig model configuration to validate
+     * @param expectedPredictionType required prediction type
+     * @throws IllegalArgumentException if the configuration is null or declares
+     *         a different prediction type
      */
     private void validateModelConfig(
             ModelConfig modelConfig,

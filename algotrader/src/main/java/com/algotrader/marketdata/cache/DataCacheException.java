@@ -1,36 +1,42 @@
 package com.algotrader.marketdata.cache;
 
 /**
- * Exception thrown when an error occurs during data cache operations.
+ * Exception thrown when market data cannot be retrieved, loaded, or processed.
  *
- * <p>This exception is used to signal issues related to retrieving, loading,
- * or processing OHLCV data within market data cache implementations.
+ * <p>{@code DataCacheException} represents failures originating from the
+ * market data layer, including cache lookups, data loading, data validation,
+ * and underlying data source operations.
  *
  * <p>Typical causes include:
  * <ul>
- *     <li>Invalid request parameters (e.g. null ticker, invalid batch size)</li>
- *     <li>Missing or unreadable CSV files</li>
- *     <li>Malformed or invalid data within a CSV file</li>
- *     <li>Insufficient data to fulfill a batch request</li>
+ *     <li>Requested market data does not exist</li>
+ *     <li>Insufficient historical data to satisfy a request</li>
+ *     <li>Corrupted or invalid market data</li>
+ *     <li>Failures in underlying data sources</li>
+ *     <li>Cache population or retrieval failures</li>
  * </ul>
+ *
+ * <p>This exception provides a common error type for market data operations,
+ * allowing higher-level trading components to handle data-access failures
+ * without depending on specific storage implementations.
  */
 public class DataCacheException extends Exception {
 
     /**
-     * Constructs a new {@code DataCacheException} with the specified detail message.
+     * Creates a data cache exception with the specified detail message.
      *
-     * @param message a descriptive message explaining the cause of the exception
+     * @param message detail message describing the failure
      */
     public DataCacheException(String message) {
         super(message);
     }
 
     /**
-     * Constructs a new {@code DataCacheException} with the specified detail message
-     * and underlying cause.
+     * Creates a data cache exception with the specified detail message and
+     * underlying cause.
      *
-     * @param message a descriptive message explaining the cause of the exception
-     * @param cause the underlying exception that triggered this error
+     * @param message detail message describing the failure
+     * @param cause underlying cause of the failure
      */
     public DataCacheException(String message, Throwable cause) {
         super(message, cause);

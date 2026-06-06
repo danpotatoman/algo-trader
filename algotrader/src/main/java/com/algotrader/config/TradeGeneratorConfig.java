@@ -4,18 +4,29 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Immutable configuration describing a trade generator.
+ * Immutable configuration describing how a TradeGenerator should convert
+ * model predictions into trade recommendations.
  *
- * <p>A {@code TradeGeneratorConfig} defines:
+ * <p>A TradeGenerator is configured through an underlying trade generation
+ * strategy and its associated parameters.
+ *
+ * <p>A TradeGenerator is responsible for converting model predictions into
+ * trade recommendations according to a configurable decision-making strategy.
+ *
+ * <p>This configuration defines:
  * <ul>
- *     <li>Strategy identifiers and metadata</li>
- *     <li>Strategy type</li>
- *     <li>Strategy parameters</li>
- *     <li>Versioning information</li>
+ *     <li>A unique identifier for the trade generator</li>
+ *     <li>The trade generation strategy implementation to use</li>
+ *     <li>Human-readable metadata and version information</li>
+ *     <li>Strategy-specific parameters</li>
  * </ul>
  *
- * <p>This class is intended to be loaded from external configuration
- * files such as JSON.
+ * <p>Instances are typically loaded from external JSON configuration files
+ * during application startup.
+ *
+ * <p><b>Note:</b> The current configuration structure is designed around
+ * confidence-threshold classification strategies and may need to be expanded
+ * as additional trade generation approaches are introduced.
  */
 public final class TradeGeneratorConfig {
 
@@ -27,7 +38,14 @@ public final class TradeGeneratorConfig {
     private final StrategyParameters parameters;
 
     /**
-     * Constructs a {@code TradeGeneratorConfig}.
+     * Creates a trade generator configuration from deserialized JSON data.
+     *
+     * @param strategyId unique identifier for the trade generator
+     * @param strategyType type of trade generation strategy to use
+     * @param description human-readable description of the configuration
+     * @param version configuration version identifier
+     * @param parameters strategy-specific parameters
+     * @throws IllegalArgumentException if any required field is invalid
      */
     @JsonCreator
     public TradeGeneratorConfig(
@@ -74,53 +92,40 @@ public final class TradeGeneratorConfig {
         this.parameters = parameters;
     }
 
-    /**
-     * Returns the unique strategy identifier.
-     *
-     * @return the strategy ID
-     */
     public String getStrategyId() {
         return strategyId;
     }
 
-    /**
-     * Returns the strategy type.
-     *
-     * @return the strategy type
-     */
     public String getStrategyType() {
         return strategyType;
     }
 
-    /**
-     * Returns the strategy description.
-     *
-     * @return the description
-     */
     public String getDescription() {
         return description;
     }
 
-    /**
-     * Returns the config version.
-     *
-     * @return the version
-     */
     public String getVersion() {
         return version;
     }
 
     /**
-     * Returns the strategy parameters.
+     * Returns the strategy-specific parameters used when generating trades.
      *
-     * @return strategy parameters
+     * @return the configured strategy parameters
      */
     public StrategyParameters getParameters() {
         return parameters;
     }
 
     /**
-     * Immutable strategy parameter configuration.
+     * Configuration parameters for a confidence-based trade generation strategy.
+     *
+     * <p>These parameters determine when a prediction is considered actionable
+     * and how large a position should be opened when trading conditions are met.
+     *
+     * <p><b>TODO:</b> As additional trade generator types are introduced,
+     * strategy-specific parameter objects should replace this shared parameter
+     * structure.
      */
     public static final class StrategyParameters {
 
@@ -128,10 +133,14 @@ public final class TradeGeneratorConfig {
         private final double buyQuantity;
 
         /**
-         * Constructs strategy parameters.
+         * Creates a set of strategy parameters.
          *
-         * @param confidenceThreshold minimum confidence required to trade
-         * @param buyQuantity quantity to trade when conditions are met
+         * @param confidenceThreshold minimum prediction confidence required before
+         *        generating a trade recommendation
+         * @param buyQuantity quantity to purchase when a qualifying trade signal
+         *        is generated
+         * @throws IllegalArgumentException if the threshold is outside the range
+         *         [0, 1] or the quantity is negative
          */
         @JsonCreator
         public StrategyParameters(
