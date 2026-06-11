@@ -3,6 +3,9 @@ package com.algotrader.config;
 import java.time.Duration;
 import java.time.Instant;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Immutable configuration describing a trading session.
  *
@@ -52,15 +55,16 @@ public final class TradingSessionConfig {
      * @param endingTimestamp timestamp after which the session may no longer run
      * @throws IllegalArgumentException if any argument is invalid
      */
+    @JsonCreator
     public TradingSessionConfig(
-            String sessionId,
-            String modelId,
-            String strategyId,
-            String ticker,
-            Duration minTimeBeforeClose,
-            Instant startingTimestamp,
-            Instant endingTimestamp
-    ) {
+            @JsonProperty("sessionId") String sessionId,
+            @JsonProperty("modelId") String modelId,
+            @JsonProperty("strategyId") String strategyId,
+            @JsonProperty("ticker") String ticker,
+            @JsonProperty("minTimeBeforeClose") Duration minTimeBeforeClose,
+            @JsonProperty("startingTimestamp") Instant startingTimestamp,
+            @JsonProperty("endingTimestamp") Instant endingTimestamp)
+    {
         validateConstructorArgs(
                 sessionId,
                 modelId,

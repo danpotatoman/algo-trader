@@ -18,7 +18,7 @@ public class Main {
 
         TradingSessionConfigLoader tradingSessionConfigLoader = new TradingSessionConfigLoader();
 
-        TradingSessionConfig sessionConfig = tradingSessionConfigLoader.load("aapl-cnn-v1.json");
+        TradingSessionConfig sessionConfig = tradingSessionConfigLoader.load("aapl-cnn-v1");
 
         OHLCVRepository repository = new SQLiteOHLCVRepository("data/ohlcv.db");
 

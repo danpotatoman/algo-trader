@@ -6,7 +6,7 @@
     "ticker" : "AAPL",
     "interval" : "FIVE_MINUTES",
     "modelId" : "cnn-v1",
-    "planId" : "aapl-cnn-v1-5m",
+    "planId" : "aapl-cnn-v1",
     "liveMode" : false
   },
   "strategyId" : "threshold-strategy-v1",
