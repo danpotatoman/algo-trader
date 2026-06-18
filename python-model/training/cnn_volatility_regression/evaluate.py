@@ -10,7 +10,7 @@ from training.cnn_volatility_regression.build_examples import (
     build_regression_examples,
 )
 from training.split_data import chronological_split
-from training.cnn_volatility_regression.model import CNNRegressionModel
+from training.cnn_volatility_regression.model import CNNVolatilityRegressionModel
 
 
 WINDOW_SIZE = 30
@@ -160,7 +160,7 @@ def main():
 
     checkpoint = torch.load(MODEL_PATH, map_location=device)
 
-    model = CNNRegressionModel(
+    model = CNNVolatilityRegressionModel(
         input_channels=checkpoint["input_channels"],
         output_size=checkpoint["output_size"],
     ).to(device)

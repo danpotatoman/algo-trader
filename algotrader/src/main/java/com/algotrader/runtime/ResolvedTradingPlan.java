@@ -3,7 +3,9 @@ package com.algotrader.runtime;
 import java.time.Duration;
 import java.time.Instant;
 
-import com.algotrader.config.ModelConfig;
+import com.algotrader.config.EndpointConfig;
+import com.algotrader.config.PredictionType;
+import com.algotrader.config.StrategyType;
 import com.algotrader.config.TradeGeneratorConfig;
 import com.algotrader.config.TradingSessionConfig;
 import com.algotrader.marketdata.model.TimeInterval;
@@ -11,11 +13,11 @@ import com.algotrader.marketdata.model.TimeInterval;
 /**
  * Immutable runtime trading plan created by resolving a
  * {@link TradingSessionConfig} into its associated
- * {@link ModelConfig} and {@link TradeGeneratorConfig}.
+ * {@link EndpointConfig} and {@link TradeGeneratorConfig}.
  *
  * <p>A {@code ResolvedTradingPlan} represents a fully-resolved trading
  * session ready for runtime execution. It combines the session,
- * model, and trade generation configurations into a single object
+ * endpoint, and trade generation configurations into a single object
  * that can be passed throughout the trading pipeline.
  *
  * <p>This class exists primarily as a convenience layer to avoid
@@ -28,22 +30,22 @@ import com.algotrader.marketdata.model.TimeInterval;
 public final class ResolvedTradingPlan {
 
     private final TradingSessionConfig sessionConfig;
-    private final ModelConfig modelConfig;
+    private final EndpointConfig endpointConfig;
     private final TradeGeneratorConfig tradeGeneratorConfig;
 
     public ResolvedTradingPlan(
             TradingSessionConfig sessionConfig,
-            ModelConfig modelConfig,
+            EndpointConfig endpointConfig,
             TradeGeneratorConfig tradeGeneratorConfig
     ) {
         validateConstructorArgs(
                 sessionConfig,
-                modelConfig,
+                endpointConfig,
                 tradeGeneratorConfig
         );
 
         this.sessionConfig = sessionConfig;
-        this.modelConfig = modelConfig;
+        this.endpointConfig = endpointConfig;
         this.tradeGeneratorConfig = tradeGeneratorConfig;
     }
 
@@ -57,12 +59,12 @@ public final class ResolvedTradingPlan {
     }
 
     /**
-     * Returns the resolved model configuration.
+     * Returns the resolved endpoint configuration.
      *
-     * @return model configuration
+     * @return endpoint configuration
      */
-    public ModelConfig getModelConfig() {
-        return modelConfig;
+    public EndpointConfig getEndpointConfig() {
+        return endpointConfig;
     }
 
     /**
@@ -79,23 +81,23 @@ public final class ResolvedTradingPlan {
     }
 
     public TimeInterval getInterval() {
-        return modelConfig.getInput().getInterval();
+        return endpointConfig.getInterval();
     }
 
     public String getSessionId() {
         return sessionConfig.getSessionId();
     }
 
-    public String getModelId() {
-        return sessionConfig.getModelId();
+    public String getEndpointId() {
+        return sessionConfig.getEndpointId();
     }
 
     public String getStrategyId() {
         return sessionConfig.getStrategyId();
     }
 
-    public int getBatchSize() {
-        return modelConfig.getInput().getBatchSize();
+    public int getNumCandles() {
+        return endpointConfig.getNumCandles();
     }
 
     public Instant getStartingTimestamp() {
@@ -110,37 +112,17 @@ public final class ResolvedTradingPlan {
         return sessionConfig.getMinTimeBeforeClose();
     }
 
-    public String getStrategyType() {
+    public StrategyType getStrategyType() {
         return tradeGeneratorConfig.getStrategyType();
     }
 
-    public String getPredictionType() {
-        return modelConfig.getPredictionType();
-    }
-
-    /**
-     * Returns the confidence threshold configured for the trade generator.
-     *
-     * <p>This accessor currently assumes the underlying trade generator
-     * configuration defines a confidence threshold. Future strategy types
-     * may not use confidence-based decision making.
-     *
-     * @return configured confidence threshold
-     *
-     * // TODO: Revisit once additional strategy types are supported.
-     * // Some strategies may not define a confidence threshold.
-     */
-    public double getConfidenceThreshold() {
-        return tradeGeneratorConfig.getParameters().getConfidenceThreshold(); //TODO: validate that a confidence threshold exists for this model type. Throw if it doesn't. Alternatively, maybe this should be a ClassificationTradingPlan?
-    }
-
-    public int getHorizonMinutes() {
-        return modelConfig.getOutput().getHorizonMinutes();
+    public PredictionType getPredictionType() {
+        return endpointConfig.getPredictionType();
     }
 
     private static void validateConstructorArgs(
             TradingSessionConfig sessionConfig,
-            ModelConfig modelConfig,
+            EndpointConfig endpointConfig,
             TradeGeneratorConfig tradeGeneratorConfig
     ) {
         if (sessionConfig == null) {
@@ -149,9 +131,9 @@ public final class ResolvedTradingPlan {
             );
         }
 
-        if (modelConfig == null) {
+        if (endpointConfig == null) {
             throw new IllegalArgumentException(
-                    "ModelConfig cannot be null."
+                    "EndpointConfig cannot be null."
             );
         }
 

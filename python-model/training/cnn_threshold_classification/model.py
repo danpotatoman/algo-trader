@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 
 
-class CNNClassificationModel(nn.Module):
-    def __init__(self, input_channels: int = 10, output_size: int = 3):
+class CNNThresholdClassificationModel(nn.Module):
+    def __init__(self, input_channels: int = 10, output_size: int = 1):
         super().__init__()
 
         self.conv = nn.Sequential(

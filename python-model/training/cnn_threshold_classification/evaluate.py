@@ -9,9 +9,9 @@ from training.split_data import chronological_split
 from training.cnn_threshold_classification.build_examples import (
     add_base_features,
     build_classification_examples,
-    TARGET_COLUMNS,
+    TARGET_COLUMN,
 )
-from training.cnn_threshold_classification.model import CNNClassificationModel
+from training.cnn_threshold_classification.model import CNNThresholdClassificationModel
 
 
 WINDOW_SIZE = 30
@@ -52,9 +52,7 @@ def binary_metrics(probs, actual, threshold=0.5):
     accuracy = (tp + tn) / max(tp + tn + fp + fn, 1)
     precision = tp / max(tp + fp, 1)
     recall = tp / max(tp + fn, 1)
-    f1 = (
-        2 * precision * recall / max(precision + recall, 1e-12)
-    )
+    f1 = 2 * precision * recall / max(precision + recall, 1e-12)
 
     positive_rate = np.mean(actual)
     predicted_positive_rate = np.mean(pred)
@@ -75,104 +73,95 @@ def binary_metrics(probs, actual, threshold=0.5):
 
 def print_threshold_sweep(probs, actual):
     print("\nClassification metrics across probability thresholds:")
+    print(f"\n{'=' * 80}")
+    print(TARGET_COLUMN)
+    print(f"{'=' * 80}")
+
+    target_probs = probs[:, 0]
+    target_actual = actual[:, 0]
+
+    base_rate = np.mean(target_actual)
+
+    print(f"Actual positive rate: {base_rate:.4f}\n")
+
+    header = (
+        f"{'thr':>5} "
+        f"{'pred%':>8} "
+        f"{'prec':>8} "
+        f"{'recall':>8} "
+        f"{'f1':>8} "
+        f"{'acc':>8}"
+    )
+
+    print(header)
+    print("-" * len(header))
 
     thresholds = np.arange(0.05, 0.55, 0.05)
 
-    for i, target in enumerate(TARGET_COLUMNS):
-        print(f"\n{'=' * 80}")
-        print(target)
-        print(f"{'=' * 80}")
-
-        base_rate = np.mean(actual[:, i])
-
-        print(f"Actual positive rate: {base_rate:.4f}\n")
-
-        header = (
-            f"{'thr':>5} "
-            f"{'pred%':>8} "
-            f"{'prec':>8} "
-            f"{'recall':>8} "
-            f"{'f1':>8} "
-            f"{'acc':>8}"
+    for threshold in thresholds:
+        metrics = binary_metrics(
+            target_probs,
+            target_actual,
+            threshold=threshold,
         )
-
-        print(header)
-        print("-" * len(header))
-
-        for threshold in thresholds:
-            metrics = binary_metrics(
-                probs[:, i],
-                actual[:, i],
-                threshold=threshold,
-            )
-
-            print(
-                f"{threshold:>5.2f} "
-                f"{metrics['predicted_positive_rate']:>8.4f} "
-                f"{metrics['precision']:>8.4f} "
-                f"{metrics['recall']:>8.4f} "
-                f"{metrics['f1']:>8.4f} "
-                f"{metrics['accuracy']:>8.4f}"
-            )
 
         print(
-            f"\nAverage predicted probability: "
-            f"{np.mean(probs[:, i]):.4f}"
+            f"{threshold:>5.2f} "
+            f"{metrics['predicted_positive_rate']:>8.4f} "
+            f"{metrics['precision']:>8.4f} "
+            f"{metrics['recall']:>8.4f} "
+            f"{metrics['f1']:>8.4f} "
+            f"{metrics['accuracy']:>8.4f}"
         )
-        print(
-            f"Predicted probability std: "
-            f"{np.std(probs[:, i]):.4f}"
-        )
+
+    print(f"\nAverage predicted probability: {np.mean(target_probs):.4f}")
+    print(f"Predicted probability std: {np.std(target_probs):.4f}")
 
 
 def print_probability_buckets(probs, actual, num_buckets=5):
     print("\nProbability bucket tests:")
+    print(f"\n{TARGET_COLUMN}")
 
-    for i, target in enumerate(TARGET_COLUMNS):
-        print(f"\n{target}")
+    target_probs = probs[:, 0]
+    target_actual = actual[:, 0]
 
-        target_probs = probs[:, i]
-        target_actual = actual[:, i]
+    sorted_indices = np.argsort(target_probs)
+    buckets = np.array_split(sorted_indices, num_buckets)
 
-        sorted_indices = np.argsort(target_probs)
-        buckets = np.array_split(sorted_indices, num_buckets)
+    for bucket_num, indices in enumerate(buckets, start=1):
+        avg_prob = np.mean(target_probs[indices])
+        actual_positive_rate = np.mean(target_actual[indices])
 
-        for bucket_num, indices in enumerate(buckets, start=1):
-            avg_prob = np.mean(target_probs[indices])
-            actual_positive_rate = np.mean(target_actual[indices])
-
-            print(
-                f"  Bucket {bucket_num}: "
-                f"avg_prob={avg_prob:.4f}, "
-                f"actual_positive_rate={actual_positive_rate:.4f}, "
-                f"count={len(indices)}"
-            )
+        print(
+            f"  Bucket {bucket_num}: "
+            f"avg_prob={avg_prob:.4f}, "
+            f"actual_positive_rate={actual_positive_rate:.4f}, "
+            f"count={len(indices)}"
+        )
 
 
 def print_top_probability_slices(probs, actual):
     print("\nTop probability slice tests:")
+    print(f"\n{TARGET_COLUMN}")
 
-    for i, target in enumerate(TARGET_COLUMNS):
-        print(f"\n{target}")
+    target_probs = probs[:, 0]
+    target_actual = actual[:, 0]
 
-        target_probs = probs[:, i]
-        target_actual = actual[:, i]
+    sorted_indices = np.argsort(target_probs)[::-1]
 
-        sorted_indices = np.argsort(target_probs)[::-1]
+    for fraction in [0.01, 0.05, 0.10, 0.20]:
+        n = max(int(len(sorted_indices) * fraction), 1)
+        top_indices = sorted_indices[:n]
 
-        for fraction in [0.01, 0.05, 0.10, 0.20]:
-            n = max(int(len(sorted_indices) * fraction), 1)
-            top_indices = sorted_indices[:n]
+        avg_prob = np.mean(target_probs[top_indices])
+        hit_rate = np.mean(target_actual[top_indices])
 
-            avg_prob = np.mean(target_probs[top_indices])
-            hit_rate = np.mean(target_actual[top_indices])
-
-            print(
-                f"  Top {int(fraction * 100):>2}%: "
-                f"avg_prob={avg_prob:.4f}, "
-                f"hit_rate={hit_rate:.4f}, "
-                f"count={n}"
-            )
+        print(
+            f"  Top {int(fraction * 100):>2}%: "
+            f"avg_prob={avg_prob:.4f}, "
+            f"hit_rate={hit_rate:.4f}, "
+            f"count={n}"
+        )
 
 
 def main():
@@ -180,7 +169,7 @@ def main():
     df = load_five_minute_dataframe(DB_PATH)
     df = add_base_features(df)
 
-    print("Building classification examples...")
+    print("Building 30m threshold classification examples...")
     X, y, metadata = build_classification_examples(
         df,
         window_size=WINDOW_SIZE,
@@ -223,7 +212,7 @@ def main():
 
     checkpoint = torch.load(MODEL_PATH, map_location=device)
 
-    model = CNNClassificationModel(
+    model = CNNThresholdClassificationModel(
         input_channels=checkpoint["input_channels"],
         output_size=checkpoint["output_size"],
     ).to(device)

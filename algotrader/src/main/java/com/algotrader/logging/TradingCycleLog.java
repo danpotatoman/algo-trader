@@ -129,7 +129,7 @@ public final class TradingCycleLog {
         private final String ticker;
         private final TimeInterval interval;
 
-        private final String modelId;
+        private final String endpointId;
         private final String planId;
 
         private final boolean liveMode;
@@ -139,7 +139,7 @@ public final class TradingCycleLog {
      *
      * @param ticker ticker traded during the cycle
      * @param interval market data interval used by the model
-     * @param modelId model used during the cycle
+     * @param endpointId model used during the cycle
      * @param planId trading plan or session identifier associated with the cycle
      * @param liveMode whether the cycle was run in live mode
      * @throws IllegalArgumentException if any argument is invalid
@@ -147,7 +147,7 @@ public final class TradingCycleLog {
         public Metadata(
                 String ticker,
                 TimeInterval interval,
-                String modelId,
+                String endpointId,
                 String planId,
                 boolean liveMode
         ) {
@@ -163,7 +163,7 @@ public final class TradingCycleLog {
                 );
             }
 
-            if (modelId == null || modelId.isBlank()) {
+            if (endpointId == null || endpointId.isBlank()) {
                 throw new IllegalArgumentException(
                         "Model ID cannot be null or blank."
                 );
@@ -178,7 +178,7 @@ public final class TradingCycleLog {
             this.ticker = ticker.toUpperCase();
             this.interval = interval;
 
-            this.modelId = modelId;
+            this.endpointId = endpointId;
             this.planId = planId;
 
             this.liveMode = liveMode;
@@ -192,8 +192,8 @@ public final class TradingCycleLog {
             return interval;
         }
 
-        public String getModelId() {
-            return modelId;
+        public String getEndpointId() {
+            return endpointId;
         }
 
         public String getPlanId() {

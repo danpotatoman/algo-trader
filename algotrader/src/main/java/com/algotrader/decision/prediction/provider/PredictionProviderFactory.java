@@ -1,9 +1,12 @@
 package com.algotrader.decision.prediction.provider;
 
-import com.algotrader.config.ModelConfig;
+import com.algotrader.config.EndpointConfig;
+import com.algotrader.config.PredictionType;
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
-import com.algotrader.decision.dataobjects.RegressionPrediction;
+import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
 import com.algotrader.decision.prediction.api.PythonPredictionClient;
+import com.algotrader.decision.prediction.api.request.ClassificationWithVolatilityRequestMapper;
+import com.algotrader.decision.prediction.api.request.LegacyClassificationRequestMapper;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
@@ -11,11 +14,11 @@ import com.algotrader.runtime.ResolvedTradingPlan;
  * trading configuration.
  *
  * <p>This factory is responsible for selecting and creating the appropriate
- * prediction provider implementation based on a model's configured
+ * prediction provider implementation based on an endpoint's configured
  * prediction type.
  *
  * <p>Prediction providers act as the bridge between the trading system and
- * machine learning models, converting market data into
+ * prediction endpoints, converting market data into
  * {@link com.algotrader.decision.dataobjects.ModelPrediction} instances.
  *
  * <p>The current implementation creates providers backed by Python model
@@ -31,86 +34,105 @@ public final class PredictionProviderFactory {
    /**
      * Creates a classification prediction provider for the supplied trading plan.
      *
-     * <p>The referenced model configuration must declare a prediction type of
+     * <p>The referenced endpoint configuration must declare a prediction type of
      * {@code CLASSIFICATION}.
      *
-     * @param tradingPlan resolved trading plan containing the model
+     * @param tradingPlan resolved trading plan containing the endpoint
      *        configuration
      * @return a classification prediction provider
-     * @throws IllegalArgumentException if the trading plan references a model
+     * @throws IllegalArgumentException if the trading plan references an endpoint
      *         that is not configured for classification predictions
      */
     public PredictionProvider<ClassificationPrediction> createClassificationProvider(
             ResolvedTradingPlan tradingPlan
         ) {
 
-        ModelConfig modelConfig = tradingPlan.getModelConfig();
+        if (tradingPlan == null) {
+                throw new IllegalArgumentException("ResolvedTradingPlan cannot be null.");
+        }
 
-        validateModelConfig(modelConfig, "CLASSIFICATION");
+        EndpointConfig endpointConfig = tradingPlan.getEndpointConfig();
+
+        validateEndpointConfig(
+                endpointConfig,
+                PredictionType.CLASSIFICATION
+        );
 
         PythonPredictionClient client =
                 new PythonPredictionClient(
-                        modelConfig.getEndpoint()
+                        endpointConfig.getEndpoint(),
+                        new LegacyClassificationRequestMapper()
                 );
 
         return new PythonClassificationPredictionProvider(client);
     }
 
     /**
-     * Creates a regression prediction provider from the supplied model
-     * configuration.
+     * Creates a classification-with-volatility prediction provider for the
+     * supplied trading plan.
      *
-     * <p>The supplied model configuration must declare a prediction type of
-     * {@code REGRESSION}.
+     * <p>The referenced endpoint configuration must declare a prediction type
+     * of {@code CLASSIFICATION_WITH_VOLATILITY}.
      *
-     * @param modelConfig regression model configuration
-     * @return a regression prediction provider
-     * @throws IllegalArgumentException if the model is not configured for
-     *         regression predictions
+     * @param tradingPlan resolved trading plan containing the endpoint
+     *        configuration
+     * @return a classification-with-volatility prediction provider
+     * @throws IllegalArgumentException if the trading plan references an
+     *         endpoint with a different prediction type
      */
-    public PredictionProvider<RegressionPrediction> createRegressionProvider(
-            ModelConfig modelConfig
+    public PredictionProvider<ClassificationWithVolatilityPrediction> createClassificationWithVolatilityProvider(
+            ResolvedTradingPlan tradingPlan
         ) {
 
-        validateModelConfig(modelConfig, "REGRESSION");
+        if (tradingPlan == null) {
+                throw new IllegalArgumentException("ResolvedTradingPlan cannot be null.");
+        }
+
+        EndpointConfig endpointConfig = tradingPlan.getEndpointConfig();
+
+        validateEndpointConfig(
+                endpointConfig,
+                PredictionType.CLASSIFICATION_WITH_VOLATILITY
+        );
 
         PythonPredictionClient client =
                 new PythonPredictionClient(
-                        modelConfig.getEndpoint()
+                        endpointConfig.getEndpoint(),
+                        new ClassificationWithVolatilityRequestMapper()
                 );
 
-        return new PythonRegressionPredictionProvider(client);
+        return new PythonClassificationWithVolatilityPredictionProvider(client);
     }
 
     /**
-     * Validates that a model configuration declares the expected prediction
+     * Validates that an endpoint configuration declares the expected prediction
      * type.
      *
-     * @param modelConfig model configuration to validate
+     * @param endpointConfig endpoint configuration to validate
      * @param expectedPredictionType required prediction type
      * @throws IllegalArgumentException if the configuration is null or declares
      *         a different prediction type
      */
-    private void validateModelConfig(
-            ModelConfig modelConfig,
-            String expectedPredictionType
-    ) {
-        if (modelConfig == null) {
-            throw new IllegalArgumentException(
-                    "ModelConfig cannot be null."
-            );
-        }
+    private void validateEndpointConfig(
+        EndpointConfig endpointConfig,
+        PredictionType expectedPredictionType
+        ) {
+                if (endpointConfig == null) {
+                        throw new IllegalArgumentException(
+                                "EndpointConfig cannot be null."
+                        );
+                }
 
-        String actualPredictionType =
-                modelConfig.getPredictionType().toUpperCase();
+                PredictionType actualPredictionType =
+                        endpointConfig.getPredictionType();
 
-        if (!actualPredictionType.equals(expectedPredictionType)) {
-            throw new IllegalArgumentException(
-                    "Expected prediction type "
-                            + expectedPredictionType
-                            + " but received "
-                            + actualPredictionType
-            );
+                if (actualPredictionType != expectedPredictionType) {
+                        throw new IllegalArgumentException(
+                                "Expected prediction type "
+                                        + expectedPredictionType
+                                        + " but received "
+                                        + actualPredictionType
+                        );
+                }
         }
-    }
 }

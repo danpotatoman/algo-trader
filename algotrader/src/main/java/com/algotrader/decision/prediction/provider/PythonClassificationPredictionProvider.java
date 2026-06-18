@@ -1,11 +1,14 @@
 package com.algotrader.decision.prediction.provider;
 
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
-import com.algotrader.decision.dataobjects.ClassificationScore;
 import com.algotrader.decision.prediction.api.PythonPredictionClient;
 import com.algotrader.marketdata.model.DataBatch;
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * Prediction provider that converts Python classification endpoint responses
+ * into {@link ClassificationPrediction} domain objects.
+ */
 public final class PythonClassificationPredictionProvider
         implements PredictionProvider<ClassificationPrediction> {
 
@@ -23,6 +26,14 @@ public final class PythonClassificationPredictionProvider
         this.client = client;
     }
 
+    /**
+     * Requests a classification prediction for the supplied market data batch.
+     *
+     * @param batch market data batch to send to the endpoint
+     * @return classification prediction for the batch
+     * @throws IllegalArgumentException if {@code batch} is null
+     * @throws PredictionProviderException if the endpoint response is invalid
+     */
     @Override
     public ClassificationPrediction makePrediction(
             DataBatch batch
@@ -35,23 +46,21 @@ public final class PythonClassificationPredictionProvider
 
         JsonNode response = client.predict(batch);
 
-        String responseTicker = response.get("ticker").asText();
+        String ticker = response.get("ticker").asText();
 
-        if (!batch.getTicker().equalsIgnoreCase(responseTicker)) {
+        if (!batch.getTicker().equalsIgnoreCase(ticker)) {
             throw new PredictionProviderException(
                     "Classification response ticker does not match request ticker. "
                             + "Requested: " + batch.getTicker()
-                            + ", received: " + responseTicker
+                            + ", received: " + ticker
             );
         }
 
-        ClassificationScore score = new ClassificationScore(
-                responseTicker,
-                response.get("prediction").asInt(),
-                response.get("confidence").asDouble(),
-                response.get("label").asText()
-        );
+        int prediction = response.get("prediction").asInt();
+        double confidence = response.get("confidence").asDouble();
+        int horizonMinutes = response.get("horizonMinutes").asInt();
+        String label = response.get("label").asText();
 
-        return new ClassificationPrediction(batch, score);
+        return new ClassificationPrediction(batch, ticker, prediction, confidence, horizonMinutes, label);
     }
 }

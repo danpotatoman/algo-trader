@@ -4,9 +4,7 @@ import pandas as pd
 from training.window_utils import is_continuous_window
 
 
-RETURN_5M_THRESHOLD = 0.0010
-RETURN_10M_THRESHOLD = 0.0015 #revisit these thresholds. To make something profitable, model needs to learn when return > threshold + cost
-RETURN_30M_THRESHOLD = 0.0020
+RETURN_30M_THRESHOLD = 0.0020 #revisit how this number is chosen. To be profitable, a trade needs return > threshold + cost
 
 FEATURE_COLUMNS = [
     "open_rel",
@@ -21,11 +19,8 @@ FEATURE_COLUMNS = [
     "cos_time",
 ]
 
-TARGET_COLUMNS = [
-    "return_5m_exceeds_threshold",
-    "return_10m_exceeds_threshold",
-    "return_30m_exceeds_threshold",
-]
+TARGET_COLUMN = "return_30m_exceeds_threshold"
+
 
 def add_base_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
@@ -100,23 +95,15 @@ def build_single_example(
         return None
 
     close_now = float(ticker_df["close"].iloc[end_idx])
-    close_5m = float(ticker_df["close"].iloc[end_idx + 1])
-    close_10m = float(ticker_df["close"].iloc[end_idx + 2])
-    close_30m = float(ticker_df["close"].iloc[end_idx + 6])
+    close_30m = float(ticker_df["close"].iloc[future_end_idx])
 
     if close_now <= 0:
         return None
 
-    return_5m = close_5m / close_now - 1.0
-    return_10m = close_10m / close_now - 1.0
     return_30m = close_30m / close_now - 1.0
 
     y = np.array(
-        [
-            1.0 if return_5m >= RETURN_5M_THRESHOLD else 0.0,
-            1.0 if return_10m >= RETURN_10M_THRESHOLD else 0.0,
-            1.0 if return_30m >= RETURN_30M_THRESHOLD else 0.0,
-        ],
+        [1.0 if return_30m >= RETURN_30M_THRESHOLD else 0.0],
         dtype=np.float32,
     )
 
@@ -126,13 +113,10 @@ def build_single_example(
         "ticker": ticker_df["ticker"].iloc[end_idx],
         "window_start_timestamp": int(ticker_df["timestamp"].iloc[start_idx]),
         "window_end_timestamp": int(ticker_df["timestamp"].iloc[end_idx]),
-        "target_5m_timestamp": int(ticker_df["timestamp"].iloc[end_idx + 1]),
-        "target_10m_timestamp": int(ticker_df["timestamp"].iloc[end_idx + 2]),
-        "target_30m_timestamp": int(ticker_df["timestamp"].iloc[end_idx + 6]),
+        "target_30m_timestamp": int(ticker_df["timestamp"].iloc[future_end_idx]),
         "window_end_datetime": ticker_df["datetime"].iloc[end_idx],
-        "return_5m": float(return_5m),
-        "return_10m": float(return_10m),
         "return_30m": float(return_30m),
+        TARGET_COLUMN: float(y[0]),
     }
 
     return X, y, metadata
@@ -176,7 +160,7 @@ def build_classification_examples(
     X = np.stack(X_examples).astype(np.float32)
     y = np.stack(y_examples).astype(np.float32)
 
-    print("Positive rates:")
-    print(y.mean(axis=0))
+    print(f"Positive rate for {TARGET_COLUMN}:")
+    print(float(y.mean()))
 
     return X, y, metadata

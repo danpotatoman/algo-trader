@@ -33,31 +33,22 @@ public final class ThresholdClassificationPredictionInterpreter
         implements PredictionInterpreter<ClassificationPrediction> {
 
     private final double k;
-    private final int horizonMinutes;
     private final String strategyId;
 
     /**
      * Creates a threshold-based classification trading strategy.
      *
      * @param k minimum confidence required before a trade is generated
-     * @param horizonMinutes holding period of generated trades
      * @param strategyId identifier associated with generated trades
      * @throws IllegalArgumentException if any argument is invalid
      */
     public ThresholdClassificationPredictionInterpreter(
             double k,
-            int horizonMinutes,
             String strategyId
     ) {
         if (k < 0.0 || k > 1.0) {
             throw new IllegalArgumentException(
                     "Confidence threshold k must be between 0 and 1."
-            );
-        }
-
-        if (horizonMinutes <= 0) {
-            throw new IllegalArgumentException(
-                    "Horizon minutes must be positive."
             );
         }
 
@@ -68,7 +59,6 @@ public final class ThresholdClassificationPredictionInterpreter
         }
 
         this.k = k;
-        this.horizonMinutes = horizonMinutes;
         this.strategyId = strategyId;
     }
 
@@ -101,8 +91,8 @@ public final class ThresholdClassificationPredictionInterpreter
         }
 
         String ticker = prediction.getTicker();
-
         Instant entryTime = prediction.getFinalTimestamp();
+        int horizonMinutes = prediction.getHorizonMinutes();
 
         if (entryTime == null) {
             throw new IllegalArgumentException(

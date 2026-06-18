@@ -1,0 +1,12 @@
+{
+  "sessionId": "aapl-cnn-volatility-v1",
+  "modelId": "cnn-with-volatility-v1",
+  "strategyId": "threshold-strategy-volatility-v1",
+
+  "ticker": "AAPL",
+
+  "minTimeBeforeClose": "PT10M",
+
+  "startingTimestamp": "2026-05-18T19:15:00Z",
+  "endingTimestamp": "2026-06-16T20:00:00Z"
+}

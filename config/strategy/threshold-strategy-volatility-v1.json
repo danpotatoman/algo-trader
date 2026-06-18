@@ -1,0 +1,14 @@
+{
+  "strategyId": "threshold-strategy-volatility-v1",
+
+  "strategyType": "THRESHOLD_CLASSIFICATION",
+
+  "description": "Buys when prediction confidence exceeds a threshold and volatility is below a threshold.",
+
+  "parameters": {
+    "confidenceThreshold": 0.3,
+    "maxVolatilityThreshold": 1.0
+  },
+
+  "version": "1.0.0"
+}

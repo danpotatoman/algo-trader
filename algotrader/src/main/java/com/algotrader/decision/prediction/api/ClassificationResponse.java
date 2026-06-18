@@ -8,12 +8,10 @@ package com.algotrader.decision.prediction.api;
  * the application's prediction domain objects.
  *
  * <p>Instances are typically deserialized directly from endpoint responses
- * before being converted into {@code ClassificationScore} objects.
+ * before being converted into {@code ClassificationPrediction} objects.
  *
- * <p>This DTO exists primarily to support the project's original
- * classification-based prediction pipeline. Newer models are expected to
- * favor regression outputs, but classification support is retained for
- * experimentation and backwards compatibility.
+ * <p>This DTO supports the classification prediction pipeline, which is
+ * supported end-to-end by the trading workflow.
  *
  * <p>Expected JSON format:
  *
@@ -51,6 +49,11 @@ public record ClassificationResponse(
      * <p>Expected range: {@code [0.0, 1.0]}.
      */
     double confidence,
+
+    /**
+     * How many minutes into the future this forecast is for.
+     */
+    int horizonMinutes,
 
     /** Human-readable label describing the prediction. */
     String label

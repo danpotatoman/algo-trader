@@ -1,7 +1,7 @@
 package com.algotrader.service;
 
-import com.algotrader.config.ModelConfig;
-import com.algotrader.config.ModelConfigLoader;
+import com.algotrader.config.EndpointConfig;
+import com.algotrader.config.EndpointConfigLoader;
 import com.algotrader.config.TradeGeneratorConfig;
 import com.algotrader.config.TradingSessionConfig;
 import com.algotrader.config.TradeGeneratorConfigLoader;
@@ -28,17 +28,17 @@ import com.algotrader.runtime.ResolvedTradingPlan;
  * trade generation, simulated execution, price availability checking, and
  * cycle logging.
  *
- * <p>The supplied {@link TradingSessionConfig} references model and strategy
- * configuration by ID. This factory loads those configs, combines them into a
- * {@link ResolvedTradingPlan}, and uses that resolved plan to construct the
- * runtime objects needed by the runner.
+ * <p>The supplied {@link TradingSessionConfig} references endpoint and
+ * strategy configuration by ID. This factory loads those configs, combines
+ * them into a {@link ResolvedTradingPlan}, and uses that resolved plan to
+ * construct the runtime objects needed by the runner.
  *
  * <p><b>TODO:</b> Revisit the dependency on {@link PriceAvailabilityValidator}
  * once the market data missing-price contract is redesigned.
  */
 public final class TradingCycleRunnerFactory {
 
-    private final ModelConfigLoader modelConfigLoader;
+    private final EndpointConfigLoader modelConfigLoader;
     private final TradeGeneratorConfigLoader tradeGeneratorConfigLoader;
     private final SlidingWindowProviderFactory slidingWindowProviderFactory;
     private final TradeGeneratorFactory tradeGeneratorFactory;
@@ -79,7 +79,7 @@ public final class TradingCycleRunnerFactory {
         }
 
         this.modelConfigLoader =
-                new ModelConfigLoader();
+                new EndpointConfigLoader();
 
         this.tradeGeneratorConfigLoader =
                 new TradeGeneratorConfigLoader();
@@ -106,13 +106,13 @@ public final class TradingCycleRunnerFactory {
     /**
      * Creates a trading cycle runner from a trading session configuration.
      *
-     * <p>The session's model and strategy IDs are resolved into concrete
+     * <p>The session's endpoint and strategy IDs are resolved into concrete
      * configuration objects before the runner is constructed.
      *
      * @param sessionConfig trading session configuration to run
      * @return configured trading cycle runner
      * @throws IllegalArgumentException if {@code sessionConfig} is null
-     * @throws RuntimeException if referenced model or strategy configuration
+     * @throws RuntimeException if referenced endpoint or strategy configuration
      *         cannot be loaded
      */
     public TradingCycleRunner create(
@@ -124,9 +124,9 @@ public final class TradingCycleRunnerFactory {
             );
         }
 
-        ModelConfig modelConfig =
+        EndpointConfig modelConfig =
                 modelConfigLoader.load(
-                        sessionConfig.getModelId()
+                        sessionConfig.getEndpointId()
                 );
 
         TradeGeneratorConfig strategyConfig =

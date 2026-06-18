@@ -10,28 +10,28 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Immutable configuration describing a trading session.
  *
  * <p>A trading session defines one trading workload to be executed by the
- * system. It specifies the ticker to trade, the prediction model to use,
+ * system. It specifies the ticker to trade, the prediction endpoint to use,
  * the trade generation strategy to use, the active time range for the
  * session, and any market-close trading constraints.
  *
- * <p>This class references model and strategy configurations by ID rather
+ * <p>This class references endpoint and strategy configurations by ID rather
  * than embedding them directly. At runtime, those IDs are resolved into
- * concrete {@link ModelConfig} and {@link TradeGeneratorConfig} instances
+ * concrete {@link EndpointConfig} and {@link TradeGeneratorConfig} instances
  * before the session is executed.
  *
  * <p>The {@code startingTimestamp} and {@code endingTimestamp} define when
  * the session is allowed to operate. These timestamps apply to both
  * backtesting and live trading sessions.
  *
- * <p>Model-specific requirements such as candle interval, batch size,
+ * <p>Endpoint-specific requirements such as candle interval, batch size,
  * feature definitions, and prediction endpoints are defined by the
- * referenced {@link ModelConfig}.
+ * referenced {@link EndpointConfig}.
  */
 public final class TradingSessionConfig {
 
     private final String sessionId;
 
-    private final String modelId;
+    private final String endpointId;
     private final String strategyId;
 
     private final String ticker;
@@ -45,7 +45,7 @@ public final class TradingSessionConfig {
      * Creates a trading session configuration.
      *
      * @param sessionId unique identifier for the trading session
-     * @param modelId identifier of the model configuration used by the session
+     * @param endpointId identifier of the endpoint configuration used by the session
      * @param strategyId identifier of the trade generation strategy used by
      *        the session
      * @param ticker ticker symbol to trade
@@ -58,7 +58,7 @@ public final class TradingSessionConfig {
     @JsonCreator
     public TradingSessionConfig(
             @JsonProperty("sessionId") String sessionId,
-            @JsonProperty("modelId") String modelId,
+            @JsonProperty("endpointId") String endpointId,
             @JsonProperty("strategyId") String strategyId,
             @JsonProperty("ticker") String ticker,
             @JsonProperty("minTimeBeforeClose") Duration minTimeBeforeClose,
@@ -67,7 +67,7 @@ public final class TradingSessionConfig {
     {
         validateConstructorArgs(
                 sessionId,
-                modelId,
+                endpointId,
                 strategyId,
                 ticker,
                 minTimeBeforeClose,
@@ -76,7 +76,7 @@ public final class TradingSessionConfig {
         );
 
         this.sessionId = sessionId;
-        this.modelId = modelId;
+        this.endpointId = endpointId;
         this.strategyId = strategyId;
         this.ticker = ticker.toUpperCase();
 
@@ -94,7 +94,7 @@ public final class TradingSessionConfig {
      */
     private static void validateConstructorArgs(
             String sessionId,
-            String modelId,
+            String endpointId,
             String strategyId,
             String ticker,
             Duration minTimeBeforeClose,
@@ -107,7 +107,7 @@ public final class TradingSessionConfig {
             );
         }
 
-        if (modelId == null || modelId.isBlank()) {
+        if (endpointId == null || endpointId.isBlank()) {
             throw new IllegalArgumentException(
                     "Model ID cannot be null or blank."
             );
@@ -154,8 +154,8 @@ public final class TradingSessionConfig {
         return sessionId;
     }
 
-    public String getModelId() {
-        return modelId;
+    public String getEndpointId() {
+        return endpointId;
     }
 
     public String getStrategyId() {
@@ -182,7 +182,7 @@ public final class TradingSessionConfig {
     public String toString() {
         return "TradingSessionConfig{" +
                 "sessionId='" + sessionId + '\'' +
-                ", modelId='" + modelId + '\'' +
+                ", endpointId='" + endpointId + '\'' +
                 ", strategyId='" + strategyId + '\'' +
                 ", ticker='" + ticker + '\'' +
                 ", minTimeBeforeClose=" + minTimeBeforeClose +

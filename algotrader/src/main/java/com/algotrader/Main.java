@@ -12,13 +12,16 @@ import com.algotrader.persistence.sqlite.repository.SQLiteOHLCVRepository;
 import com.algotrader.service.TradingCycleRunner;
 import com.algotrader.service.TradingCycleRunnerFactory;
 
+/**
+ * Application entry point for running the configured trading session.
+ */
 public class Main {
 
     public static void main(String[] args) {
 
         TradingSessionConfigLoader tradingSessionConfigLoader = new TradingSessionConfigLoader();
 
-        TradingSessionConfig sessionConfig = tradingSessionConfigLoader.load("aapl-cnn-v1");
+        TradingSessionConfig sessionConfig = tradingSessionConfigLoader.load("aapl-cnn-volatility-v1");
 
         OHLCVRepository repository = new SQLiteOHLCVRepository("data/ohlcv.db");
 

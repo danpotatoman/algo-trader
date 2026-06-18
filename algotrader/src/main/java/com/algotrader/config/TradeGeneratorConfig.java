@@ -1,5 +1,7 @@
 package com.algotrader.config;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -31,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public final class TradeGeneratorConfig {
 
     private final String strategyId;
-    private final String strategyType;
+    private final StrategyType strategyType;
     private final String description;
     private final String version;
 
@@ -50,7 +52,7 @@ public final class TradeGeneratorConfig {
     @JsonCreator
     public TradeGeneratorConfig(
             @JsonProperty("strategyId") String strategyId,
-            @JsonProperty("strategyType") String strategyType,
+            @JsonProperty("strategyType") StrategyType strategyType,
             @JsonProperty("description") String description,
             @JsonProperty("version") String version,
             @JsonProperty("parameters") StrategyParameters parameters
@@ -61,9 +63,9 @@ public final class TradeGeneratorConfig {
             );
         }
 
-        if (strategyType == null || strategyType.isBlank()) {
+        if (strategyType == null) {
             throw new IllegalArgumentException(
-                    "Strategy type cannot be null or blank."
+                    "Strategy type cannot be null."
             );
         }
 
@@ -96,7 +98,7 @@ public final class TradeGeneratorConfig {
         return strategyId;
     }
 
-    public String getStrategyType() {
+    public StrategyType getStrategyType() {
         return strategyType;
     }
 
@@ -119,67 +121,70 @@ public final class TradeGeneratorConfig {
 
     /**
      * Configuration parameters for a confidence-based trade generation strategy.
-     *
-     * <p>These parameters determine when a prediction is considered actionable
-     * and how large a position should be opened when trading conditions are met.
-     *
-     * <p><b>TODO:</b> As additional trade generator types are introduced,
-     * strategy-specific parameter objects should replace this shared parameter
-     * structure.
      */
     public static final class StrategyParameters {
 
-        private final double confidenceThreshold;
-        private final double buyQuantity;
+        private final Map<String, Object> values;
 
-        /**
-         * Creates a set of strategy parameters.
-         *
-         * @param confidenceThreshold minimum prediction confidence required before
-         *        generating a trade recommendation
-         * @param buyQuantity quantity to purchase when a qualifying trade signal
-         *        is generated
-         * @throws IllegalArgumentException if the threshold is outside the range
-         *         [0, 1] or the quantity is negative
-         */
         @JsonCreator
         public StrategyParameters(
-                @JsonProperty("confidenceThreshold") double confidenceThreshold,
-                @JsonProperty("buyQuantity") double buyQuantity
+                Map<String, Object> values
         ) {
-            if (confidenceThreshold < 0.0
-                    || confidenceThreshold > 1.0) {
+            if (values == null) {
                 throw new IllegalArgumentException(
-                        "Confidence threshold must be between 0 and 1."
+                        "Strategy parameter values cannot be null."
                 );
             }
 
-            if (buyQuantity < 0.0) {
+            this.values = Map.copyOf(values);
+        }
+
+        public double getRequiredDouble(String key) {
+            Object value = getRequiredValue(key);
+
+            if (!(value instanceof Number number)) {
                 throw new IllegalArgumentException(
-                        "Buy quantity cannot be negative."
+                        "Required strategy parameter must be numeric: " + key
                 );
             }
 
-            this.confidenceThreshold = confidenceThreshold;
-            this.buyQuantity = buyQuantity;
+            return number.doubleValue();
         }
 
-        /**
-         * Returns the minimum confidence required to trade.
-         *
-         * @return the confidence threshold
-         */
-        public double getConfidenceThreshold() {
-            return confidenceThreshold;
+        public int getRequiredInt(String key) {
+            Object value = getRequiredValue(key);
+
+            if (!(value instanceof Number number)) {
+                throw new IllegalArgumentException(
+                        "Required strategy parameter must be numeric: " + key
+                );
+            }
+
+            return number.intValue();
         }
 
-        /**
-         * Returns the trade quantity.
-         *
-         * @return the buy quantity
-         */
-        public double getBuyQuantity() {
-            return buyQuantity;
+        public boolean has(String key) {
+            return values.containsKey(key);
+        }
+
+        public Map<String, Object> asMap() {
+            return values;
+        }
+
+        private Object getRequiredValue(String key) {
+            if (key == null || key.isBlank()) {
+                throw new IllegalArgumentException(
+                        "Strategy parameter key cannot be null or blank."
+                );
+            }
+
+            if (!values.containsKey(key)) {
+                throw new IllegalArgumentException(
+                        "Missing required strategy parameter: " + key
+                );
+            }
+
+            return values.get(key);
         }
     }
 }

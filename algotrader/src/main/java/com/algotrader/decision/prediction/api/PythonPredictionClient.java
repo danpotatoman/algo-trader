@@ -6,6 +6,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import com.algotrader.decision.prediction.api.request.PredictionRequestMapper;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
 import com.algotrader.marketdata.model.DataBatch;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,43 +15,54 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Thin HTTP client for sending prediction requests to a Python model service.
  *
- * <p>This class is transport-focused. It converts a {@link DataBatch} into a
- * {@link PredictRequest}, serializes it as JSON, sends it to one configured
- * prediction endpoint, and returns the raw JSON response.
+ * <p>This class is transport-focused. It converts a {@link DataBatch} into the
+ * request DTO expected by the configured endpoint, serializes it as JSON, and
+ * returns the raw JSON response.
  *
  * <p>This client intentionally does not interpret prediction semantics.
- * Classification-specific or regression-specific parsing should be handled
- * by higher-level prediction provider classes.
+ * Prediction-type-specific parsing should be handled by higher-level
+ * prediction provider classes.
  */
 public final class PythonPredictionClient {
 
-    private final String endpoint;
-    private final HttpClient httpClient;
+    private final URI endpoint;
     private final ObjectMapper objectMapper;
+    private final HttpClient httpClient;
+    private final PredictionRequestMapper<?> requestMapper;
 
     /**
-     * Creates a prediction client for a single model endpoint.
+     * Creates a prediction client for a single prediction endpoint.
      *
      * @param endpoint HTTP endpoint used to request predictions
+     * @param requestMapper maps market data batches to endpoint request DTOs
      * @throws IllegalArgumentException if {@code endpoint} is null or blank
      */
-    public PythonPredictionClient(String endpoint) {
-        if (endpoint == null || endpoint.isBlank()) {
-            throw new IllegalArgumentException(
-                    "Endpoint cannot be null or blank."
-            );
+    public PythonPredictionClient(
+            URI endpoint,
+            PredictionRequestMapper<?> requestMapper
+    ) {
+        if (endpoint == null) {
+            throw new IllegalArgumentException("Endpoint URI cannot be null.");
+        }
+
+        if (!endpoint.isAbsolute()) {
+            throw new IllegalArgumentException("Endpoint URI must be absolute.");
+        }
+
+        if (requestMapper == null) {
+            throw new IllegalArgumentException("requestMapper cannot be null.");
         }
 
         this.endpoint = endpoint;
-        this.httpClient = HttpClient.newHttpClient();
+        this.requestMapper = requestMapper;
         this.objectMapper = new ObjectMapper();
+        this.httpClient = HttpClient.newHttpClient();
     }
-
     /**
      * Sends a prediction request to the configured Python endpoint.
      *
-     * <p>The supplied batch is converted into a feature matrix using
-     * {@link DataBatch#toFeatureArray()} before being serialized and sent.
+     * <p>The supplied batch is converted by the configured request mapper
+     * before being serialized and sent.
      *
      * @param batch market data batch to send to the model service
      * @return raw JSON response returned by the prediction endpoint
@@ -67,19 +79,16 @@ public final class PythonPredictionClient {
         }
 
         try {
-            PredictRequest requestBody = new PredictRequest(
-                    batch.getTicker(),
-                    batch.toFeatureArray()
-            );
+            Object requestBody = requestMapper.map(batch);
 
             String requestJson =
                     objectMapper.writeValueAsString(requestBody);
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(endpoint))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(requestJson))
-                    .build();
+                .uri(endpoint)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestJson))
+                .build();
 
             HttpResponse<String> response = httpClient.send(
                     request,
@@ -113,12 +122,7 @@ public final class PythonPredictionClient {
         }
     }
 
-    /**
-     * Returns the endpoint used by this client.
-     *
-     * @return prediction endpoint URL
-     */
-    public String getEndpoint() {
+    public URI getEndpoint() {
         return endpoint;
     }
 }

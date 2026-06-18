@@ -47,7 +47,7 @@ public class TradingCycleRunner {
     private final String ticker;
     private final TimeInterval interval;
     private final String sessionId;
-    private final String modelId;
+    private final String endpointId;
     private final String strategyId;
     private final boolean liveMode = false;
 
@@ -91,7 +91,7 @@ public class TradingCycleRunner {
         this.ticker = tradingPlan.getTicker().toUpperCase();
         this.interval = tradingPlan.getInterval();
         this.sessionId = tradingPlan.getSessionId();
-        this.modelId = tradingPlan.getModelId();
+        this.endpointId = tradingPlan.getEndpointId();
         this.strategyId = tradingPlan.getStrategyId();
     }
 
@@ -191,7 +191,7 @@ public class TradingCycleRunner {
                     new TradingCycleLog.Metadata(
                             ticker,
                             interval,
-                            modelId,
+                            endpointId,
                             sessionId,
                             liveMode
                     );

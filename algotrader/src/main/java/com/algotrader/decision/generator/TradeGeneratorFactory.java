@@ -1,5 +1,8 @@
 package com.algotrader.decision.generator;
 
+import com.algotrader.config.PredictionType;
+import com.algotrader.config.StrategyType;
+import com.algotrader.config.TradeGeneratorConfig;
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
 import com.algotrader.decision.generator.validation.RoundTripTradeValidator;
 import com.algotrader.decision.interpreter.PredictionInterpreter;
@@ -8,6 +11,8 @@ import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderFactory;
 import com.algotrader.marketcalendar.MarketCalendar;
 import com.algotrader.runtime.ResolvedTradingPlan;
+import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
+import com.algotrader.decision.interpreter.ClassificationWithVolatilityPredictionInterpreter;
 
 /**
  * Factory for constructing {@link TradeGenerator} instances from resolved
@@ -20,9 +25,9 @@ import com.algotrader.runtime.ResolvedTradingPlan;
  * <p>Created trade generators are assembled from a prediction provider, a
  * prediction interpreter, and a round-trip trade validator.
  *
- * <p><b>TODO:</b> This factory currently supports only the classification
- * threshold strategy. Add regression-based trade generator construction as
- * regression strategy support is completed.
+ * <p><b>TODO:</b> This factory currently supports classification and
+ * classification-with-volatility threshold strategies. Add regression-based
+ * trade generator construction as regression strategy support is completed.
  */
 public final class TradeGeneratorFactory {
 
@@ -60,7 +65,7 @@ public final class TradeGeneratorFactory {
     /**
      * Creates a trade generator for the supplied resolved trading plan.
      *
-     * @param tradingPlan resolved trading plan containing model, strategy, and
+     * @param tradingPlan resolved trading plan containing endpoint, strategy, and
      *        session configuration
      * @return a trade generator matching the configured prediction and strategy
      *         types
@@ -76,12 +81,16 @@ public final class TradeGeneratorFactory {
             );
         }
 
-        String predictionType = tradingPlan.getPredictionType().toUpperCase();
-        String strategyType = tradingPlan.getStrategyType().toUpperCase();
+        PredictionType predictionType = tradingPlan.getPredictionType();
+        StrategyType strategyType = tradingPlan.getStrategyType();
 
-        if (predictionType.equals("CLASSIFICATION")
-                && strategyType.equals("THRESHOLD_CLASSIFICATION")) {
+        if (predictionType == PredictionType.CLASSIFICATION
+                && strategyType == StrategyType.THRESHOLD_CLASSIFICATION) {
             return createThresholdClassificationStrategy(tradingPlan);
+        }
+        if (predictionType == PredictionType.CLASSIFICATION_WITH_VOLATILITY
+                && strategyType == StrategyType.THRESHOLD_CLASSIFICATION) {
+            return createThresholdClassificationWithVolatilityStrategy(tradingPlan);
         }
 
         throw new IllegalArgumentException(
@@ -107,10 +116,16 @@ public final class TradeGeneratorFactory {
                         tradingPlan
                 );
 
+        TradeGeneratorConfig config = tradingPlan.getTradeGeneratorConfig();
+
+        double confidenceThreshold =
+                config.getParameters().getRequiredDouble(
+                        "confidenceThreshold"
+                );
+
         PredictionInterpreter<ClassificationPrediction> interpreter =
                 new ThresholdClassificationPredictionInterpreter(
-                        tradingPlan.getConfidenceThreshold(),
-                        tradingPlan.getHorizonMinutes(),
+                        confidenceThreshold,
                         tradingPlan.getStrategyId()
                 );
 
@@ -126,4 +141,45 @@ public final class TradeGeneratorFactory {
                 tradeValidator
         );
     }
+
+    private TradeGenerator createThresholdClassificationWithVolatilityStrategy(
+        ResolvedTradingPlan tradingPlan
+    ) {
+        PredictionProvider<ClassificationWithVolatilityPrediction> provider =
+                predictionProviderFactory.createClassificationWithVolatilityProvider(
+                        tradingPlan
+                );
+
+        TradeGeneratorConfig config = tradingPlan.getTradeGeneratorConfig();
+
+        double confidenceThreshold =
+                config.getParameters().getRequiredDouble(
+                        "confidenceThreshold"
+                );
+
+        double maxVolatilityThreshold =
+                config.getParameters().getRequiredDouble(
+                        "maxVolatilityThreshold"
+                );
+
+        PredictionInterpreter<ClassificationWithVolatilityPrediction> interpreter =
+                new ClassificationWithVolatilityPredictionInterpreter(
+                        confidenceThreshold,
+                        maxVolatilityThreshold,
+                        tradingPlan.getStrategyId()
+                );
+
+        RoundTripTradeValidator tradeValidator =
+                new RoundTripTradeValidator(
+                        marketCalendar,
+                        tradingPlan.getMinTimeBeforeClose()
+                );
+
+        return new GenericTradeGenerator<>(
+                provider,
+                interpreter,
+                tradeValidator
+        );
+        }
+    
 }

@@ -9,7 +9,7 @@ from training.cnn_volatility_regression.build_examples import (
     build_regression_examples,
 )
 from training.split_data import chronological_split
-from training.cnn_volatility_regression.model import CNNRegressionModel
+from training.cnn_volatility_regression.model import CNNVolatilityRegressionModel
 
 
 WINDOW_SIZE = 30
@@ -108,7 +108,7 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    model = CNNRegressionModel(
+    model = CNNVolatilityRegressionModel(
         input_channels=X_train.shape[1],
         output_size=y_train.shape[1],
     ).to(device)

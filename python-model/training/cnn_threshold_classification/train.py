@@ -9,12 +9,10 @@ from training.cnn_threshold_classification.build_examples import (
     add_base_features,
     build_classification_examples,
     FEATURE_COLUMNS,
-    TARGET_COLUMNS,
-    RETURN_5M_THRESHOLD,
-    RETURN_10M_THRESHOLD,
+    TARGET_COLUMN,
     RETURN_30M_THRESHOLD,
 )
-from training.cnn_threshold_classification.model import CNNClassificationModel
+from training.cnn_threshold_classification.model import CNNThresholdClassificationModel
 
 
 WINDOW_SIZE = 30
@@ -28,20 +26,26 @@ DB_PATH = PROJECT_ROOT / "data" / "ohlcv.db"
 MODEL_OUT = PROJECT_ROOT / "python-model" / "saved_models" / "cnn-threshold-classification-v1.pt"
 
 
+def print_positive_rate(split_name: str, y: torch.Tensor | None = None) -> None:
+    if y is None:
+        return
+
+    print(f"{split_name}: {float(y.mean()):.4f}")
+
+
 def main() -> None:
     print("Loading data...")
     df = load_five_minute_dataframe(DB_PATH)
     df = add_base_features(df)
 
-    print("Building classification examples...")
+    print("Building 30m threshold classification examples...")
     X, y, metadata = build_classification_examples(
         df,
         window_size=WINDOW_SIZE,
     )
 
-    print("\nOverall positive rates:")
-    for i, target in enumerate(TARGET_COLUMNS):
-        print(f"{target}: {y[:, i].mean():.4f}")
+    print("\nOverall positive rate:")
+    print(f"{TARGET_COLUMN}: {y.mean():.4f}")
 
     (
         X_train,
@@ -61,14 +65,9 @@ def main() -> None:
     print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 
     print("\nSplit positive rates:")
-    for split_name, split_y in [
-        ("train", y_train),
-        ("val", y_val),
-        ("test", y_test),
-    ]:
-        print(f"\n{split_name}:")
-        for i, target in enumerate(TARGET_COLUMNS):
-            print(f"  {target}: {split_y[:, i].mean():.4f}")
+    print(f"train {TARGET_COLUMN}: {y_train.mean():.4f}")
+    print(f"val   {TARGET_COLUMN}: {y_val.mean():.4f}")
+    print(f"test  {TARGET_COLUMN}: {y_test.mean():.4f}")
 
     print("\nSplit boundaries:")
     print(
@@ -121,9 +120,9 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\nUsing device: {device}")
 
-    model = CNNClassificationModel(
+    model = CNNThresholdClassificationModel(
         input_channels=X_train.shape[1],
-        output_size=y_train.shape[1],
+        output_size=1,
     ).to(device)
 
     loss_fn = torch.nn.BCEWithLogitsLoss()
@@ -183,13 +182,11 @@ def main() -> None:
                 {
                     "model_state_dict": model.state_dict(),
                     "input_channels": X_train.shape[1],
-                    "output_size": y_train.shape[1],
+                    "output_size": 1,
                     "window_size": X_train.shape[2],
                     "feature_columns": FEATURE_COLUMNS,
-                    "target_columns": TARGET_COLUMNS,
+                    "target_column": TARGET_COLUMN,
                     "thresholds": {
-                        "return_5m": RETURN_5M_THRESHOLD,
-                        "return_10m": RETURN_10M_THRESHOLD,
                         "return_30m": RETURN_30M_THRESHOLD,
                     },
                     "last_train_timestamp": metadata_train[-1]["target_30m_timestamp"],

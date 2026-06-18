@@ -1,0 +1,15 @@
+{
+  "endpointId": "cnn-with-volatility-v1",
+
+  "predictionType": "CLASSIFICATION_WITH_VOLATILITY",
+
+  "endpoint": "http://127.0.0.1:8000/predict/cnn-classification-volatility-v1",
+
+  "description": "Predicts whether price will increase by at least 0.2% within 30 minutes and forecasts 30-minute volatility.",
+
+  "interval": "FIVE_MINUTES",
+
+  "numCandles": 30,
+
+  "version": "1.0.0"
+}

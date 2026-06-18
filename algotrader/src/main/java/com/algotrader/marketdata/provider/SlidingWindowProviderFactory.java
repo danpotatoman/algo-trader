@@ -60,7 +60,7 @@ public class SlidingWindowProviderFactory {
                 marketDataProvider,
                 tradingPlan.getTicker(),
                 tradingPlan.getInterval(),
-                tradingPlan.getBatchSize(),
+                tradingPlan.getNumCandles(),
                 tradingPlan.getStartingTimestamp(),
                 tradingPlan.getEndingTimestamp()
         );
