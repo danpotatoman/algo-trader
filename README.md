@@ -7,10 +7,11 @@ The project supports:
 
 - Historical backtesting
 - Config-driven trading sessions
-- Classification and regression models
 - SQLite-backed OHLCV storage
 - JSON trade logging
 - Modular trading strategies
+- Classification models are fully supported.
+- Regression infrastructure exists but regression-based trade generation strategies are not yet implemented.
 
 ## Features
 
