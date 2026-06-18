@@ -35,6 +35,7 @@ Thumbs.db
 saved_models/
 data/cache/
 data/ohlcv/
+data/ohlcv.db
 
 # Environment variables
 .env
