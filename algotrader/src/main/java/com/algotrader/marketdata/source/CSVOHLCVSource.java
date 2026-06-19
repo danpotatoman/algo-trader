@@ -75,14 +75,14 @@ public class CSVOHLCVSource implements OHLCVSource {
     }
 
     /**
-     * Loads a single OHLCV row for the given ticker, interval, and timestamp.
+     * Loads a single OHLCV row for the given ticker, interval, and candle timestamp.
      *
      * <p>This implementation loads the relevant CSV file and searches for an
-     * exact timestamp match.
+     * exact candle timestamp match.
      *
      * @param ticker the stock ticker symbol
      * @param interval the candlestick interval
-     * @param timestamp the timestamp of the requested candle
+     * @param candleTimestamp the timestamp of the requested candle
      * @return the matching OHLCV row
      * @throws DataCacheException if the CSV file cannot be loaded or parsed,
      *         or if no matching row exists
@@ -91,25 +91,25 @@ public class CSVOHLCVSource implements OHLCVSource {
     public StampedOHLCV loadRow(
             String ticker,
             TimeInterval interval,
-            Instant timestamp
+            Instant candleTimestamp
     ) throws DataCacheException {
 
-        if (timestamp == null) {
+        if (candleTimestamp == null) {
             throw new DataCacheException("Timestamp cannot be null.");
         }
 
         List<StampedOHLCV> rows = loadRows(ticker, interval);
 
         return rows.stream()
-                .filter(row -> row.timestamp().equals(timestamp))
+                .filter(row -> row.candleOpenTime().equals(candleTimestamp))
                 .findFirst()
                 .orElseThrow(() -> new DataCacheException(
                         "No OHLCV row found for ticker "
                                 + ticker.toUpperCase()
                                 + ", interval "
                                 + interval
-                                + ", timestamp "
-                                + timestamp
+                                + ", candleTimestamp "
+                                + candleTimestamp
                 ));
     }
 
@@ -119,7 +119,7 @@ public class CSVOHLCVSource implements OHLCVSource {
      * @throws UnsupportedOperationException if called
      */
     @Override //TODO: implement
-    public Optional<Instant> getNextTimestamp(String ticker, TimeInterval interval, Instant timestamp) {
+    public Optional<Instant> getNextCandleTimestamp(String ticker, TimeInterval interval, Instant timestamp) {
         throw new UnsupportedOperationException("Next timestamp retrieval is not implemented for this CSV source.");
     }
 

@@ -1,5 +1,7 @@
 package com.algotrader.marketdata.model;
 
+import java.time.Duration;
+
 /**
  * Represents supported time intervals for OHLCV candlestick data.
  *
@@ -80,5 +82,14 @@ public enum TimeInterval {
      */
     public int getSeconds() {
         return seconds;
+    }
+
+    /**
+     * Returns the duration represented by this interval.
+     *
+     * @return interval duration
+     */
+    public Duration getDuration() {
+        return Duration.ofSeconds(seconds);
     }
 }

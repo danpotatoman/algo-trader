@@ -218,7 +218,7 @@ public class MarketDataCache
             if (row != null) {
                 return new MarketPrice(
                         normalizedTicker,
-                        row.close(),
+                        row.open(),
                         timestamp);
             }
         }
@@ -235,7 +235,7 @@ public class MarketDataCache
 
                 return new MarketPrice(
                         normalizedTicker,
-                        row.close(),
+                        row.open(),
                         timestamp);
 
             } catch (DataCacheException ignored) {
@@ -301,7 +301,7 @@ public class MarketDataCache
 
             if (loadedRows != null) {
                 for (StampedOHLCV row : loadedRows) {
-                    entry.rows.put(row.timestamp(), row);
+                    entry.rows.put(row.candleOpenTime(), row);
                 }
             }
 

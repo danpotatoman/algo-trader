@@ -3,7 +3,7 @@ package com.algotrader.marketdata.model;
 import java.time.Instant;
 
 /**
- * Represents a market price associated with a ticker and timestamp.
+ * Represents a market price associated with a ticker and executionTime.
  *
  * <p>A {@code MarketPrice} is a lightweight value object used throughout the
  * trading system when only a price lookup result is needed rather than a full
@@ -17,19 +17,19 @@ import java.time.Instant;
  *
  * @param ticker ticker symbol associated with the price
  * @param price market price value
- * @param timestamp timestamp associated with the price
+ * @param executionTime executionTime associated with the price
  */
 public record MarketPrice(
         String ticker,
         double price,
-        Instant timestamp
+        Instant executionTime
 ) {
 
     /**
      * Creates a market price.
      *
      * @throws IllegalArgumentException if the ticker is null or blank, if the
-     *         timestamp is null, price is NaN, or price is negative
+     *         executionTime is null, price is NaN, or price is negative
      */
     public MarketPrice {
 
@@ -39,9 +39,9 @@ public record MarketPrice(
             );
         }
 
-        if (timestamp == null) {
+        if (executionTime == null) {
             throw new IllegalArgumentException(
-                    "Timestamp cannot be null."
+                    "Execution time cannot be null."
             );
         }
 

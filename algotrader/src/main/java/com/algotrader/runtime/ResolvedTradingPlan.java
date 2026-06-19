@@ -101,11 +101,11 @@ public final class ResolvedTradingPlan {
     }
 
     public Instant getStartingTimestamp() {
-        return sessionConfig.getStartingTimestamp();
+        return sessionConfig.getFirstCandleTimestamp();
     }
 
     public Instant getEndingTimestamp() {
-        return sessionConfig.getEndingTimestamp();
+        return sessionConfig.getLastCandleTimestamp();
     }
 
     public Duration getMinTimeBeforeClose() {

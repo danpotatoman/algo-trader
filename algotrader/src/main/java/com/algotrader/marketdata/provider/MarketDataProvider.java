@@ -39,7 +39,7 @@ public interface MarketDataProvider {
     /**
      * Retrieves all available OHLCV rows within the requested time range.
      *
-     * <p>The start and end timestamps are inclusive.
+     * <p>The first and last candle timestamps are inclusive.
      *
      * <p>If no matching data exists, an empty list is returned.
      *
@@ -47,20 +47,20 @@ public interface MarketDataProvider {
      *
      * @param ticker ticker symbol to query
      * @param interval candle interval to query
-     * @param startTime inclusive range start
-     * @param endTime inclusive range end
+     * @param firstCandleTimestamp inclusive first candle timestamp
+     * @param lastCandleTimestamp inclusive last candle timestamp
      * @return ordered OHLCV rows within the requested range
      * @throws DataCacheException if the request cannot be satisfied
      */
     List<StampedOHLCV> requestRange(
             String ticker,
             TimeInterval interval,
-            Instant startTime,
-            Instant endTime
+            Instant firstCandleTimestamp,
+            Instant lastCandleTimestamp
     ) throws DataCacheException;
 
     /**
-     * Retrieves a single OHLCV row at an exact timestamp.
+     * Retrieves a single OHLCV row at an exact candle timestamp.
      *
      * <p>The requested timestamp must exactly match the timestamp of an
      * available candle. No interpolation, nearest-neighbor lookup, or interval
@@ -68,7 +68,7 @@ public interface MarketDataProvider {
      *
      * @param ticker ticker symbol to query
      * @param interval candle interval to query
-     * @param timestamp exact candle timestamp
+     * @param candleTimestamp exact candle timestamp
      * @return matching OHLCV row
      * @throws DataCacheException if the row cannot be retrieved or no matching
      *         candle exists
@@ -76,6 +76,6 @@ public interface MarketDataProvider {
     StampedOHLCV requestRow(
             String ticker,
             TimeInterval interval,
-            Instant timestamp
+            Instant candleTimestamp
     ) throws DataCacheException;
 }

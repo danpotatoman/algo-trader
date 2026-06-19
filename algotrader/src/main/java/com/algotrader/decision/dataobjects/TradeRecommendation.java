@@ -11,7 +11,7 @@ import java.time.Instant;
  *     <li>The recommended action ({@link Action#BUY} or {@link Action#SELL})</li>
  *     <li>The confidence associated with the recommendation</li>
  *     <li>The quantity to trade</li>
- *     <li>The timestamp at which the action should occur</li>
+ *     <li>The time at which the action should occur</li>
  * </ul>
  *
  * <p>Trade recommendations are typically derived from higher-level trading
@@ -39,7 +39,7 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
     private final Action action;
     private final double confidence;
     private final double quantity; //TODO: rethink what the purpose of quantity is, and at what point of the cycle it should be calculated
-    private final Instant timestamp;
+    private final Instant executionTime;
 
     /**
      * Creates a trade recommendation.
@@ -48,7 +48,7 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
      * @param action trading action to perform
      * @param confidence confidence associated with the recommendation
      * @param quantity quantity to trade
-     * @param timestamp timestamp at which the action should occur
+     * @param executionTime the time at which the action should occur
      * @throws IllegalArgumentException if any argument is invalid
      */
     public TradeRecommendation(
@@ -56,15 +56,15 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
             Action action,
             double confidence,
             double quantity,
-            Instant timestamp
+            Instant executionTime
     ) {
-        validate(ticker, action, confidence, quantity, timestamp);
+        validate(ticker, action, confidence, quantity, executionTime);
 
         this.ticker = ticker;
         this.action = action;
         this.confidence = confidence;
         this.quantity = quantity;
-        this.timestamp = timestamp;
+        this.executionTime = executionTime;
     }
 
     /**
@@ -77,7 +77,7 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
             Action action,
             double confidence,
             double quantity,
-            Instant timestamp
+            Instant executionTime
     ) {
         if (ticker == null || ticker.isBlank()) {
             throw new IllegalArgumentException("Ticker cannot be null or blank.");
@@ -95,8 +95,8 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
             throw new IllegalArgumentException("Quantity cannot be negative.");
         }
 
-        if (timestamp == null) {
-            throw new IllegalArgumentException("Timestamp cannot be null.");
+        if (executionTime == null) {
+            throw new IllegalArgumentException("Execution time cannot be null.");
         }
     }
 
@@ -116,8 +116,8 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
         return quantity;
     }
 
-    public Instant getTimestamp() {
-        return timestamp;
+    public Instant getExecutionTime() {
+        return executionTime;
     }
 
     /**
@@ -141,12 +141,12 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
     @Override
     public String toString() {
         return String.format(
-                "TradeRecommendation[ticker=%s, action=%s, confidence=%.2f%%, quantity=%.4f, timestamp=%s]",
+                "TradeRecommendation[ticker=%s, action=%s, confidence=%.2f%%, quantity=%.4f, executionTime=%s]",
                 ticker,
                 action,
                 confidence * 100.0,
                 quantity,
-                timestamp
+                executionTime
         );
     }
 }

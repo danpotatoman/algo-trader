@@ -69,8 +69,8 @@ public final class SQLiteOHLCVSource implements OHLCVSource {
      *
      * @param ticker ticker symbol to query
      * @param interval candle interval to query
-     * @param startTimestamp inclusive range start
-     * @param endTimestamp inclusive range end
+     * @param firstCandleTimestamp inclusive first candle timestamp
+     * @param lastCandleTimestamp inclusive last candle timestamp
      * @return matching rows
      * @throws DataCacheException if the request is invalid or the repository
      *         query fails
@@ -79,22 +79,22 @@ public final class SQLiteOHLCVSource implements OHLCVSource {
     public List<StampedOHLCV> loadRange(
             String ticker,
             TimeInterval interval,
-            Instant startTimestamp,
-            Instant endTimestamp
+            Instant firstCandleTimestamp,
+            Instant lastCandleTimestamp
     ) throws DataCacheException {
         validateTickerAndInterval(ticker, interval);
 
-        if (startTimestamp == null) {
-            throw new DataCacheException("startTimestamp cannot be null");
+        if (firstCandleTimestamp == null) {
+            throw new DataCacheException("firstCandleTimestamp cannot be null");
         }
 
-        if (endTimestamp == null) {
-            throw new DataCacheException("endTimestamp cannot be null");
+        if (lastCandleTimestamp == null) {
+            throw new DataCacheException("lastCandleTimestamp cannot be null");
         }
 
-        if (startTimestamp.isAfter(endTimestamp)) {
+        if (firstCandleTimestamp.isAfter(lastCandleTimestamp)) {
             throw new DataCacheException(
-                    "startTimestamp cannot be after endTimestamp"
+                    "firstCandleTimestamp cannot be after lastCandleTimestamp"
             );
         }
 
@@ -102,25 +102,25 @@ public final class SQLiteOHLCVSource implements OHLCVSource {
             return repository.findRange(
                     ticker,
                     interval,
-                    startTimestamp,
-                    endTimestamp
+                    firstCandleTimestamp,
+                    lastCandleTimestamp
             );
         } catch (Exception e) {
             throw new DataCacheException(
                     "Failed to load OHLCV range for "
                             + ticker + " " + interval
-                            + " from " + startTimestamp
-                            + " to " + endTimestamp
+                            + " from " + firstCandleTimestamp
+                            + " to " + lastCandleTimestamp
             );
         }
     }
 
     /**
-     * Loads a single persisted OHLCV row at an exact timestamp.
+     * Loads a single persisted OHLCV row at an exact candle timestamp.
      *
      * @param ticker ticker symbol to query
      * @param interval candle interval to query
-     * @param timestamp exact candle timestamp
+     * @param candleTimestamp exact candle timestamp
      * @return matching OHLCV row
      * @throws DataCacheException if the request is invalid, no matching row
      *         exists, or the repository query fails
@@ -129,20 +129,20 @@ public final class SQLiteOHLCVSource implements OHLCVSource {
     public StampedOHLCV loadRow(
             String ticker,
             TimeInterval interval,
-            Instant timestamp
+            Instant candleTimestamp
     ) throws DataCacheException {
         validateTickerAndInterval(ticker, interval);
 
-        if (timestamp == null) {
-            throw new DataCacheException("timestamp cannot be null");
+        if (candleTimestamp == null) {
+            throw new DataCacheException("candleTimestamp cannot be null");
         }
 
         try {
-            return repository.findByKey(ticker, interval, timestamp)
+            return repository.findByKey(ticker, interval, candleTimestamp)
                     .orElseThrow(() -> new DataCacheException(
                             "No OHLCV row found for "
                                     + ticker + " " + interval
-                                    + " at " + timestamp
+                                    + " at " + candleTimestamp
                     ));
         } catch (DataCacheException e) {
             throw e;
@@ -150,7 +150,7 @@ public final class SQLiteOHLCVSource implements OHLCVSource {
             throw new DataCacheException(
                     "Failed to load OHLCV row for "
                             + ticker + " " + interval
-                            + " at " + timestamp
+                            + " at " + candleTimestamp
             );
         }
     }
@@ -161,13 +161,13 @@ public final class SQLiteOHLCVSource implements OHLCVSource {
      * @param ticker ticker symbol to query
      * @param interval candle interval to query
      * @param timestamp timestamp after which to search
-     * @return next available timestamp, or {@link Optional#empty()} if none
+     * @return next available candle timestamp, or {@link Optional#empty()} if none
      *         exists
      * @throws DataCacheException if the request is invalid or the repository
      *         query fails
      */
     @Override
-    public Optional<Instant> getNextTimestamp(
+    public Optional<Instant> getNextCandleTimestamp(
             String ticker,
             TimeInterval interval,
             Instant timestamp
@@ -192,7 +192,7 @@ public final class SQLiteOHLCVSource implements OHLCVSource {
         }
 
         try {
-            return repository.findNextTimestamp(
+            return repository.findNextCandleTimestamp(
                     ticker,
                     interval,
                     timestamp

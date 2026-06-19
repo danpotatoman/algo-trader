@@ -30,6 +30,7 @@ public final class TradingSessionConfigLoader {
     private static final Path DEFAULT_SESSION_CONFIG_DIRECTORY = Path.of("config", "session");
 
     private final ObjectMapper objectMapper;
+
     /**
      * Creates a loader that reads trading session configs from the default
      * session config directory:

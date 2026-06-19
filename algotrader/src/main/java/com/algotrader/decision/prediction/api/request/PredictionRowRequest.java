@@ -33,7 +33,7 @@ public record PredictionRowRequest(
      */
     public static PredictionRowRequest from(StampedOHLCV row) {
         return new PredictionRowRequest(
-                row.timestamp().toString(),
+                row.candleOpenTime().toString(),
                 row.open(),
                 row.high(),
                 row.low(),

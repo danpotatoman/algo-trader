@@ -34,30 +34,21 @@ public class PriceAvailabilityValidator {
 
     public boolean pricesExist(RoundTripTrade trade) {
 
-    try {
-        priceProvider.getTickerPrice(
-                trade.ticker(),
-                trade.entryTime()
-        );
+        try {
+            priceProvider.getTickerPrice(
+                    trade.ticker(),
+                    trade.entryTime()
+            );
 
-        priceProvider.getTickerPrice(
-                trade.ticker(),
-                trade.exitTime()
-        );
+            priceProvider.getTickerPrice(
+                    trade.ticker(),
+                    trade.exitTime()
+            );
 
-        return true;
+            return true;
 
-    } catch (DataCacheException e) {
-        return false;
-    }
-}
-
-// TODO: This method is currently ineffective because pricesExist catches
-//       DataCacheException. Remove this class or replace it after the
-//       PriceProvider missing-data contract is redesigned.
-    public void validatePricesExist(RoundTripTrade trade)
-            throws DataCacheException {
-
-        pricesExist(trade);
+        } catch (DataCacheException e) {
+            return false;
+        }
     }
 }

@@ -186,14 +186,14 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
      *
      * @param ticker ticker symbol to query
      * @param interval candle interval to query
-     * @param timestamp exact candle timestamp
+     * @param candleTimestamp exact candle timestamp
      * @return matching candle, or {@link Optional#empty()} if none exists
      */
     @Override
     public Optional<StampedOHLCV> findByKey(
             String ticker,
             TimeInterval interval,
-            Instant timestamp
+            Instant candleTimestamp
     ) {
         String sql = """
             SELECT *
@@ -209,7 +209,7 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         ) {
             ps.setString(1, ticker);
             ps.setString(2, interval.name());
-            ps.setLong(3, timestamp.getEpochSecond());
+            ps.setLong(3, candleTimestamp.getEpochSecond());
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -228,16 +228,16 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
      *
      * @param ticker ticker symbol to query
      * @param interval candle interval to query
-     * @param start inclusive range start
-     * @param end inclusive range end
+     * @param firstCandleTimestamp inclusive first candle timestamp
+     * @param lastCandleTimestamp inclusive last candle timestamp
      * @return matching candles ordered by ascending timestamp
      */
     @Override
     public List<StampedOHLCV> findRange(
             String ticker,
             TimeInterval interval,
-            Instant start,
-            Instant end
+            Instant firstCandleTimestamp,
+            Instant lastCandleTimestamp
     ) {
         String sql = """
             SELECT *
@@ -256,8 +256,8 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
         ) {
             ps.setString(1, ticker);
             ps.setString(2, interval.name());
-            ps.setLong(3, start.getEpochSecond());
-            ps.setLong(4, end.getEpochSecond());
+            ps.setLong(3, firstCandleTimestamp.getEpochSecond());
+            ps.setLong(4, lastCandleTimestamp.getEpochSecond());
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -364,10 +364,10 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
      * @param ticker ticker symbol to query
      * @param interval candle interval to query
      * @param timestamp timestamp after which to search
-     * @return next available timestamp, or {@link Optional#empty()} if none exists
+     * @return next available candle timestamp, or {@link Optional#empty()} if none exists
      */
     @Override
-    public Optional<Instant> findNextTimestamp(
+    public Optional<Instant> findNextCandleTimestamp(
             String ticker,
             TimeInterval interval,
             Instant timestamp
@@ -425,7 +425,7 @@ public class SQLiteOHLCVRepository implements OHLCVRepository {
 
         ps.setString(1, candle.ticker());
         ps.setString(2, candle.interval().name());
-        ps.setLong(3, candle.timestamp().getEpochSecond());
+        ps.setLong(3, candle.candleOpenTime().getEpochSecond());
 
         ps.setDouble(4, ohlcv.open());
         ps.setDouble(5, ohlcv.high());

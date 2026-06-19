@@ -19,9 +19,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * concrete {@link EndpointConfig} and {@link TradeGeneratorConfig} instances
  * before the session is executed.
  *
- * <p>The {@code startingTimestamp} and {@code endingTimestamp} define when
- * the session is allowed to operate. These timestamps apply to both
- * backtesting and live trading sessions.
+ * <p>The {@code firstCandleTimestamp} and {@code lastCandleTimestamp} define the
+ * inclusive range of candle timestamps that are valid for the session.
+ *
+ * <p>The {@code firstCandleTimestamp} is the timestamp of the first candle,
+ * chronologically, that is available for model inference. Candles with
+ * earlier timestamps are excluded from the session.
+ *
+ * <p>The {@code lastCandleTimestamp} is the timestamp of the final candle that is
+ * available for model inference. Candles with later timestamps are excluded
+ * from the session.
  *
  * <p>Endpoint-specific requirements such as candle interval, batch size,
  * feature definitions, and prediction endpoints are defined by the
@@ -38,8 +45,8 @@ public final class TradingSessionConfig {
 
     private final Duration minTimeBeforeClose;
 
-    private final Instant startingTimestamp;
-    private final Instant endingTimestamp;
+    private final Instant firstCandleTimestamp;
+    private final Instant lastCandleTimestamp;
 
     /**
      * Creates a trading session configuration.
@@ -51,8 +58,10 @@ public final class TradingSessionConfig {
      * @param ticker ticker symbol to trade
      * @param minTimeBeforeClose minimum time remaining before market close
      *        required to initiate new trades
-     * @param startingTimestamp earliest timestamp at which the session may run
-     * @param endingTimestamp timestamp after which the session may no longer run
+     * @param firstCandleTimestamp timestamp of the first candle available for
+     *        model inference during the session
+     * @param lastCandleTimestamp timestamp of the final candle available for
+     *        model inference during the session
      * @throws IllegalArgumentException if any argument is invalid
      */
     @JsonCreator
@@ -62,8 +71,8 @@ public final class TradingSessionConfig {
             @JsonProperty("strategyId") String strategyId,
             @JsonProperty("ticker") String ticker,
             @JsonProperty("minTimeBeforeClose") Duration minTimeBeforeClose,
-            @JsonProperty("startingTimestamp") Instant startingTimestamp,
-            @JsonProperty("endingTimestamp") Instant endingTimestamp)
+            @JsonProperty("firstCandleTimestamp") Instant firstCandleTimestamp,
+            @JsonProperty("lastCandleTimestamp") Instant lastCandleTimestamp)
     {
         validateConstructorArgs(
                 sessionId,
@@ -71,8 +80,8 @@ public final class TradingSessionConfig {
                 strategyId,
                 ticker,
                 minTimeBeforeClose,
-                startingTimestamp,
-                endingTimestamp
+                firstCandleTimestamp,
+                lastCandleTimestamp
         );
 
         this.sessionId = sessionId;
@@ -82,8 +91,8 @@ public final class TradingSessionConfig {
 
         this.minTimeBeforeClose = minTimeBeforeClose;
 
-        this.startingTimestamp = startingTimestamp;
-        this.endingTimestamp = endingTimestamp;
+        this.firstCandleTimestamp = firstCandleTimestamp;
+        this.lastCandleTimestamp = lastCandleTimestamp;
     }
 
     /**
@@ -98,8 +107,8 @@ public final class TradingSessionConfig {
             String strategyId,
             String ticker,
             Duration minTimeBeforeClose,
-            Instant startingTimestamp,
-            Instant endingTimestamp
+            Instant firstCandleTimestamp,
+            Instant lastCandleTimestamp
     ) {
         if (sessionId == null || sessionId.isBlank()) {
             throw new IllegalArgumentException(
@@ -131,21 +140,21 @@ public final class TradingSessionConfig {
             );
         }
 
-        if (startingTimestamp == null) {
+        if (firstCandleTimestamp == null) {
             throw new IllegalArgumentException(
                     "Starting timestamp cannot be null."
             );
         }
 
-        if (endingTimestamp == null) {
+        if (lastCandleTimestamp == null) {
             throw new IllegalArgumentException(
                     "Ending timestamp cannot be null."
             );
         }
 
-        if (!startingTimestamp.isBefore(endingTimestamp)) {
+        if (!firstCandleTimestamp.isBefore(lastCandleTimestamp)) {
             throw new IllegalArgumentException(
-                    "Starting timestamp must be before ending timestamp."
+                    "Starting candle timestamp must be before ending candle timestamp."
             );
         }
     }
@@ -170,12 +179,12 @@ public final class TradingSessionConfig {
         return minTimeBeforeClose;
     }
 
-    public Instant getStartingTimestamp() {
-        return startingTimestamp;
+    public Instant getFirstCandleTimestamp() {
+        return firstCandleTimestamp;
     }
 
-    public Instant getEndingTimestamp() {
-        return endingTimestamp;
+    public Instant getLastCandleTimestamp() {
+        return lastCandleTimestamp;
     }
 
     @Override
@@ -186,8 +195,8 @@ public final class TradingSessionConfig {
                 ", strategyId='" + strategyId + '\'' +
                 ", ticker='" + ticker + '\'' +
                 ", minTimeBeforeClose=" + minTimeBeforeClose +
-                ", startingTimestamp=" + startingTimestamp +
-                ", endingTimestamp=" + endingTimestamp +
+                ", firstCandleTimestamp=" + firstCandleTimestamp +
+                ", lastCandleTimestamp=" + lastCandleTimestamp +
                 '}';
     }
 }

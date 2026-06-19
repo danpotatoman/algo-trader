@@ -149,7 +149,7 @@ public class DataBatch {
             throw new IllegalArgumentException("Ticker cannot be null or blank.");
         }
 
-        if (row.timestamp() == null) {
+        if (row.candleOpenTime() == null) {
             throw new IllegalArgumentException("Timestamp cannot be null.");
         }
 
@@ -167,11 +167,11 @@ public class DataBatch {
                 );
             }
 
-            if (!row.timestamp().isAfter(lastRow.timestamp())) {
+            if (!row.candleOpenTime().isAfter(lastRow.candleOpenTime())) {
                 throw new IllegalArgumentException(
                         "Rows must be strictly ordered by timestamp. New row has timestamp "
-                                + row.timestamp()
-                                + ", but previous timestamp was " + lastRow.timestamp()
+                                + row.candleOpenTime()
+                                + ", but previous timestamp was " + lastRow.candleOpenTime()
                 );
             }
         }
@@ -198,16 +198,34 @@ public class DataBatch {
     }
 
     /**
-     * Returns the timestamp of the final candle in the batch.
+     * Returns the opening timestamp of the final candle in the batch.
      *
-     * @return the timestamp of the last row, or {@code null} if empty
+     * @return opening timestamp of the last candle, or {@code null} if empty
      */
-    public Instant getFinalTimestamp() {
+    public Instant getLastCandleTimestamp() {
         if (rows.isEmpty()) {
             return null;
         }
 
-        return rows.get(rows.size() - 1).timestamp();
+        return rows.get(rows.size() - 1).candleOpenTime();
+    }
+
+    /**
+     * Returns the closing timestamp of the final candle in the batch.
+     *
+     * <p>This is calculated by adding the batch interval duration to the final
+     * candle's opening timestamp.
+     *
+     * @return closing timestamp of the last candle, or {@code null} if empty
+     */
+    public Instant getLastCandleCloseTimestamp() {
+        Instant lastCandleTimestamp = getLastCandleTimestamp();
+
+        if (lastCandleTimestamp == null) {
+            return null;
+        }
+
+        return lastCandleTimestamp.plus(interval.getDuration());
     }
 
     public boolean isEmpty() {
@@ -286,9 +304,8 @@ public class DataBatch {
 
         String ticker = getTicker();
         int size = getBatchSize();
-        Instant start = rows.get(0).timestamp();
-        Instant end = getFinalTimestamp();
-
+        Instant start = rows.get(0).candleOpenTime();
+        Instant end = getLastCandleTimestamp();
         return "DataBatch{" +
                 "ticker='" + ticker + '\'' +
                 ", interval=" + interval +

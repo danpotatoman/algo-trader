@@ -31,8 +31,8 @@ public class SlidingWindowProvider {
     private final String ticker;
     private final TimeInterval interval;
     private final int batchSize;
-    private final Instant startTime;
-    private final Instant endTime;
+    private final Instant firstCandleTimestamp;
+    private final Instant lastCandleTimestamp;
 
     private List<StampedOHLCV> rows;
     private int nextEndIndex;
@@ -45,8 +45,8 @@ public class SlidingWindowProvider {
      * @param ticker ticker symbol to load
      * @param interval candle interval for the requested data
      * @param batchSize number of rows in each generated window
-     * @param startTime inclusive start of the data range
-     * @param endTime inclusive end of the data range
+     * @param firstCandleTimestamp inclusive start of the data range
+     * @param lastCandleTimestamp inclusive end of the data range
      * @throws IllegalArgumentException if any argument is invalid
      */
     public SlidingWindowProvider(
@@ -54,17 +54,17 @@ public class SlidingWindowProvider {
             String ticker,
             TimeInterval interval,
             int batchSize,
-            Instant startTime,
-            Instant endTime
+            Instant firstCandleTimestamp,
+            Instant lastCandleTimestamp
     ) {
-        validateConstructorArgs(marketDataProvider, ticker, interval, batchSize, startTime, endTime);
+        validateConstructorArgs(marketDataProvider, ticker, interval, batchSize, firstCandleTimestamp, lastCandleTimestamp);
         
         this.marketDataProvider = marketDataProvider;
         this.ticker = ticker.toUpperCase();
         this.interval = interval;
         this.batchSize = batchSize;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.firstCandleTimestamp = firstCandleTimestamp;
+        this.lastCandleTimestamp = lastCandleTimestamp;
 
         this.rows = List.of();
         this.nextEndIndex = batchSize - 1;
@@ -139,8 +139,8 @@ public class SlidingWindowProvider {
                 marketDataProvider.requestRange(
                         ticker,
                         interval,
-                        startTime,
-                        endTime
+                        firstCandleTimestamp,
+                        lastCandleTimestamp
                 )
         );
 
@@ -162,8 +162,8 @@ public class SlidingWindowProvider {
             String ticker,
             TimeInterval interval,
             int batchSize,
-            Instant startTime,
-            Instant endTime
+            Instant firstCandleTimestamp,
+            Instant lastCandleTimestamp
     ) {
 
         if (marketDataProvider == null) {
@@ -190,21 +190,21 @@ public class SlidingWindowProvider {
             );
         }
 
-        if (startTime == null) {
+        if (firstCandleTimestamp == null) {
             throw new IllegalArgumentException(
-                    "Start time cannot be null."
+                    "First candle timestamp cannot be null."
             );
         }
 
-        if (endTime == null) {
+        if (lastCandleTimestamp == null) {
             throw new IllegalArgumentException(
-                    "End time cannot be null."
+                    "Last candle timestamp cannot be null."
             );
         }
 
-        if (startTime.isAfter(endTime)) {
+        if (firstCandleTimestamp.isAfter(lastCandleTimestamp)) {
             throw new IllegalArgumentException(
-                    "Start time cannot be after end time."
+                    "First candle timestamp cannot be after last candle timestamp."
             );
         }
     }

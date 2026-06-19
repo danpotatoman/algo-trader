@@ -18,7 +18,6 @@ import com.algotrader.marketdata.model.TimeInterval;
 public final class TradingCycleLog {
 
     private final String cycleId;
-    private final Instant timestamp;
     private final long cycleDurationMillis;
 
     private final Metadata metadata;
@@ -31,7 +30,6 @@ public final class TradingCycleLog {
      * Creates a trading cycle log.
      *
      * @param cycleId unique identifier for the completed cycle
-     * @param timestamp timestamp associated with the cycle
      * @param cycleDurationMillis elapsed runtime of the cycle in milliseconds
      * @param metadata configuration metadata for the cycle
      * @param strategyId strategy used to generate trades
@@ -40,7 +38,6 @@ public final class TradingCycleLog {
      */
     public TradingCycleLog(
             String cycleId,
-            Instant timestamp,
             long cycleDurationMillis,
             Metadata metadata,
             String strategyId,
@@ -49,12 +46,6 @@ public final class TradingCycleLog {
         if (cycleId == null || cycleId.isBlank()) {
             throw new IllegalArgumentException(
                     "Cycle ID cannot be null or blank."
-            );
-        }
-
-        if (timestamp == null) {
-            throw new IllegalArgumentException(
-                    "Timestamp cannot be null."
             );
         }
 
@@ -83,7 +74,6 @@ public final class TradingCycleLog {
         }
 
         this.cycleId = cycleId;
-        this.timestamp = timestamp;
         this.cycleDurationMillis = cycleDurationMillis;
 
         this.metadata = metadata;
@@ -95,10 +85,6 @@ public final class TradingCycleLog {
 
     public String getCycleId() {
         return cycleId;
-    }
-
-    public Instant getTimestamp() {
-        return timestamp;
     }
 
     public long getCycleDurationMillis() {
@@ -215,7 +201,7 @@ public final class TradingCycleLog {
 
         private final String action;
 
-        private final Instant timestamp;
+        private final Instant executionTime;
 
         private final double price;
         private final double quantity;
@@ -224,14 +210,14 @@ public final class TradingCycleLog {
          * Creates an executed action log.
          *
          * @param action executed action, such as {@code BUY} or {@code SELL}
-         * @param timestamp execution timestamp
+         * @param executionTime execution timestamp
          * @param price execution price
          * @param quantity executed quantity
          * @throws IllegalArgumentException if any argument is invalid
          */
         public ActionLog(
                 String action,
-                Instant timestamp,
+                Instant executionTime,
                 double price,
                 double quantity
         ) {
@@ -241,9 +227,9 @@ public final class TradingCycleLog {
                 );
             }
 
-            if (timestamp == null) {
+            if (executionTime == null) {
                 throw new IllegalArgumentException(
-                        "Timestamp cannot be null."
+                        "Execution timestamp cannot be null."
                 );
             }
 
@@ -260,7 +246,7 @@ public final class TradingCycleLog {
             }
 
             this.action = action;
-            this.timestamp = timestamp;
+            this.executionTime = executionTime;
             this.price = price;
             this.quantity = quantity;
         }
@@ -269,8 +255,8 @@ public final class TradingCycleLog {
             return action;
         }
 
-        public Instant getTimestamp() {
-            return timestamp;
+        public Instant getExecutionTime() {
+            return executionTime;
         }
 
         public double getPrice() {

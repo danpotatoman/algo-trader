@@ -198,7 +198,7 @@ public class TradingCycleRunner {
 
             String cycleId = String.format(
                     "cycle-%s-%s-%s",
-                    batch.getFinalTimestamp(),
+                    batch.getLastCandleTimestamp(),
                     ticker,
                     interval
             );
@@ -206,7 +206,6 @@ public class TradingCycleRunner {
             TradingCycleLog tradingCycleLog =
                     new TradingCycleLog(
                             cycleId,
-                            batch.getFinalTimestamp(),
                             cycleDurationMillis,
                             metadata,
                             strategyId,

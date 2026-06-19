@@ -52,38 +52,18 @@ public final class ClassificationWithVolatilityPrediction
         this.horizonMinutes = horizonMinutes;
     }
 
-    /**
-     * Returns the source market data batch.
-     *
-     * @return source market data batch
-     */
     public DataBatch getBatch() {
         return batch;
     }
 
-    /**
-     * Returns the upward classification probability.
-     *
-     * @return probability from {@code 0.0} through {@code 1.0}
-     */
     public double getProbability() {
         return probability;
     }
 
-    /**
-     * Returns the forecast volatility used for risk-aware decisions.
-     *
-     * @return non-negative forecast volatility
-     */
     public double getVolatility() {
         return volatility;
     }
 
-    /**
-     * Returns the prediction horizon.
-     *
-     * @return prediction horizon in minutes
-     */
     public int getHorizonMinutes() {
         return horizonMinutes;
     }
@@ -97,11 +77,11 @@ public final class ClassificationWithVolatilityPrediction
     public String summary() {
         return String.format(
                 "ClassificationWithVolatilityPrediction[" +
-                        "ticker=%s, timestamp=%s, interval=%s, " +
+                        "ticker=%s, lastCandleCloseTimestamp=%s, interval=%s, " +
                         "probability=%.4f, volatility=%.6f, " +
                         "horizonMinutes=%d]",
                 getTicker(),
-                getFinalTimestamp(),
+                getLastCandleCloseTimestamp(),
                 getInterval(),
                 probability,
                 volatility,
@@ -109,31 +89,16 @@ public final class ClassificationWithVolatilityPrediction
         );
     }
 
-    /**
-     * Returns the ticker symbol from the source batch.
-     *
-     * @return source batch ticker symbol
-     */
     @Override
     public String getTicker() {
         return batch.getTicker();
     }
 
-    /**
-     * Returns the final timestamp in the source market data batch.
-     *
-     * @return final batch timestamp
-     */
     @Override
-    public Instant getFinalTimestamp() {
-        return batch.getFinalTimestamp();
+    public Instant getLastCandleCloseTimestamp() {
+        return batch.getLastCandleTimestamp();
     }
 
-    /**
-     * Returns the market data interval used by the source batch.
-     *
-     * @return source batch interval
-     */
     @Override
     public TimeInterval getInterval() {
         return batch.getInterval();

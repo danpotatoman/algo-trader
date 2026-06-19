@@ -25,6 +25,6 @@ public interface ModelPrediction {
      */
     String summary();
     String getTicker();
-    Instant getFinalTimestamp();
+    Instant getLastCandleCloseTimestamp();
     TimeInterval getInterval();
 }

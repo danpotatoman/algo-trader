@@ -7,6 +7,6 @@
 
   "minTimeBeforeClose": "PT10M",
 
-  "startingTimestamp": "2026-05-18T19:15:00Z",
-  "endingTimestamp": "2026-06-16T20:00:00Z"
+  "firstCandleTimestamp": "2026-05-18T19:15:00Z",
+  "lastCandleTimestamp": "2026-06-16T20:00:00Z"
 }

@@ -56,13 +56,13 @@ public interface OHLCVRepository {
          *
          * @param ticker ticker symbol
          * @param interval candle interval
-         * @param timestamp exact candle timestamp
+         * @param candleTimestamp exact candle timestamp
          * @return matching candle, or {@link Optional#empty()} if none exists
          */
         Optional<StampedOHLCV> findByKey(
                 String ticker,
                 TimeInterval interval,
-                Instant timestamp
+                Instant candleTimestamp
         );
 
         /**
@@ -70,15 +70,15 @@ public interface OHLCVRepository {
          *
          * @param ticker ticker symbol
          * @param interval candle interval
-         * @param start inclusive range start
-         * @param end inclusive range end
+         * @param firstCandleTimestamp inclusive first candle timestamp
+         * @param lastCandleTimestamp inclusive last candle timestamp
          * @return matching candles ordered by ascending timestamp
          */
         List<StampedOHLCV> findRange(
                 String ticker,
                 TimeInterval interval,
-                Instant start,
-                Instant end
+                Instant firstCandleTimestamp,
+                Instant lastCandleTimestamp
         );
 
         /**
@@ -106,14 +106,14 @@ public interface OHLCVRepository {
         );
 
         /**
-         * Retrieves the next available timestamp after the supplied timestamp.
+         * Retrieves the next available candle timestamp after the supplied timestamp.
          *
          * @param ticker ticker symbol
          * @param interval candle interval
          * @param timestamp timestamp after which to search
-         * @return next available timestamp, or {@link Optional#empty()} if none exists
+         * @return next available candle timestamp, or {@link Optional#empty()} if none exists
          */
-        Optional<Instant> findNextTimestamp(
+        Optional<Instant> findNextCandleTimestamp(
                 String ticker,
                 TimeInterval interval,
                 Instant timestamp

@@ -79,7 +79,7 @@ public final class ClassificationWithVolatilityPredictionInterpreter
             return List.of();
         }
 
-        Instant entryTime = prediction.getFinalTimestamp();
+        Instant entryTime = prediction.getLastCandleCloseTimestamp();
         Instant exitTime = entryTime.plus(Duration.ofMinutes(horizonMinutes));
 
         RoundTripTrade trade = new RoundTripTrade(

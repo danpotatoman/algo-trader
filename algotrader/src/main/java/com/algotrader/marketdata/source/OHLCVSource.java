@@ -41,32 +41,32 @@ public interface OHLCVSource {
         /**
          * Loads all OHLCV rows within the requested time range.
          *
-         * <p>The start and end timestamps are inclusive. Returned rows should be
-         * ordered by ascending timestamp.
+         * <p>The start and end candle timestamps are inclusive. Returned rows
+         * should be ordered by ascending timestamp.
          *
          * @param ticker ticker symbol to query
          * @param interval candle interval to query
-         * @param startTimestamp inclusive range start
-         * @param endTimestamp inclusive range end
+         * @param firstCandleTimestamp inclusive first candle timestamp
+         * @param lastCandleTimestamp inclusive last candle timestamp
          * @return matching rows ordered by timestamp
          * @throws DataCacheException if the data cannot be retrieved
          */
         List<StampedOHLCV> loadRange(
                 String ticker,
                 TimeInterval interval,
-                Instant startTimestamp,
-                Instant endTimestamp
+                Instant firstCandleTimestamp,
+                Instant lastCandleTimestamp
         ) throws DataCacheException;
 
         /**
-         * Loads a single OHLCV row at an exact timestamp.
+         * Loads a single OHLCV row at an exact candle timestamp.
          *
          * <p>The timestamp must exactly match an available candle timestamp. No
          * nearest-neighbor lookup or interpolation is performed.
          *
          * @param ticker ticker symbol to query
          * @param interval candle interval to query
-         * @param timestamp exact candle timestamp
+         * @param candleTimestamp exact candle timestamp
          * @return matching OHLCV row
          * @throws DataCacheException if the row cannot be retrieved or no matching
          *         candle exists
@@ -74,7 +74,7 @@ public interface OHLCVSource {
         StampedOHLCV loadRow(
                 String ticker,
                 TimeInterval interval,
-                Instant timestamp
+                Instant candleTimestamp
         ) throws DataCacheException;
 
         /**
@@ -91,7 +91,7 @@ public interface OHLCVSource {
          *         exists
          * @throws DataCacheException if the lookup cannot be performed
          */
-        Optional<Instant> getNextTimestamp(
+        Optional<Instant> getNextCandleTimestamp(
                         String ticker,
                         TimeInterval interval,
                         Instant timestamp

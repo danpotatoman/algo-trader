@@ -9,7 +9,7 @@ import java.time.Instant;
  * <ul>
  *     <li>a ticker symbol</li>
  *     <li>a time interval</li>
- *     <li>a timestamp (typically the closing time of the candle)</li>
+ *     <li>a candle open time</li>
  * </ul>
  *
  * <p>Ticker symbols are normalized to uppercase during construction.
@@ -20,21 +20,21 @@ import java.time.Instant;
  * 
  * @param ticker the stock ticker symbol (e.g. {@code "AAPL"})
  * @param interval the candlestick time interval
- * @param timestamp the timestamp associated with the candle (typically the close time)
+ * @param candleOpenTime the open time of the candle
  * @param ohlcv the OHLCV data for the interval
  *
  * @throws IllegalArgumentException if:
  * <ul>
  *     <li>{@code ticker} is null or blank</li>
  *     <li>{@code interval} is null</li>
- *     <li>{@code timestamp} is null</li>
+ *     <li>{@code candleOpenTime} is null</li>
  *     <li>{@code ohlcv} is null</li>
  * </ul>
  */
 public record StampedOHLCV(
     String ticker,
     TimeInterval interval,
-    Instant timestamp,
+    Instant candleOpenTime,
     OHLCV ohlcv
 ) {
 
@@ -50,8 +50,8 @@ public record StampedOHLCV(
         if (interval == null) {
             throw new IllegalArgumentException("Interval cannot be null.");
         }
-        if (timestamp == null) {
-            throw new IllegalArgumentException("Timestamp cannot be null.");
+        if (candleOpenTime == null) {
+            throw new IllegalArgumentException("Candle open time cannot be null.");
         }
         if (ohlcv == null) {
             throw new IllegalArgumentException("OHLCV cannot be null.");
@@ -87,7 +87,7 @@ public record StampedOHLCV(
      */
     @Override
     public String toString() {
-        return ticker + " " + interval + " " + timestamp +
+        return ticker + " " + interval + " " + candleOpenTime +
             " [o=" + open() +
             ", h=" + high() +
             ", l=" + low() +

@@ -66,7 +66,7 @@ public final class ThresholdClassificationPredictionInterpreter
      * Generates a trade when the prediction indicates an upward move with
      * sufficient confidence.
      *
-     * <p>The generated trade enters immediately at the prediction timestamp and
+     * <p>The generated trade enters when the final input candle has closed and
      * exits after the configured forecast horizon.
      *
      * @param prediction classification prediction to interpret
@@ -91,7 +91,7 @@ public final class ThresholdClassificationPredictionInterpreter
         }
 
         String ticker = prediction.getTicker();
-        Instant entryTime = prediction.getFinalTimestamp();
+        Instant entryTime = prediction.getLastCandleCloseTimestamp();
         int horizonMinutes = prediction.getHorizonMinutes();
 
         if (entryTime == null) {

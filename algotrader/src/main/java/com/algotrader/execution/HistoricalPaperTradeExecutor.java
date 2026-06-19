@@ -70,12 +70,12 @@ public class HistoricalPaperTradeExecutor implements TradeExecutor {
         try {
             double executionPrice = priceProvider.getTickerPrice(
                     recommendation.getTicker(),
-                    recommendation.getTimestamp()
+                    recommendation.getExecutionTime()
             ).price();
 
             return new ActionLog(
                     recommendation.getAction().name(),
-                    recommendation.getTimestamp(),
+                    recommendation.getExecutionTime(),
                     executionPrice,
                     recommendation.getQuantity()
             );

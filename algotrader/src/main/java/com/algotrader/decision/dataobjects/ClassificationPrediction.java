@@ -60,103 +60,48 @@ public final class ClassificationPrediction implements ModelPrediction {
         this.label = label;
     }
 
-    /**
-     * Returns the source market data batch.
-     *
-     * @return source market data batch
-     */
     public DataBatch getBatch() {
         return batch;
     }
 
-    /**
-     * Returns the predicted ticker symbol.
-     *
-     * @return predicted ticker symbol
-     */
     @Override
     public String getTicker() {
         return ticker;
     }
 
-    /**
-     * Returns the numeric classification.
-     *
-     * @return {@code 1} for up or {@code 0} for down
-     */
     public int getPrediction() {
         return prediction;
     }
 
-    /**
-     * Returns the model confidence.
-     *
-     * @return confidence between {@code 0.0} and {@code 1.0}
-     */
     public double getConfidence() {
         return confidence;
     }
 
-    /**
-     * Returns the prediction horizon.
-     *
-     * @return prediction horizon in minutes
-     */
     public int getHorizonMinutes() {
         return horizonMinutes;
     }
 
-    /**
-     * Returns the human-readable prediction label.
-     *
-     * @return prediction label
-     */
     public String getLabel() {
         return label;
     }
 
-    /**
-     * Returns whether the prediction classifies the price direction as up.
-     *
-     * @return {@code true} when the numeric prediction is {@code 1}
-     */
     public boolean predictsUp() {
         return prediction == 1;
     }
 
-    /**
-     * Returns whether the prediction classifies the price direction as down.
-     *
-     * @return {@code true} when the numeric prediction is {@code 0}
-     */
     public boolean predictsDown() {
         return prediction == 0;
     }
 
-    /**
-     * Returns the final timestamp in the source market data batch.
-     *
-     * @return final batch timestamp
-     */
     @Override
-    public Instant getFinalTimestamp() {
-        return batch.getFinalTimestamp();
+    public Instant getLastCandleCloseTimestamp() {
+        return batch.getLastCandleTimestamp();
     }
 
-    /**
-     * Returns the number of market data points in the source batch.
-     *
-     * @return source batch size
-     */
     public int getBatchSize() {
         return batch.getBatchSize();
     }
 
-    /**
-     * Returns the market data interval used by the source batch.
-     *
-     * @return source batch interval
-     */
     @Override
     public TimeInterval getInterval() {
         return batch.getInterval();
