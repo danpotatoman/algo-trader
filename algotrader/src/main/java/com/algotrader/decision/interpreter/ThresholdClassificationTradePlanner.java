@@ -29,8 +29,8 @@ import com.algotrader.decision.dataobjects.RoundTripTrade;
  * pipeline and serves as a simple baseline for converting binary model
  * predictions into trading decisions.
  */
-public final class ThresholdClassificationPredictionInterpreter
-        implements PredictionInterpreter<ClassificationPrediction> {
+public final class ThresholdClassificationTradePlanner
+        implements TradePlanner<ClassificationPrediction> {
 
     private final double k;
     private final String strategyId;
@@ -42,7 +42,7 @@ public final class ThresholdClassificationPredictionInterpreter
      * @param strategyId identifier associated with generated trades
      * @throws IllegalArgumentException if any argument is invalid
      */
-    public ThresholdClassificationPredictionInterpreter(
+    public ThresholdClassificationTradePlanner(
             double k,
             String strategyId
     ) {

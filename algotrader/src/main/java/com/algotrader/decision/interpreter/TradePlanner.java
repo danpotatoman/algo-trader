@@ -24,7 +24,7 @@ import com.algotrader.decision.dataobjects.RoundTripTrade;
  *
  * @param <T> the prediction type interpreted by this strategy
  */
-public interface PredictionInterpreter<T extends ModelPrediction> {
+public interface TradePlanner<T extends ModelPrediction> {
 
     /**
      * Generates proposed round-trip trades from a model prediction.

@@ -209,7 +209,7 @@ public final class TradingCycleLog {
         /**
          * Creates an executed action log.
          *
-         * @param action executed action, such as {@code BUY} or {@code SELL}
+         * @param action executed action, such as {@code BUY} or {@code SELL} //TODO: maybe this should use the Action enum
          * @param executionTime execution timestamp
          * @param price execution price
          * @param quantity executed quantity

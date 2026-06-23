@@ -5,14 +5,14 @@ import com.algotrader.config.StrategyType;
 import com.algotrader.config.TradeGeneratorConfig;
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
 import com.algotrader.decision.generator.validation.RoundTripTradeValidator;
-import com.algotrader.decision.interpreter.PredictionInterpreter;
-import com.algotrader.decision.interpreter.ThresholdClassificationPredictionInterpreter;
+import com.algotrader.decision.interpreter.TradePlanner;
+import com.algotrader.decision.interpreter.ThresholdClassificationTradePlanner;
 import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderFactory;
 import com.algotrader.marketcalendar.MarketCalendar;
 import com.algotrader.runtime.ResolvedTradingPlan;
 import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
-import com.algotrader.decision.interpreter.ClassificationWithVolatilityPredictionInterpreter;
+import com.algotrader.decision.interpreter.ClassificationWithVolatilityTradePlanner;
 
 /**
  * Factory for constructing {@link TradeGenerator} instances from resolved
@@ -123,8 +123,8 @@ public final class TradeGeneratorFactory {
                         "confidenceThreshold"
                 );
 
-        PredictionInterpreter<ClassificationPrediction> interpreter =
-                new ThresholdClassificationPredictionInterpreter(
+        TradePlanner<ClassificationPrediction> interpreter =
+                new ThresholdClassificationTradePlanner(
                         confidenceThreshold,
                         tradingPlan.getStrategyId()
                 );
@@ -162,8 +162,8 @@ public final class TradeGeneratorFactory {
                         "maxVolatilityThreshold"
                 );
 
-        PredictionInterpreter<ClassificationWithVolatilityPrediction> interpreter =
-                new ClassificationWithVolatilityPredictionInterpreter(
+        TradePlanner<ClassificationWithVolatilityPrediction> interpreter =
+                new ClassificationWithVolatilityTradePlanner(
                         confidenceThreshold,
                         maxVolatilityThreshold,
                         tradingPlan.getStrategyId()

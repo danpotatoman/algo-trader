@@ -5,7 +5,7 @@ import java.util.List;
 import com.algotrader.decision.dataobjects.ModelPrediction;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.decision.generator.validation.RoundTripTradeValidator;
-import com.algotrader.decision.interpreter.PredictionInterpreter;
+import com.algotrader.decision.interpreter.TradePlanner;
 import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
 import com.algotrader.marketdata.model.DataBatch;
@@ -16,7 +16,7 @@ import com.algotrader.marketdata.model.DataBatch;
  *
  * <p>This generator represents the common trading pipeline: it requests a
  * model prediction for a market data batch, passes that prediction to a
- * {@link PredictionInterpreter}, and filters the resulting
+ * {@link TradePlanner}, and filters the resulting
  * {@link RoundTripTrade} objects through a {@link RoundTripTradeValidator}.
  *
  * <p>This class is intentionally focused on orchestration. Prediction logic,
@@ -29,7 +29,7 @@ public final class GenericTradeGenerator<T extends ModelPrediction>
         implements TradeGenerator {
 
     private final PredictionProvider<T> predictionProvider;
-    private final PredictionInterpreter<T> interpreter;
+    private final TradePlanner<T> interpreter;
     private final RoundTripTradeValidator tradeValidator;
 
     /**
@@ -44,7 +44,7 @@ public final class GenericTradeGenerator<T extends ModelPrediction>
      */
     public GenericTradeGenerator(
             PredictionProvider<T> predictionProvider,
-            PredictionInterpreter<T> interpreter,
+            TradePlanner<T> interpreter,
             RoundTripTradeValidator tradeValidator
     ) {
         if (predictionProvider == null) {

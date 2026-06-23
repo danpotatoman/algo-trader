@@ -15,8 +15,8 @@ import com.algotrader.decision.dataobjects.RoundTripTrade;
  * probability meets the configured confidence threshold and volatility does
  * not exceed the configured maximum.
  */
-public final class ClassificationWithVolatilityPredictionInterpreter
-        implements PredictionInterpreter<ClassificationWithVolatilityPrediction> {
+public final class ClassificationWithVolatilityTradePlanner
+        implements TradePlanner<ClassificationWithVolatilityPrediction> {
 
     private static final int FIXED_QUANTITY = 1;
 
@@ -34,7 +34,7 @@ public final class ClassificationWithVolatilityPredictionInterpreter
      * @param strategyId identifier associated with generated trades
      * @throws IllegalArgumentException if any argument is invalid
      */
-    public ClassificationWithVolatilityPredictionInterpreter(
+    public ClassificationWithVolatilityTradePlanner(
             double minimumConfidenceThreshold,
             double maximumVolatilityThreshold,
             String strategyId
