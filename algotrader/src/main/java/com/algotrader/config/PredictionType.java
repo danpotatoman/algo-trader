@@ -5,7 +5,7 @@ package com.algotrader.config;
  * Enumerates the prediction contracts supported by prediction endpoints.
  *
  * <p>The prediction type defines the structure of data returned by an
- * endpoint and determines which prediction providers, interpreters, and
+ * endpoint and determines which prediction providers, trade planners, and
  * trade generation strategies can consume the result.
  *
  * <p>Classification-based prediction types are fully supported throughout

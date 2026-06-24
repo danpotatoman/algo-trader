@@ -3,11 +3,12 @@
 
   "strategyType": "THRESHOLD_CLASSIFICATION",
 
-  "description": "Buys when prediction confidence exceeds a threshold and volatility is below a threshold.",
+  "description": "Buys when prediction confidence exceeds a threshold, with quantity scaled by confidence and volatility.",
 
   "parameters": {
-    "confidenceThreshold": 0.3,
-    "maxVolatilityThreshold": 1.0
+    "minConfidenceThreshold": 0.25,
+    "minPositionFraction": 0.10,
+    "maxPositionFraction": 1.00
   },
 
   "version": "1.0.0"

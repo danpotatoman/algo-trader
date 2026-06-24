@@ -5,7 +5,7 @@ import java.util.List;
 import com.algotrader.decision.dataobjects.ModelPrediction;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.decision.generator.validation.RoundTripTradeValidator;
-import com.algotrader.decision.interpreter.TradePlanner;
+import com.algotrader.decision.planner.TradePlanner;
 import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
 import com.algotrader.marketdata.model.DataBatch;
@@ -20,7 +20,7 @@ import com.algotrader.marketdata.model.DataBatch;
  * {@link RoundTripTrade} objects through a {@link RoundTripTradeValidator}.
  *
  * <p>This class is intentionally focused on orchestration. Prediction logic,
- * prediction interpretation, and market-session validation are delegated to the
+ * trade planning, and market-session validation are delegated to the
  * injected dependencies.
  *
  * @param <T> concrete prediction type produced and interpreted by this generator
@@ -29,14 +29,14 @@ public final class GenericTradeGenerator<T extends ModelPrediction>
         implements TradeGenerator {
 
     private final PredictionProvider<T> predictionProvider;
-    private final TradePlanner<T> interpreter;
+    private final TradePlanner<T> tradePlanner;
     private final RoundTripTradeValidator tradeValidator;
 
     /**
      * Creates a generic trade generator.
      *
      * @param predictionProvider provider used to obtain predictions from market data
-     * @param interpreter component that converts predictions into proposed
+     * @param tradePlanner component that converts predictions into proposed
      *        round-trip trades
      * @param tradeValidator validator used to reject trades that violate market
      *        calendar constraints
@@ -44,7 +44,7 @@ public final class GenericTradeGenerator<T extends ModelPrediction>
      */
     public GenericTradeGenerator(
             PredictionProvider<T> predictionProvider,
-            TradePlanner<T> interpreter,
+            TradePlanner<T> tradePlanner,
             RoundTripTradeValidator tradeValidator
     ) {
         if (predictionProvider == null) {
@@ -53,9 +53,9 @@ public final class GenericTradeGenerator<T extends ModelPrediction>
             );
         }
 
-        if (interpreter == null) {
+        if (tradePlanner == null) {
             throw new IllegalArgumentException(
-                    "PredictionInterpreter cannot be null."
+                    "TradePlanner cannot be null."
             );
         }
 
@@ -66,7 +66,7 @@ public final class GenericTradeGenerator<T extends ModelPrediction>
         }
 
         this.predictionProvider = predictionProvider;
-        this.interpreter = interpreter;
+        this.tradePlanner = tradePlanner;
         this.tradeValidator = tradeValidator;
     }
 
@@ -93,7 +93,7 @@ public final class GenericTradeGenerator<T extends ModelPrediction>
 
         T prediction = predictionProvider.makePrediction(batch);
 
-        return interpreter.getTrades(prediction)
+        return tradePlanner.getTrades(prediction)
                 .stream()
                 .filter(tradeValidator::isValid)
                 .toList();

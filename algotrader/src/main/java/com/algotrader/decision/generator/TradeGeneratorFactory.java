@@ -5,14 +5,14 @@ import com.algotrader.config.StrategyType;
 import com.algotrader.config.TradeGeneratorConfig;
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
 import com.algotrader.decision.generator.validation.RoundTripTradeValidator;
-import com.algotrader.decision.interpreter.TradePlanner;
-import com.algotrader.decision.interpreter.ThresholdClassificationTradePlanner;
+import com.algotrader.decision.planner.ClassificationWithVolatilityTradePlanner;
+import com.algotrader.decision.planner.ThresholdClassificationTradePlanner;
+import com.algotrader.decision.planner.TradePlanner;
 import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderFactory;
 import com.algotrader.marketcalendar.MarketCalendar;
 import com.algotrader.runtime.ResolvedTradingPlan;
 import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
-import com.algotrader.decision.interpreter.ClassificationWithVolatilityTradePlanner;
 
 /**
  * Factory for constructing {@link TradeGenerator} instances from resolved
@@ -23,7 +23,7 @@ import com.algotrader.decision.interpreter.ClassificationWithVolatilityTradePlan
  * {@link ResolvedTradingPlan}.
  *
  * <p>Created trade generators are assembled from a prediction provider, a
- * prediction interpreter, and a round-trip trade validator.
+ * trade planner, and a round-trip trade validator.
  *
  * <p><b>TODO:</b> This factory currently supports classification and
  * classification-with-volatility threshold strategies. Add regression-based
@@ -123,7 +123,7 @@ public final class TradeGeneratorFactory {
                         "confidenceThreshold"
                 );
 
-        TradePlanner<ClassificationPrediction> interpreter =
+        TradePlanner<ClassificationPrediction> tradePlanner =
                 new ThresholdClassificationTradePlanner(
                         confidenceThreshold,
                         tradingPlan.getStrategyId()
@@ -137,11 +137,18 @@ public final class TradeGeneratorFactory {
 
         return new GenericTradeGenerator<>(
                 provider,
-                interpreter,
+                tradePlanner,
                 tradeValidator
         );
     }
 
+    /**
+     * Creates the volatility-aware classification threshold pipeline.
+     *
+     * @param tradingPlan resolved trading plan containing confidence and
+     *        volatility thresholds
+     * @return a configured classification-with-volatility trade generator
+     */
     private TradeGenerator createThresholdClassificationWithVolatilityStrategy(
         ResolvedTradingPlan tradingPlan
     ) {
@@ -162,7 +169,7 @@ public final class TradeGeneratorFactory {
                         "maxVolatilityThreshold"
                 );
 
-        TradePlanner<ClassificationWithVolatilityPrediction> interpreter =
+        TradePlanner<ClassificationWithVolatilityPrediction> tradePlanner =
                 new ClassificationWithVolatilityTradePlanner(
                         confidenceThreshold,
                         maxVolatilityThreshold,
@@ -177,7 +184,7 @@ public final class TradeGeneratorFactory {
 
         return new GenericTradeGenerator<>(
                 provider,
-                interpreter,
+                tradePlanner,
                 tradeValidator
         );
         }

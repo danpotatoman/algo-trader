@@ -1,4 +1,4 @@
-package com.algotrader.decision.interpreter;
+package com.algotrader.decision.planner;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -11,7 +11,7 @@ import com.algotrader.decision.dataobjects.RoundTripTrade;
  * Classification-based trading strategy that enters a position when the
  * model predicts a sufficiently confident upward move.
  *
- * <p>This interpreter generates a single round-trip trade when:
+ * <p>This planner generates a single round-trip trade when:
  * <ul>
  *     <li>The model predicts the positive class</li>
  *     <li>The prediction confidence is at least the configured threshold
@@ -69,7 +69,7 @@ public final class ThresholdClassificationTradePlanner
      * <p>The generated trade enters when the final input candle has closed and
      * exits after the configured forecast horizon.
      *
-     * @param prediction classification prediction to interpret
+     * @param prediction classification prediction to evaluate
      * @return a single trade if the prediction satisfies the strategy rules;
      *         otherwise an empty list
      * @throws IllegalArgumentException if {@code prediction} is null or its
@@ -110,7 +110,6 @@ public final class ThresholdClassificationTradePlanner
                 1,// TODO: Replace fixed quantity sizing with a dedicated position-sizing mechanism once trade sizing is separated from signal generation.
                 entryTime,
                 exitTime,
-                prediction.getConfidence(),
                 strategyId
         );
 

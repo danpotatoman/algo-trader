@@ -11,5 +11,9 @@
 
   "numCandles": 10,
 
+  "statistics": {
+
+  },
+
   "version": "1.0.0"
 }

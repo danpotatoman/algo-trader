@@ -1,4 +1,4 @@
-package com.algotrader.decision.interpreter;
+package com.algotrader.decision.planner;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -11,7 +11,7 @@ import com.algotrader.decision.dataobjects.RoundTripTrade;
  * Volatility-aware classification strategy that enters a position when upward
  * probability is high enough and forecast volatility is low enough.
  *
- * <p>This interpreter generates a single round-trip trade when the prediction
+ * <p>This planner generates a single round-trip trade when the prediction
  * probability meets the configured confidence threshold and volatility does
  * not exceed the configured maximum.
  */
@@ -25,7 +25,7 @@ public final class ClassificationWithVolatilityTradePlanner
     private final String strategyId;
 
     /**
-     * Creates a volatility-aware classification interpreter.
+     * Creates a volatility-aware classification planner.
      *
      * @param minimumConfidenceThreshold minimum upward probability required
      *        before a trade is generated
@@ -52,7 +52,7 @@ public final class ClassificationWithVolatilityTradePlanner
      * Generates a trade when confidence and volatility satisfy the configured
      * thresholds.
      *
-     * @param prediction classification-with-volatility prediction to interpret
+     * @param prediction classification-with-volatility prediction to evaluate
      * @return a single trade if the prediction satisfies the strategy rules;
      *         otherwise an empty list
      * @throws IllegalArgumentException if {@code prediction} is null
@@ -87,7 +87,6 @@ public final class ClassificationWithVolatilityTradePlanner
                 FIXED_QUANTITY,
                 entryTime,
                 exitTime,
-                probability,
                 strategyId
         );
 

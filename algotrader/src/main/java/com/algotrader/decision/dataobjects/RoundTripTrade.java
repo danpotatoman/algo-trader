@@ -20,15 +20,15 @@ import com.algotrader.decision.dataobjects.TradeRecommendation.Action;
  * instances.
  *
  * <p>The entry and exit recommendations produced by this object always
- * reference the same ticker, quantity, confidence score, and strategy,
- * differing only in action type and execution time.
+ * reference the same ticker and quantity, differing only in action type and
+ * execution time. The strategy identifier remains attached to the round trip
+ * for attribution.
  */
 public record RoundTripTrade(
         String ticker,
-        int quantity,
+        double quantity,
         Instant entryTime,
         Instant exitTime,
-        double confidence,// TODO: Consider whether confidence should be constrained to [0.0, 1.0] to match ClassificationScore semantics.
         String strategyId
 ) {
 
@@ -67,11 +67,6 @@ public record RoundTripTrade(
             throw new IllegalArgumentException(
                     "strategyId cannot be null or blank");
         }
-
-        if (Double.isNaN(confidence)) {
-            throw new IllegalArgumentException(
-                    "confidence cannot be NaN");
-        }
     }
 
     /**
@@ -84,7 +79,6 @@ public record RoundTripTrade(
         return new TradeRecommendation(
                 ticker,
                 Action.BUY,
-                confidence,
                 quantity,
                 entryTime
         );
@@ -100,7 +94,6 @@ public record RoundTripTrade(
         return new TradeRecommendation(
                 ticker,
                 Action.SELL,
-                confidence,
                 quantity,
                 exitTime
         );
@@ -131,7 +124,6 @@ public record RoundTripTrade(
                 quantity,
                 entryTime,
                 exitTime,
-                confidence,
                 strategyId
         );
     }

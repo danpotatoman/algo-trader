@@ -19,16 +19,16 @@ import com.algotrader.marketdata.model.DataBatch;
  * <p>Implementations typically:
  * <ol>
  *     <li>Request a model prediction for the supplied market data</li>
- *     <li>Interpret that prediction according to strategy rules</li>
+ *     <li>Plan trades from that prediction according to strategy rules</li>
  *     <li>Return valid round-trip trades, or an empty list if no trade
  *         opportunities are identified</li>
  * </ol>
  *
  * <p>Different implementations may use different prediction providers,
- * prediction types, interpretation strategies, or validation rules.
+ * prediction types, trade planners, or validation rules.
  *
  * <p>The trading service should depend on this abstraction rather than
- * directly coordinating prediction providers and interpreters itself.
+ * directly coordinating prediction providers and trade planners itself.
  */
 public interface TradeGenerator {
 

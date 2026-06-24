@@ -9,7 +9,6 @@ import java.time.Instant;
  * <ul>
  *     <li>The ticker to trade</li>
  *     <li>The recommended action ({@link Action#BUY} or {@link Action#SELL})</li>
- *     <li>The confidence associated with the recommendation</li>
  *     <li>The quantity to trade</li>
  *     <li>The time at which the action should occur</li>
  * </ul>
@@ -37,7 +36,6 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
 
     private final String ticker;
     private final Action action;
-    private final double confidence;
     private final double quantity; //TODO: rethink what the purpose of quantity is, and at what point of the cycle it should be calculated
     private final Instant executionTime;
 
@@ -46,7 +44,6 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
      *
      * @param ticker ticker symbol to trade
      * @param action trading action to perform
-     * @param confidence confidence associated with the recommendation
      * @param quantity quantity to trade
      * @param executionTime the time at which the action should occur
      * @throws IllegalArgumentException if any argument is invalid
@@ -54,15 +51,13 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
     public TradeRecommendation(
             String ticker,
             Action action,
-            double confidence,
             double quantity,
             Instant executionTime
     ) {
-        validate(ticker, action, confidence, quantity, executionTime);
+        validate(ticker, action, quantity, executionTime);
 
         this.ticker = ticker;
         this.action = action;
-        this.confidence = confidence;
         this.quantity = quantity;
         this.executionTime = executionTime;
     }
@@ -75,7 +70,6 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
     private void validate(
             String ticker,
             Action action,
-            double confidence,
             double quantity,
             Instant executionTime
     ) {
@@ -85,10 +79,6 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
 
         if (action == null) {
             throw new IllegalArgumentException("Action cannot be null.");
-        }
-
-        if (confidence < 0.0 || confidence > 1.0) {
-            throw new IllegalArgumentException("Confidence must be between 0 and 1.");
         }
 
         if (quantity < 0) {
@@ -106,10 +96,6 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
 
     public Action getAction() {
         return action;
-    }
-
-    public double getConfidence() {
-        return confidence;
     }
 
     public double getQuantity() {
@@ -141,10 +127,9 @@ public final class TradeRecommendation { //TODO: this could probably use a renam
     @Override
     public String toString() {
         return String.format(
-                "TradeRecommendation[ticker=%s, action=%s, confidence=%.2f%%, quantity=%.4f, executionTime=%s]",
+                "TradeRecommendation[ticker=%s, action=%s, quantity=%.4f, executionTime=%s]",
                 ticker,
                 action,
-                confidence * 100.0,
                 quantity,
                 executionTime
         );
