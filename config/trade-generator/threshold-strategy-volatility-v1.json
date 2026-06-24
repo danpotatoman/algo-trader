@@ -1,7 +1,7 @@
 {
   "strategyId": "threshold-strategy-volatility-v1",
 
-  "strategyType": "THRESHOLD_CLASSIFICATION",
+  "strategyType": "VOLATILITY_SCALED_THRESHOLD",
 
   "description": "Buys when prediction confidence exceeds a threshold, with quantity scaled by confidence and volatility.",
 

@@ -6,34 +6,28 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Immutable configuration describing how a TradeGenerator should convert
+ * Immutable configuration describing how a trade generator should convert
  * model predictions into trade recommendations.
- *
- * <p>A TradeGenerator is configured through an underlying trade generation
- * strategy and its associated parameters.
- *
- * <p>A TradeGenerator is responsible for converting model predictions into
- * trade recommendations according to a configurable decision-making strategy.
  *
  * <p>This configuration defines:
  * <ul>
  *     <li>A unique identifier for the trade generator</li>
- *     <li>The trade generation strategy implementation to use</li>
+ *     <li>The trade generator type to use</li>
  *     <li>Human-readable metadata and version information</li>
- *     <li>Strategy-specific parameters</li>
+ *     <li>Generator-specific parameters</li>
  * </ul>
  *
  * <p>Instances are typically loaded from external JSON configuration files
  * during application startup.
  *
  * <p><b>Note:</b> The current configuration structure is designed around
- * confidence-threshold classification strategies and may need to be expanded
- * as additional trade generation approaches are introduced.
+ * classification and classification-with-volatility generators. Regression
+ * prediction types are not yet supported end-to-end.
  */
 public final class TradeGeneratorConfig {
 
     private final String strategyId;
-    private final StrategyType strategyType;
+    private final TradeGeneratorType strategyType;
     private final String description;
     private final String version;
 
@@ -43,16 +37,16 @@ public final class TradeGeneratorConfig {
      * Creates a trade generator configuration from deserialized JSON data.
      *
      * @param strategyId unique identifier for the trade generator
-     * @param strategyType type of trade generation strategy to use
+     * @param strategyType type of trade generator to use
      * @param description human-readable description of the configuration
      * @param version configuration version identifier
-     * @param parameters strategy-specific parameters
+     * @param parameters generator-specific parameters
      * @throws IllegalArgumentException if any required field is invalid
      */
     @JsonCreator
     public TradeGeneratorConfig(
             @JsonProperty("strategyId") String strategyId,
-            @JsonProperty("strategyType") StrategyType strategyType,
+            @JsonProperty("strategyType") TradeGeneratorType strategyType,
             @JsonProperty("description") String description,
             @JsonProperty("version") String version,
             @JsonProperty("parameters") StrategyParameters parameters
@@ -98,7 +92,7 @@ public final class TradeGeneratorConfig {
         return strategyId;
     }
 
-    public StrategyType getStrategyType() {
+    public TradeGeneratorType getStrategyType() {
         return strategyType;
     }
 
@@ -111,16 +105,16 @@ public final class TradeGeneratorConfig {
     }
 
     /**
-     * Returns the strategy-specific parameters used when generating trades.
+     * Returns the generator-specific parameters used when generating trades.
      *
-     * @return the configured strategy parameters
+     * @return the configured trade generator parameters
      */
     public StrategyParameters getParameters() {
         return parameters;
     }
 
     /**
-     * Configuration parameters for a confidence-based trade generation strategy.
+     * Configuration parameters used by a trade generator.
      */
     public static final class StrategyParameters {
 

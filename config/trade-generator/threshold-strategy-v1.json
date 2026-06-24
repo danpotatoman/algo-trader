@@ -1,7 +1,7 @@
 {
   "strategyId": "threshold-strategy-v1",
 
-  "strategyType": "THRESHOLD_CLASSIFICATION",
+  "strategyType": "THRESHOLD",
 
   "description": "Buys when prediction confidence exceeds a threshold.",
 

@@ -1,5 +1,6 @@
 package com.algotrader.service;
 
+import com.algotrader.account.PaperAccount;
 import com.algotrader.config.EndpointConfig;
 import com.algotrader.config.EndpointConfigLoader;
 import com.algotrader.config.TradeGeneratorConfig;
@@ -28,21 +29,21 @@ import com.algotrader.runtime.ResolvedTradingPlan;
  * trade generation, simulated execution, price availability checking, and
  * cycle logging.
  *
- * <p>The supplied {@link TradingSessionConfig} references endpoint and
- * strategy configuration by ID. This factory loads those configs, combines
+ * <p>The supplied {@link TradingSessionConfig} references endpoint and trade
+ * generator configuration by ID. This factory loads those configs, combines
  * them into a {@link ResolvedTradingPlan}, and uses that resolved plan to
- * construct the runtime objects needed by the runner.
+ * construct the runtime objects and shared paper account needed by the runner.
  *
  * <p><b>TODO:</b> Revisit the dependency on {@link PriceAvailabilityValidator}
  * once the market data missing-price contract is redesigned.
  */
 public final class TradingCycleRunnerFactory {
 
-    private final EndpointConfigLoader modelConfigLoader;
+    private final EndpointConfigLoader endpointConfigLoader;
     private final TradeGeneratorConfigLoader tradeGeneratorConfigLoader;
     private final SlidingWindowProviderFactory slidingWindowProviderFactory;
     private final TradeGeneratorFactory tradeGeneratorFactory;
-    private final TradeExecutor tradeExecutor;
+    private final PriceProvider priceProvider;
     private final TradingCycleLogger tradingCycleLogger;
     private final PriceAvailabilityValidator priceAvailabilityValidator;
 
@@ -78,7 +79,7 @@ public final class TradingCycleRunnerFactory {
             );
         }
 
-        this.modelConfigLoader =
+        this.endpointConfigLoader =
                 new EndpointConfigLoader();
 
         this.tradeGeneratorConfigLoader =
@@ -90,13 +91,11 @@ public final class TradingCycleRunnerFactory {
         this.tradeGeneratorFactory =
                 new TradeGeneratorFactory(
                         new PredictionProviderFactory(),
-                        new UsMarketCalendar2026Loader().load()
-                );
-        
-        this.tradeExecutor =
-                new HistoricalPaperTradeExecutor(
+                        new UsMarketCalendar2026Loader().load(),
                         priceProvider
                 );
+        
+        this.priceProvider = priceProvider;
         
         this.priceAvailabilityValidator = new PriceAvailabilityValidator(priceProvider);
 
@@ -106,14 +105,14 @@ public final class TradingCycleRunnerFactory {
     /**
      * Creates a trading cycle runner from a trading session configuration.
      *
-     * <p>The session's endpoint and strategy IDs are resolved into concrete
-     * configuration objects before the runner is constructed.
+     * <p>The session's endpoint and trade generator IDs are resolved into
+     * concrete configuration objects before the runner is constructed.
      *
      * @param sessionConfig trading session configuration to run
      * @return configured trading cycle runner
      * @throws IllegalArgumentException if {@code sessionConfig} is null
-     * @throws RuntimeException if referenced endpoint or strategy configuration
-     *         cannot be loaded
+     * @throws RuntimeException if referenced endpoint or trade generator
+     *         configuration cannot be loaded
      */
     public TradingCycleRunner create(
             TradingSessionConfig sessionConfig
@@ -124,8 +123,8 @@ public final class TradingCycleRunnerFactory {
             );
         }
 
-        EndpointConfig modelConfig =
-                modelConfigLoader.load(
+        EndpointConfig endpointConfig =
+                endpointConfigLoader.load(
                         sessionConfig.getEndpointId()
                 );
 
@@ -134,16 +133,23 @@ public final class TradingCycleRunnerFactory {
                         sessionConfig.getStrategyId()
                 );
         
-        ResolvedTradingPlan tradingPlan = new ResolvedTradingPlan(sessionConfig, modelConfig, strategyConfig);
+        ResolvedTradingPlan tradingPlan = new ResolvedTradingPlan(sessionConfig, endpointConfig, strategyConfig);
 
         SlidingWindowProvider dataProvider =
                 slidingWindowProviderFactory.create(
                         tradingPlan
                 );
 
+        PaperAccount paperAccount = new PaperAccount(10000); //TODO: starting balance in session config
+
         TradeGenerator tradeGenerator =
                 tradeGeneratorFactory.create(
-                        tradingPlan
+                        tradingPlan, paperAccount
+                );
+        
+        TradeExecutor tradeExecutor =
+                new HistoricalPaperTradeExecutor(
+                        priceProvider, paperAccount
                 );
 
         return new TradingCycleRunner(

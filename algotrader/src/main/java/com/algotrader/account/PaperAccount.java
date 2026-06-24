@@ -8,7 +8,6 @@ import java.util.Map;
  *
  * <p>A PaperAccount tracks:
  * <ul>
- *     <li>Account identifier</li>
  *     <li>Cash balance</li>
  *     <li>Current stock positions</li>
  * </ul>
@@ -32,18 +31,15 @@ import java.util.Map;
  */
 public final class PaperAccount {
 
-    private final String accountId;
     private double cash;
     private final Map<String, Double> positions;
 
     /**
      * Creates a new paper trading account.
      *
-     * @param accountId unique account identifier
      * @param startingCash initial cash balance
      */
-    public PaperAccount(String accountId, double startingCash) {
-        this.accountId = accountId;
+    public PaperAccount(double startingCash) {
         this.cash = startingCash;
         this.positions = new HashMap<>();
     }
@@ -93,17 +89,7 @@ public final class PaperAccount {
         } else {
             positions.put(ticker, remainingQuantity);
         }
-
         return true;
-    }
-
-    /**
-     * Returns the account identifier.
-     *
-     * @return account identifier
-     */
-    public String getAccountId() {
-        return accountId;
     }
 
     /**

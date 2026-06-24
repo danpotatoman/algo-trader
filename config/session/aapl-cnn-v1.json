@@ -1,6 +1,6 @@
 {
   "sessionId": "aapl-cnn-v1",
-  "modelId": "cnn-v1",
+  "endointId": "cnn-v1",
   "strategyId": "threshold-strategy-v1",
 
   "ticker": "AAPL",

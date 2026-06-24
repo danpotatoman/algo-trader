@@ -12,8 +12,8 @@
   "numCandles": 30,
 
   "outputStatistics": {
-    "volatilityMeanBPS": 9.9081,
-    "volatilityStdBPS": 3.2641
+    "volatilityMean": 0.00099081,
+    "volatilityStd": 0.00032641
   },
 
   "version": "1.0.0"

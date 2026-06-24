@@ -1,6 +1,6 @@
 {
   "sessionId": "aapl-cnn-volatility-v1",
-  "modelId": "cnn-with-volatility-v1",
+  "endpointId": "cnn-with-volatility-v1",
   "strategyId": "threshold-strategy-volatility-v1",
 
   "ticker": "AAPL",

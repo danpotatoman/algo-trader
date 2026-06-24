@@ -178,7 +178,7 @@ public final class VolatilityScaledTradePlanner
 
         if (price <= 0.0) {
             throw new IllegalStateException(
-                    "Market price must be positive."
+                    "Retrieved non-positive market price while position sizing."
             );
         }
 

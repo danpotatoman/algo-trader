@@ -5,7 +5,7 @@ import java.time.Instant;
 
 import com.algotrader.config.EndpointConfig;
 import com.algotrader.config.PredictionType;
-import com.algotrader.config.StrategyType;
+import com.algotrader.config.TradeGeneratorType;
 import com.algotrader.config.TradeGeneratorConfig;
 import com.algotrader.config.TradingSessionConfig;
 import com.algotrader.marketdata.model.TimeInterval;
@@ -112,7 +112,7 @@ public final class ResolvedTradingPlan {
         return sessionConfig.getMinTimeBeforeClose();
     }
 
-    public StrategyType getStrategyType() {
+    public TradeGeneratorType getStrategyType() {
         return tradeGeneratorConfig.getStrategyType();
     }
 
