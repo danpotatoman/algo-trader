@@ -1,44 +1,44 @@
 package com.algotrader.execution;
 
-import com.algotrader.decision.dataobjects.TradeRecommendation;
-import com.algotrader.logging.TradingCycleLog.ActionLog;
+import com.algotrader.decision.dataobjects.PortfolioAction;
+import com.algotrader.decision.dataobjects.TradeInstruction;
 
 /**
- * Responsible for executing or simulating trade recommendations.
+ * Responsible for executing or simulating trade instructions.
  *
- * <p>A {@code TradeExecutor} receives a {@link TradeRecommendation} and
+ * <p>A {@code TradeExecutor} receives a trade instruction and
  * determines how it should be processed. Implementations may:
  * <ul>
  *     <li>Execute trades immediately</li>
  *     <li>Schedule trades for future execution</li>
  *     <li>Simulate execution using historical market data</li>
  *     <li>Submit orders to a broker or exchange</li>
- *     <li>Reject or filter recommendations based on execution constraints</li>
+ *     <li>Reject or filter instructions based on execution constraints</li>
  * </ul>
  *
  * <p>This interface represents the execution layer of the trading pipeline:
  *
  * <pre>
- * TradeRecommendation -> Execution -> ActionLog
+ * TradeInstruction -> Execution -> PortfolioAction
  * </pre>
  *
- * <p>The interface does not prescribe how recommendations are executed.
+ * <p>The interface does not prescribe how instructions are executed.
  * Different implementations may support paper trading, backtesting, live
  * broker integration, delayed execution, or other execution models.
  */
 public interface TradeExecutor {
 
     /**
-     * Handles a single trade recommendation.
+     * Handles a single trade instruction.
      *
-     * <p>The recommendation may be executed immediately, scheduled for later
+     * <p>The instruction may be executed immediately, scheduled for later
      * execution, simulated, or ignored depending on the implementation.
      *
-     * @param recommendation trade recommendation to handle
-     * @return an action log describing the resulting execution
-     * @throws IllegalArgumentException if {@code recommendation} is null
+     * @param instruction trade instruction to handle
+     * @return a portfolio action describing the resulting execution
+     * @throws IllegalArgumentException if {@code instruction} is null
      */
-    ActionLog handleRecommendation(
-            TradeRecommendation recommendation
+    PortfolioAction handleInstruction(
+            TradeInstruction instruction
     );
 }

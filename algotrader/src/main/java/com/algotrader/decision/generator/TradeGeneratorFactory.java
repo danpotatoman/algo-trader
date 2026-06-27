@@ -1,11 +1,11 @@
 package com.algotrader.decision.generator;
 
-import com.algotrader.account.PaperAccount;
 import com.algotrader.config.EndpointConfig;
 import com.algotrader.config.PredictionType;
 import com.algotrader.config.TradeGeneratorType;
 import com.algotrader.config.TradeGeneratorConfig;
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
+import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
 import com.algotrader.decision.generator.validation.RoundTripTradeValidator;
 import com.algotrader.decision.planner.ClassificationWithVolatilityTradePlanner;
 import com.algotrader.decision.planner.ThresholdClassificationTradePlanner;
@@ -14,9 +14,10 @@ import com.algotrader.decision.planner.VolatilityScaledTradePlanner;
 import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderFactory;
 import com.algotrader.marketdata.provider.PriceProvider;
+import com.algotrader.portfolio.PortfolioView;
 import com.algotrader.marketcalendar.MarketCalendar;
 import com.algotrader.runtime.ResolvedTradingPlan;
-import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
+
 
 /**
  * Factory for constructing {@link TradeGenerator} instances from resolved
@@ -85,16 +86,17 @@ public final class TradeGeneratorFactory {
      *
      * @param tradingPlan resolved trading plan containing endpoint, trade
      *        generator, and session configuration
-     * @param paperAccount account used by generators that size positions from
-     *        available cash; may be null for generators that do not require it
+     * @param portfolioView portfolio view used by generators that size
+     *        positions from available cash; may be null for generators that do
+     *        not require it
      * @return a trade generator matching the configured prediction and
      *         generator types
      * @throws IllegalArgumentException if {@code tradingPlan} is null or if the
      *         configured prediction/generator combination is unsupported, or
-     *         if a required paper account is absent
+     *         if a required portfolio view is absent
      */
     public TradeGenerator create(
-            ResolvedTradingPlan tradingPlan, PaperAccount paperAccount
+            ResolvedTradingPlan tradingPlan, PortfolioView portfolioView
     ) {
         if (tradingPlan == null) {
             throw new IllegalArgumentException(
@@ -115,12 +117,12 @@ public final class TradeGeneratorFactory {
         }
         if (predictionType == PredictionType.CLASSIFICATION_WITH_VOLATILITY
                 && generatorType == TradeGeneratorType.VOLATILITY_SCALED_THRESHOLD) {
-            if (paperAccount == null) {
+            if (portfolioView == null) {
                 throw new IllegalArgumentException(
-                        "PaperAccount cannot be null for volatility-scaled-threshold trade generator."
+                        "PortfolioView cannot be null for volatility-scaled-threshold trade generator."
                 );
             }
-            return createVolatilityScaledClassification(tradingPlan, paperAccount);
+            return createVolatilityScaledClassification(tradingPlan, portfolioView);
         }
 
         throw new IllegalArgumentException(
@@ -225,11 +227,11 @@ public final class TradeGeneratorFactory {
      *
      * @param tradingPlan resolved trading plan containing confidence and
      *        position-sizing parameters
-     * @param paperAccount account supplying available cash for position sizing
+     * @param portfolio account supplying available cash for position sizing
      * @return a configured classification-with-volatility trade generator
      */
     private TradeGenerator createVolatilityScaledClassification(
-        ResolvedTradingPlan tradingPlan, PaperAccount paperAccount
+        ResolvedTradingPlan tradingPlan, PortfolioView portfolio
     ) {
         PredictionProvider<ClassificationWithVolatilityPrediction> provider =
                 predictionProviderFactory.createClassificationWithVolatilityProvider(
@@ -267,7 +269,7 @@ public final class TradeGeneratorFactory {
 
         TradePlanner<ClassificationWithVolatilityPrediction> tradePlanner =
                 new VolatilityScaledTradePlanner(
-                        paperAccount,
+                        portfolio,
                         priceProvider,
                         tradingPlan.getStrategyId(),
                         volatilityMean,

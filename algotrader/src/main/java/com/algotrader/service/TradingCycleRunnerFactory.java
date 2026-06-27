@@ -1,6 +1,5 @@
 package com.algotrader.service;
 
-import com.algotrader.account.PaperAccount;
 import com.algotrader.config.EndpointConfig;
 import com.algotrader.config.EndpointConfigLoader;
 import com.algotrader.config.TradeGeneratorConfig;
@@ -18,6 +17,8 @@ import com.algotrader.marketdata.provider.MarketDataProvider;
 import com.algotrader.marketdata.provider.PriceProvider;
 import com.algotrader.marketdata.provider.SlidingWindowProvider;
 import com.algotrader.marketdata.provider.SlidingWindowProviderFactory;
+import com.algotrader.portfolio.PortfolioManager;
+import com.algotrader.portfolio.PortfolioState;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
@@ -32,7 +33,8 @@ import com.algotrader.runtime.ResolvedTradingPlan;
  * <p>The supplied {@link TradingSessionConfig} references endpoint and trade
  * generator configuration by ID. This factory loads those configs, combines
  * them into a {@link ResolvedTradingPlan}, and uses that resolved plan to
- * construct the runtime objects and shared paper account needed by the runner.
+ * construct the runtime objects and shared portfolio state needed by the
+ * runner.
  *
  * <p><b>TODO:</b> Revisit the dependency on {@link PriceAvailabilityValidator}
  * once the market data missing-price contract is redesigned.
@@ -128,28 +130,28 @@ public final class TradingCycleRunnerFactory {
                         sessionConfig.getEndpointId()
                 );
 
-        TradeGeneratorConfig strategyConfig =
+        TradeGeneratorConfig tradeGeneratorConfig =
                 tradeGeneratorConfigLoader.load(
                         sessionConfig.getStrategyId()
                 );
         
-        ResolvedTradingPlan tradingPlan = new ResolvedTradingPlan(sessionConfig, endpointConfig, strategyConfig);
+        ResolvedTradingPlan tradingPlan = new ResolvedTradingPlan(sessionConfig, endpointConfig, tradeGeneratorConfig);
 
         SlidingWindowProvider dataProvider =
                 slidingWindowProviderFactory.create(
                         tradingPlan
                 );
 
-        PaperAccount paperAccount = new PaperAccount(10000); //TODO: starting balance in session config
+        PortfolioManager portfolioManager = new PortfolioManager(new PortfolioState(10000));
 
         TradeGenerator tradeGenerator =
                 tradeGeneratorFactory.create(
-                        tradingPlan, paperAccount
+                        tradingPlan, portfolioManager
                 );
         
         TradeExecutor tradeExecutor =
                 new HistoricalPaperTradeExecutor(
-                        priceProvider, paperAccount
+                        priceProvider, portfolioManager
                 );
 
         return new TradingCycleRunner(

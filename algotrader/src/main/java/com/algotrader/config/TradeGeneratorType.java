@@ -4,7 +4,7 @@ package com.algotrader.config;
  * Enumerates the supported trade generator types.
  *
  * <p>A {@code TradeGeneratorType} identifies the logic used to convert model
- * predictions into trade recommendations.
+ * predictions into trade instructions.
  *
  * <p>Each type is associated with a corresponding trade generator pipeline
  * and may require additional parameters defined in a

@@ -253,6 +253,24 @@ public class MarketDataCache
                         + timestamp);
     }
 
+    @Override
+    public void preloadSession(
+            List<String> tickers,
+            TimeInterval interval,
+            Instant startInclusive,
+            Instant endInclusive
+    ) throws DataCacheException {
+
+        for (String ticker : tickers) {
+            requestRange(
+                    ticker,
+                    interval,
+                    startInclusive,
+                    endInclusive
+            );
+        }
+    }
+
     private void validatePriceRequest(
             String ticker,
             Instant timestamp) throws DataCacheException {

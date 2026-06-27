@@ -78,4 +78,22 @@ public interface MarketDataProvider {
             TimeInterval interval,
             Instant candleTimestamp
     ) throws DataCacheException;
+
+    /**
+     * Preloads market data for the specified tickers and time range.
+     *
+     * @param tickers the ticker symbols whose data should be loaded
+     * @param interval the candle interval to preload
+     * @param startInclusive the first candle timestamp to preload
+     * @param endInclusive the last candle timestamp to preload
+     * @throws DataCacheException if the requested data could not be loaded
+     */
+    default void preloadSession(
+                List<String> tickers,
+                TimeInterval interval,
+                Instant startInclusive,
+                Instant endInclusive
+        ) throws DataCacheException {
+        // Optional optimization. Implementations may override.
+        }
 }

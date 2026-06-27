@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Immutable configuration describing how a trade generator should convert
- * model predictions into trade recommendations.
+ * model predictions into trade instructions.
  *
  * <p>This configuration defines:
  * <ul>

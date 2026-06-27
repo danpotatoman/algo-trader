@@ -3,8 +3,6 @@ package com.algotrader.decision.dataobjects;
 import java.time.Instant;
 import java.util.List;
 
-import com.algotrader.decision.dataobjects.TradeRecommendation.Action;
-
 /**
  * Represents a complete planned trade consisting of a BUY entry followed by
  * a SELL exit of the same quantity.
@@ -16,10 +14,10 @@ import com.algotrader.decision.dataobjects.TradeRecommendation.Action;
  *
  * <p>This object is intended to be the primary output of trade generation
  * components. It serves as an intermediate representation between prediction-
- * based trading decisions and executable {@link TradeRecommendation}
+ * based trading decisions and executable {@link TradeInstruction}
  * instances.
  *
- * <p>The entry and exit recommendations produced by this object always
+ * <p>The entry and exit instructions produced by this object always
  * reference the same ticker and quantity, differing only in action type and
  * execution time. The strategy identifier remains attached to the round trip
  * for attribution.
@@ -70,13 +68,13 @@ public record RoundTripTrade(
     }
 
     /**
-     * Creates the BUY recommendation corresponding to the entry leg
+     * Creates the BUY instruction corresponding to the entry leg
      * of this round-trip trade.
      *
-     * @return the entry trade recommendation
+     * @return the entry trade instruction
      */
-    public TradeRecommendation entryRecommendation() {
-        return new TradeRecommendation(
+    public TradeInstruction entryInstruction() {
+        return new TradeInstruction(
                 ticker,
                 Action.BUY,
                 quantity,
@@ -85,13 +83,13 @@ public record RoundTripTrade(
     }
 
     /**
-     * Creates the SELL recommendation corresponding to the exit leg
+     * Creates the SELL instruction corresponding to the exit leg
      * of this round-trip trade.
      *
-     * @return the exit trade recommendation
+     * @return the exit trade instruction
      */
-    public TradeRecommendation exitRecommendation() {
-        return new TradeRecommendation(
+    public TradeInstruction exitInstruction() {
+        return new TradeInstruction(
                 ticker,
                 Action.SELL,
                 quantity,
@@ -100,15 +98,15 @@ public record RoundTripTrade(
     }
 
     /**
-     * Returns both entry and exit recommendations in execution order.
+     * Returns both entry and exit instructions in execution order.
      *
-     * @return a list containing the BUY recommendation followed by
-     *         the SELL recommendation
+     * @return a list containing the BUY instruction followed by
+     *         the SELL instruction
      */
-    public List<TradeRecommendation> toRecommendations() {
+    public List<TradeInstruction> toInstructions() {
         return List.of(
-                entryRecommendation(),
-                exitRecommendation()
+                entryInstruction(),
+                exitInstruction()
         );
     }
 

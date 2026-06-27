@@ -1,25 +1,27 @@
 package com.algotrader.execution;
 
-import com.algotrader.account.PaperAccount;
-import com.algotrader.decision.dataobjects.TradeRecommendation;
-import com.algotrader.logging.TradingCycleLog.ActionLog;
+import com.algotrader.decision.dataobjects.Action;
+import com.algotrader.decision.dataobjects.PortfolioAction;
+import com.algotrader.decision.dataobjects.TradeInstruction;
 import com.algotrader.marketdata.cache.DataCacheException;
 import com.algotrader.marketdata.provider.PriceProvider;
+import com.algotrader.portfolio.PortfolioManager;
+import com.algotrader.portfolio.PortfolioState;
 
 /**
  * Trade executor that simulates trade execution using market data.
  *
  * <p>This executor does not place real orders. Instead, it looks up the
- * market price associated with a {@link TradeRecommendation}, applies the
- * transaction to a {@link PaperAccount}, and records the result as an
- * {@link ActionLog}.
+ * market price associated with a {@link TradeInstruction}, applies the
+ * transaction to a {@link PortfolioState}, and records the result as an
+ * {@link PortfolioAction}.
  *
  * <p>It is primarily intended for backtesting and simulation workflows,
  * where historical market data is used to estimate trade execution prices.
  *
  * <p>The execution model is intentionally simple: trades are assumed to
  * execute exactly at the market price returned by the configured
- * {@link PriceProvider} for the recommendation timestamp.
+ * {@link PriceProvider} for the instruction timestamp.
  *
  * <p>No slippage, commissions, partial fills, liquidity constraints, or
  * other real-world execution effects are currently modeled.
@@ -28,93 +30,83 @@ public class HistoricalPaperTradeExecutor implements TradeExecutor {
 
     private final PriceProvider priceProvider;
 
-    private final PaperAccount paperAccount;
+    private final PortfolioManager portfolioManager;
 
     /**
      * Creates a paper-trading executor.
      *
      * @param priceProvider price source used to determine simulated execution
      *        prices
-     * @param paperAccount account updated by simulated executions
+     * @param portfolioManager portfolio manager updated by simulated executions
      * @throws IllegalArgumentException if either dependency is null
      */
-    public HistoricalPaperTradeExecutor(PriceProvider priceProvider, PaperAccount paperAccount) {
+    public HistoricalPaperTradeExecutor(PriceProvider priceProvider, PortfolioManager portfolioManager) {
         if (priceProvider == null) {
             throw new IllegalArgumentException(
                     "PriceProvider cannot be null."
             );
         }
 
-        if (paperAccount == null) {
+        if (portfolioManager == null) {
             throw new IllegalArgumentException(
-                "PaperAccount cannot be null."
+                "PortfolioManager cannot be null."
             );
         }
 
         this.priceProvider = priceProvider;
-        this.paperAccount = paperAccount;
+        this.portfolioManager = portfolioManager;
     }
 
     /**
-     * Simulates execution of a trade recommendation.
+     * Simulates execution of a trade instruction.
      *
-     * <p>The recommendation is executed against the configured
-     * {@link PaperAccount} using the market price returned by the configured
-     * {@link PriceProvider} for the recommendation timestamp.
+     * <p>The instruction is executed against the configured
+     * {@link PortfolioState} using the market price returned by the configured
+     * {@link PriceProvider} for the instruction timestamp.
      *
-     * @param recommendation recommendation to execute
-     * @return an action log describing the simulated execution
-     * @throws IllegalArgumentException if {@code recommendation} is null
+     * @param instruction instruction to execute
+     * @return a portfolio action describing the simulated execution
+     * @throws IllegalArgumentException if {@code instruction} is null
      * @throws IllegalStateException if the account rejects the transaction
      * @throws RuntimeException if execution pricing data cannot be retrieved
      */
     @Override
-    public ActionLog handleRecommendation(
-                TradeRecommendation recommendation
+    public PortfolioAction handleInstruction(
+                TradeInstruction instruction
         ) {
-                if (recommendation == null) {
+                if (instruction == null) {
                         throw new IllegalArgumentException(
-                                "Recommendation cannot be null."
+                                "Instruction cannot be null."
                         );
                 }
 
                 try {
                         double executionPrice = priceProvider.getTickerPrice(
-                                recommendation.getTicker(),
-                                recommendation.getExecutionTime()
+                                instruction.ticker(),
+                                instruction.executionTime()
                         ).price();
 
-                        boolean executed = switch (recommendation.getAction()) {
-                                case BUY -> paperAccount.buy(
-                                        recommendation.getTicker(),
-                                        recommendation.getQuantity(),
-                                        executionPrice
-                                        );
-                                case SELL -> paperAccount.sell(
-                                        recommendation.getTicker(),
-                                        recommendation.getQuantity(),
-                                        executionPrice
-                                );
+                        PortfolioAction action = switch (instruction.action()) {
+                                case BUY -> new PortfolioAction(instruction.ticker(),
+                                        Action.BUY,
+                                        instruction.executionTime(),
+                                        executionPrice,
+                                        instruction.quantity());
+                                case SELL -> new PortfolioAction(instruction.ticker(),
+                                        Action.SELL,
+                                        instruction.executionTime(),
+                                        executionPrice,
+                                        instruction.quantity());
                         };
 
-                        if (!executed) {
-                                throw new IllegalStateException(
-                                        "Failed to execute trade recommendation: "
-                                                + recommendation
-                                );
-                        }
+                        portfolioManager.apply(action);
 
-                        return new ActionLog(
-                                recommendation.getAction().name(),
-                                recommendation.getExecutionTime(),
-                                executionPrice,
-                                recommendation.getQuantity()
-                        );
+                        return action;
 
                 } catch (DataCacheException e) {
                         throw new RuntimeException(
-                                "Failed to simulate trade recommendation: "
-                                        + recommendation, e
+                                "Failed to simulate trade instruction: "
+                                        + instruction, e
                         );
                 }
         }

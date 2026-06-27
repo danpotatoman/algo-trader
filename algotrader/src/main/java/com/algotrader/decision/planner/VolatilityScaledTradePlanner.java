@@ -4,12 +4,12 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import com.algotrader.account.PaperAccount;
 import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.marketdata.cache.DataCacheException;
 import com.algotrader.marketdata.model.MarketPrice;
 import com.algotrader.marketdata.provider.PriceProvider;
+import com.algotrader.portfolio.PortfolioView;
 
 /**
  * Plans classification trades whose position size decreases as predicted
@@ -26,7 +26,7 @@ public final class VolatilityScaledTradePlanner
 
     private static final int EXIT_DELAY_MINUTES = 30;
 
-    private final PaperAccount paperAccount;
+    private final PortfolioView portfolio;
     private final PriceProvider priceProvider;
     private final String strategyId;
     private final double volatilityMean;
@@ -38,7 +38,7 @@ public final class VolatilityScaledTradePlanner
     /**
      * Creates a volatility-scaled trade planner.
      *
-     * @param paperAccount account supplying cash available for position sizing
+     * @param portfolio account supplying cash available for position sizing
      * @param priceProvider provider used to resolve the entry-time price
      * @param strategyId identifier associated with generated trades
      * @param volatilityMean mean volatility used to standardize predictions
@@ -50,7 +50,7 @@ public final class VolatilityScaledTradePlanner
      *         is invalid
      */
     public VolatilityScaledTradePlanner(
-            PaperAccount paperAccount,
+            PortfolioView portfolio,
             PriceProvider priceProvider,
             String strategyId,
             double volatilityMean,
@@ -59,9 +59,9 @@ public final class VolatilityScaledTradePlanner
             double minPositionFraction,
             double maxPositionFraction
     ) {
-        if (paperAccount == null) {
+        if (portfolio == null) {
             throw new IllegalArgumentException(
-                    "Paper account cannot be null."
+                    "PortfolioView cannot be null."
             );
         }
 
@@ -107,7 +107,7 @@ public final class VolatilityScaledTradePlanner
             );
         }
 
-        this.paperAccount = paperAccount;
+        this.portfolio = portfolio;
         this.priceProvider = priceProvider;
         this.strategyId = strategyId;
         this.volatilityMean = volatilityMean;
@@ -160,7 +160,7 @@ public final class VolatilityScaledTradePlanner
                         + (maxPositionFraction - minPositionFraction)
                         * riskScore;
 
-        double tradeCash = paperAccount.getCash() * positionFraction;
+        double tradeCash = portfolio.cash() * positionFraction;
 
         MarketPrice marketPrice;
 
@@ -207,8 +207,8 @@ public final class VolatilityScaledTradePlanner
         return Math.max(min, Math.min(max, value));
     }
 
-    public PaperAccount getPaperAccount() {
-        return paperAccount;
+    public PortfolioView getPortfolioView() {
+        return portfolio;
     }
 
     public PriceProvider getPriceProvider() {

@@ -46,7 +46,7 @@ public class EndpointConfigLoader {
     public EndpointConfigLoader(Path endpointConfigDirectory) {
         if (endpointConfigDirectory == null) {
             throw new IllegalArgumentException(
-                    "Model config directory cannot be null."
+                    "Endpoint config directory cannot be null."
             );
         }
 
@@ -86,7 +86,7 @@ public class EndpointConfigLoader {
 
         } catch (IOException e) {
             throw new RuntimeException(
-                    "Failed to load model config from: " + configPath, //TODO: custom exception for config loaders
+                    "Failed to load endpoint config from: " + configPath, //TODO: custom exception for config loaders
                     e
             );
         }

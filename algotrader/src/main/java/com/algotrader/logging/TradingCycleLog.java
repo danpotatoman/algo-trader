@@ -1,8 +1,8 @@
 package com.algotrader.logging;
 
-import java.time.Instant;
 import java.util.List;
 
+import com.algotrader.decision.dataobjects.PortfolioAction;
 import com.algotrader.marketdata.model.TimeInterval;
 
 /**
@@ -24,7 +24,7 @@ public final class TradingCycleLog {
 
     private final String strategyId;
 
-    private final List<ActionLog> actions;
+    private final List<PortfolioAction> actions;
 
     /**
      * Creates a trading cycle log.
@@ -41,7 +41,7 @@ public final class TradingCycleLog {
             long cycleDurationMillis,
             Metadata metadata,
             String strategyId,
-            List<ActionLog> actions
+            List<PortfolioAction> actions
     ) {
         if (cycleId == null || cycleId.isBlank()) {
             throw new IllegalArgumentException(
@@ -99,16 +99,16 @@ public final class TradingCycleLog {
         return strategyId;
     }
 
-    public List<ActionLog> getActions() {
+    public List<PortfolioAction> getActions() {
         return actions;
     }
 
     /**
      * Immutable metadata describing the configuration used for a trading cycle.
      *
-     * <p>This metadata records the model, plan, ticker, interval, and execution
-     * mode associated with the cycle so logs can be analyzed without needing to
-     * reload the original configuration files.
+     * <p>This metadata records the endpoint, plan, ticker, interval, and
+     * execution mode associated with the cycle so logs can be analyzed without
+     * needing to reload the original configuration files.
      */
     public static final class Metadata {
 
@@ -124,8 +124,8 @@ public final class TradingCycleLog {
      * Creates trading cycle metadata.
      *
      * @param ticker ticker traded during the cycle
-     * @param interval market data interval used by the model
-     * @param endpointId model used during the cycle
+     * @param interval market data interval used by the endpoint
+     * @param endpointId endpoint used during the cycle
      * @param planId trading plan or session identifier associated with the cycle
      * @param liveMode whether the cycle was run in live mode
      * @throws IllegalArgumentException if any argument is invalid
@@ -191,80 +191,4 @@ public final class TradingCycleLog {
         }
     }
 
-    /**
-     * Immutable log entry describing one executed trade action.
-     *
-     * <p>An action log records the action type, execution timestamp, execution
-     * price, and quantity for a single simulated or real trade action.
-     */
-    public static final class ActionLog {
-
-        private final String action;
-
-        private final Instant executionTime;
-
-        private final double price;
-        private final double quantity;
-
-        /**
-         * Creates an executed action log.
-         *
-         * @param action executed action, such as {@code BUY} or {@code SELL} //TODO: maybe this should use the Action enum
-         * @param executionTime execution timestamp
-         * @param price execution price
-         * @param quantity executed quantity
-         * @throws IllegalArgumentException if any argument is invalid
-         */
-        public ActionLog(
-                String action,
-                Instant executionTime,
-                double price,
-                double quantity
-        ) {
-            if (action == null || action.isBlank()) {
-                throw new IllegalArgumentException(
-                        "Action cannot be null or blank."
-                );
-            }
-
-            if (executionTime == null) {
-                throw new IllegalArgumentException(
-                        "Execution timestamp cannot be null."
-                );
-            }
-
-            if (price < 0.0) {
-                throw new IllegalArgumentException(
-                        "Price cannot be negative."
-                );
-            }
-
-            if (quantity < 0.0) {
-                throw new IllegalArgumentException(
-                        "Quantity cannot be negative."
-                );
-            }
-
-            this.action = action;
-            this.executionTime = executionTime;
-            this.price = price;
-            this.quantity = quantity;
-        }
-
-        public String getAction() {
-            return action;
-        }
-
-        public Instant getExecutionTime() {
-            return executionTime;
-        }
-
-        public double getPrice() {
-            return price;
-        }
-
-        public double getQuantity() {
-            return quantity;
-        }
-    }
 }

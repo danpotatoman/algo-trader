@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.algotrader.decision.dataobjects.PortfolioAction;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
-import com.algotrader.decision.dataobjects.TradeRecommendation;
+import com.algotrader.decision.dataobjects.TradeInstruction;
 import com.algotrader.decision.generator.TradeGenerator;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
 import com.algotrader.execution.TradeExecutor;
 import com.algotrader.execution.validation.PriceAvailabilityValidator;
 import com.algotrader.logging.TradingCycleLog;
 import com.algotrader.logging.TradingCycleLogger;
-import com.algotrader.logging.TradingCycleLog.ActionLog;
 import com.algotrader.marketdata.cache.DataCacheException;
 import com.algotrader.marketdata.model.DataBatch;
 import com.algotrader.marketdata.model.TimeInterval;
@@ -24,7 +24,7 @@ import com.algotrader.runtime.ResolvedTradingPlan;
  *
  * <p>A {@code TradingCycleRunner} coordinates the main backtesting cycle:
  * it requests the next market-data window, generates proposed trades,
- * validates price availability, executes resulting recommendations, and
+ * validates price availability, executes resulting instructions, and
  * writes a {@link TradingCycleLog}.
  *
  * <p>This runner is currently designed for historical simulation. It does
@@ -134,7 +134,7 @@ public class TradingCycleRunner {
      *
      * <p>If a complete data window is available, this method generates trades,
      * skips trades with unavailable execution prices, executes the remaining
-     * recommendations, logs the completed cycle, and returns {@code true}.
+     * instructions, logs the completed cycle, and returns {@code true}.
      *
      * <p>If no complete data window remains, no cycle is run and {@code false}
      * is returned.
@@ -160,7 +160,7 @@ public class TradingCycleRunner {
             List<RoundTripTrade> trades =
                     tradeGenerator.generateTrades(batch);
 
-            List<ActionLog> actionLogs = new ArrayList<>();
+            List<PortfolioAction> actions = new ArrayList<>();
 
             for (RoundTripTrade trade : trades) {
 
@@ -172,13 +172,13 @@ public class TradingCycleRunner {
                     continue;
                 }
 
-                for (TradeRecommendation recommendation
-                        : trade.toRecommendations()) {
+                for (TradeInstruction instruction
+                        : trade.toInstructions()) {
 
-                    ActionLog actionLog =
-                            tradeExecutor.handleRecommendation(recommendation);
+                    PortfolioAction action =
+                            tradeExecutor.handleInstruction(instruction);
 
-                    actionLogs.add(actionLog);
+                    actions.add(action);
                 }
             }
 
@@ -209,7 +209,7 @@ public class TradingCycleRunner {
                             cycleDurationMillis,
                             metadata,
                             strategyId,
-                            actionLogs
+                            actions
                     );
 
             tradeLogger.log(tradingCycleLog);
