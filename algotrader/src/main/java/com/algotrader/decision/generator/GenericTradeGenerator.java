@@ -28,7 +28,7 @@ import com.algotrader.marketdata.model.DataBatch;
 public final class GenericTradeGenerator<T extends ModelPrediction>
         implements TradeGenerator {
 
-    private final PredictionProvider<T> predictionProvider;
+    private final PredictionProvider<DataBatch, T> predictionProvider;
     private final TradePlanner<T> tradePlanner;
     private final RoundTripTradeValidator tradeValidator;
 
@@ -43,7 +43,7 @@ public final class GenericTradeGenerator<T extends ModelPrediction>
      * @throws IllegalArgumentException if any dependency is null
      */
     public GenericTradeGenerator(
-            PredictionProvider<T> predictionProvider,
+            PredictionProvider<DataBatch, T> predictionProvider,
             TradePlanner<T> tradePlanner,
             RoundTripTradeValidator tradeValidator
     ) {
@@ -91,7 +91,7 @@ public final class GenericTradeGenerator<T extends ModelPrediction>
             );
         }
 
-        T prediction = predictionProvider.makePrediction(batch);
+        T prediction = predictionProvider.predict(batch);
 
         return tradePlanner.getTrades(prediction)
                 .stream()

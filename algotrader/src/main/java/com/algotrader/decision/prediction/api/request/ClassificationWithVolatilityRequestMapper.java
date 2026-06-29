@@ -7,7 +7,7 @@ import com.algotrader.marketdata.model.DataBatch;
  * classification-with-volatility endpoints.
  */
 public final class ClassificationWithVolatilityRequestMapper
-        implements PredictionRequestMapper<ClassificationWithVolatilityRequest> {
+        implements PredictionRequestMapper<DataBatch, ClassificationWithVolatilityRequest> {
 
     @Override
     public ClassificationWithVolatilityRequest map(DataBatch batch) {

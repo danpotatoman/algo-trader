@@ -3,9 +3,9 @@ package com.algotrader.logging;
 import java.time.Instant;
 import java.util.List;
 
-import com.algotrader.decision.dataobjects.PortfolioAction;
+import com.algotrader.decision.dataobjects.CapitalAllocation;
+import com.algotrader.decision.dataobjects.OpenTradeAdjustment;
 import com.algotrader.portfolio.PortfolioSnapshot;
-import com.algotrader.runtime.OpenTradeRegistryUpdate;
 
 /**
  * Result of evaluating a single multi-ticker trading cycle.
@@ -21,15 +21,15 @@ import com.algotrader.runtime.OpenTradeRegistryUpdate;
  * @param cycleTime trading cycle timestamp
  * @param cycleDurationMillis evaluation duration in milliseconds
  * @param portfolioSnapshot portfolio state used during evaluation
- * @param actions portfolio actions generated for this cycle
- * @param registryUpdates updates to apply to the open trade registry
+ * @param newCapitalAllocations capital to allocate to new trades this cycle
+ * @param openTradeAdjustments updates to exit times of trades in the open trade registry
  */
 public record MultiTickerCycleEvaluation(
         Instant cycleTime,
         long cycleDurationMillis,
         PortfolioSnapshot portfolioSnapshot,
-        List<PortfolioAction> actions,
-        List<OpenTradeRegistryUpdate> registryUpdates) {
+        List<CapitalAllocation> newCapitalAllocations,
+        List<OpenTradeAdjustment> openTradeAdjustments) {
 
     /**
      * Creates an immutable trading cycle evaluation.
@@ -37,7 +37,7 @@ public record MultiTickerCycleEvaluation(
      * <p>The supplied action and registry update lists are defensively copied.
      */
     public MultiTickerCycleEvaluation {
-        actions = List.copyOf(actions);
-        registryUpdates = List.copyOf(registryUpdates);
+        newCapitalAllocations = List.copyOf(newCapitalAllocations);
+        openTradeAdjustments = List.copyOf(openTradeAdjustments);
     }
 }

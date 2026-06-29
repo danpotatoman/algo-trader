@@ -67,9 +67,9 @@ public final class ClassificationWithVolatilityTradePlanner
             );
         }
 
-        double probability = prediction.getProbability();
-        double volatility = prediction.getVolatility();
-        int horizonMinutes = prediction.getHorizonMinutes();
+        double probability = prediction.probability();
+        double volatility = prediction.volatility();
+        int horizonMinutes = prediction.horizonMinutes();
 
         if (probability < minimumConfidenceThreshold) {
             return List.of();

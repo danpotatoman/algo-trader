@@ -7,7 +7,7 @@ import com.algotrader.marketdata.model.DataBatch;
  * classification endpoints.
  */
 public final class LegacyClassificationRequestMapper
-        implements PredictionRequestMapper<LegacyClassificationRequest> {
+        implements PredictionRequestMapper<DataBatch, LegacyClassificationRequest> {
 
     @Override
     public LegacyClassificationRequest map(DataBatch batch) {

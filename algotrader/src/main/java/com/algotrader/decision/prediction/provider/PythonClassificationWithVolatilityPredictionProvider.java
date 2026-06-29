@@ -2,6 +2,8 @@ package com.algotrader.decision.prediction.provider;
 
 import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
 import com.algotrader.decision.prediction.api.PythonPredictionClient;
+import com.algotrader.decision.prediction.api.request.ClassificationWithVolatilityRequest;
+import com.algotrader.decision.prediction.api.request.PredictionRequestMapper;
 import com.algotrader.marketdata.model.DataBatch;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -11,12 +13,14 @@ import com.fasterxml.jackson.databind.JsonNode;
  * domain objects.
  */
 public final class PythonClassificationWithVolatilityPredictionProvider
-        implements PredictionProvider<ClassificationWithVolatilityPrediction> {
+        implements PredictionProvider<DataBatch, ClassificationWithVolatilityPrediction> {
 
     private final PythonPredictionClient client;
+    private final PredictionRequestMapper<DataBatch, ClassificationWithVolatilityRequest> requestMapper;
 
     public PythonClassificationWithVolatilityPredictionProvider(
-            PythonPredictionClient client
+            PythonPredictionClient client,
+            PredictionRequestMapper<DataBatch, ClassificationWithVolatilityRequest> requestMapper
     ) {
         if (client == null) {
             throw new IllegalArgumentException(
@@ -24,7 +28,14 @@ public final class PythonClassificationWithVolatilityPredictionProvider
             );
         }
 
+        if (requestMapper == null) {
+            throw new IllegalArgumentException(
+                    "PredictionRequestMapper cannot be null."
+            );
+        }
+
         this.client = client;
+        this.requestMapper = requestMapper;
     }
 
     /**
@@ -37,16 +48,19 @@ public final class PythonClassificationWithVolatilityPredictionProvider
      * @throws PredictionProviderException if the endpoint response is invalid
      */
     @Override
-    public ClassificationWithVolatilityPrediction makePrediction(
+    public ClassificationWithVolatilityPrediction predict(
             DataBatch batch
     ) throws PredictionProviderException {
+
+        
         if (batch == null) {
             throw new IllegalArgumentException(
                     "DataBatch cannot be null."
             );
         }
 
-        JsonNode response = client.predict(batch);
+        Object requestBody = requestMapper.map(batch);
+        JsonNode response = client.post(requestBody);
 
         validateResponse(response);
 

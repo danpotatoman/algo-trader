@@ -2,6 +2,8 @@ package com.algotrader.decision.prediction.provider;
 
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
 import com.algotrader.decision.prediction.api.PythonPredictionClient;
+import com.algotrader.decision.prediction.api.request.LegacyClassificationRequest;
+import com.algotrader.decision.prediction.api.request.PredictionRequestMapper;
 import com.algotrader.marketdata.model.DataBatch;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -10,12 +12,14 @@ import com.fasterxml.jackson.databind.JsonNode;
  * into {@link ClassificationPrediction} domain objects.
  */
 public final class PythonClassificationPredictionProvider
-        implements PredictionProvider<ClassificationPrediction> {
+        implements PredictionProvider<DataBatch, ClassificationPrediction> {
 
     private final PythonPredictionClient client;
+    private final PredictionRequestMapper<DataBatch, LegacyClassificationRequest> requestMapper;
 
     public PythonClassificationPredictionProvider(
-            PythonPredictionClient client
+            PythonPredictionClient client,
+            PredictionRequestMapper<DataBatch, LegacyClassificationRequest> requestMapper
     ) {
         if (client == null) {
             throw new IllegalArgumentException(
@@ -23,7 +27,14 @@ public final class PythonClassificationPredictionProvider
             );
         }
 
+        if (requestMapper == null) {
+            throw new IllegalArgumentException(
+                    "PredictionRequestMapper cannot be null."
+            );
+        }
+
         this.client = client;
+        this.requestMapper = requestMapper;
     }
 
     /**
@@ -35,7 +46,7 @@ public final class PythonClassificationPredictionProvider
      * @throws PredictionProviderException if the endpoint response is invalid
      */
     @Override
-    public ClassificationPrediction makePrediction(
+    public ClassificationPrediction predict(
             DataBatch batch
     ) throws PredictionProviderException {
         if (batch == null) {
@@ -44,7 +55,8 @@ public final class PythonClassificationPredictionProvider
             );
         }
 
-        JsonNode response = client.predict(batch);
+        Object requestBody = requestMapper.map(batch);
+        JsonNode response = client.post(requestBody);
 
         String ticker = response.get("ticker").asText();
 

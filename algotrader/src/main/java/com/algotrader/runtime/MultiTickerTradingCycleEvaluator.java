@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.algotrader.decision.dataobjects.PortfolioDecisionResult;
+import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.decision.generator.PortfolioDecisionGenerator;
 import com.algotrader.logging.MultiTickerCycleEvaluation;
 import com.algotrader.marketdata.cache.DataCacheException;
@@ -12,6 +13,7 @@ import com.algotrader.marketdata.model.DataBatch;
 import com.algotrader.marketdata.provider.MultiTickerWindowProvider;
 import com.algotrader.portfolio.PortfolioSnapshot;
 import com.algotrader.portfolio.PortfolioView;
+import com.algotrader.trade.registry.OpenTradeRegistryView;
 
 /**
  * Evaluates a single multi-ticker trading cycle.
@@ -29,6 +31,7 @@ public final class MultiTickerTradingCycleEvaluator {
     private final MultiTickerWindowProvider windowProvider;
     private final PortfolioDecisionGenerator portfolioDecisionGenerator;
     private final PortfolioView portfolioView;
+    private final OpenTradeRegistryView openTradeRegistryView;
 
     /**
      * Creates a multi-ticker cycle evaluator.
@@ -41,7 +44,8 @@ public final class MultiTickerTradingCycleEvaluator {
     public MultiTickerTradingCycleEvaluator(
             MultiTickerWindowProvider windowProvider,
             PortfolioDecisionGenerator portfolioDecisionGenerator,
-            PortfolioView portfolioView) {
+            PortfolioView portfolioView,
+            OpenTradeRegistryView openTradeRegistryView) {
 
         if (windowProvider == null) {
             throw new IllegalArgumentException(
@@ -58,9 +62,15 @@ public final class MultiTickerTradingCycleEvaluator {
                     "Portfolio view cannot be null.");
         }
 
+        if (openTradeRegistryView == null) {
+            throw new IllegalArgumentException(
+                    "Open trade registry view cannot be null.");
+        }
+
         this.windowProvider = windowProvider;
         this.portfolioDecisionGenerator = portfolioDecisionGenerator;
         this.portfolioView = portfolioView;
+        this.openTradeRegistryView = openTradeRegistryView;
     }
 
     /**
@@ -94,10 +104,16 @@ public final class MultiTickerTradingCycleEvaluator {
             PortfolioSnapshot portfolioSnapshot =
                     portfolioView.snapshot();
 
+            List<RoundTripTrade> openTrades =
+                    openTradeRegistryView.getOpenTrades();
+            
             PortfolioDecisionResult decisionResult =
                     portfolioDecisionGenerator.generateDecision(
                             batches,
-                            portfolioSnapshot);
+                            portfolioSnapshot,
+                            openTrades,
+                            cycleTime
+                    );
 
             long cycleDurationMillis = TimeUnit.NANOSECONDS.toMillis(
                     System.nanoTime() - startNanos);
@@ -106,8 +122,8 @@ public final class MultiTickerTradingCycleEvaluator {
                     cycleTime,
                     cycleDurationMillis,
                     portfolioSnapshot,
-                    decisionResult.actions(),
-                    decisionResult.registryUpdates());
+                    decisionResult.newCapitalAllocations(),
+                    decisionResult.openTradeAdjustments());
 
         } catch (Exception e) {
             throw new RuntimeException(

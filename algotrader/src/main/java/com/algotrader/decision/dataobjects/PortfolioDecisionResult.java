@@ -2,21 +2,18 @@ package com.algotrader.decision.dataobjects;
 
 import java.util.List;
 
-import com.algotrader.runtime.OpenTradeRegistryUpdate;
-
 /**
  * Result of evaluating portfolio decisions for a single trading cycle.
  *
- * <p>A {@code PortfolioDecisionResult} contains the portfolio actions that
- * should be applied immediately together with any updates that should be made
- * to the open trade registry.
+ * <p>A {@code PortfolioDecisionResult} contains the list of new trades
+ * to be opened and existing trades to be adjusted.
  *
- * @param actions portfolio actions to apply for the current cycle
- * @param registryUpdates updates to apply to the open trade registry
+ * @param newCapitalAllocations new trade intent
+ * @param openTradeAdjustments updates to apply to the open trade registry
  */
 public record PortfolioDecisionResult(
-        List<PortfolioAction> actions,
-        List<OpenTradeRegistryUpdate> registryUpdates) {
+        List<CapitalAllocation> newCapitalAllocations,
+        List<OpenTradeAdjustment> openTradeAdjustments) {
 
     /**
      * Creates an immutable portfolio decision result.
@@ -25,7 +22,7 @@ public record PortfolioDecisionResult(
      * modification by callers.
      */
     public PortfolioDecisionResult {
-        actions = List.copyOf(actions);
-        registryUpdates = List.copyOf(registryUpdates);
+        newCapitalAllocations = List.copyOf(newCapitalAllocations);
+        openTradeAdjustments = List.copyOf(openTradeAdjustments);
     }
 }

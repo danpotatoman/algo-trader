@@ -7,6 +7,7 @@ import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPredictio
 import com.algotrader.decision.prediction.api.PythonPredictionClient;
 import com.algotrader.decision.prediction.api.request.ClassificationWithVolatilityRequestMapper;
 import com.algotrader.decision.prediction.api.request.LegacyClassificationRequestMapper;
+import com.algotrader.marketdata.model.DataBatch;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
@@ -43,7 +44,7 @@ public final class PredictionProviderFactory {
      * @throws IllegalArgumentException if the trading plan references an endpoint
      *         that is not configured for classification predictions
      */
-    public PredictionProvider<ClassificationPrediction> createClassificationProvider(
+    public PredictionProvider<DataBatch, ClassificationPrediction> createClassificationProvider(
             ResolvedTradingPlan tradingPlan
         ) {
 
@@ -60,11 +61,13 @@ public final class PredictionProviderFactory {
 
         PythonPredictionClient client =
                 new PythonPredictionClient(
-                        endpointConfig.getEndpoint(),
-                        new LegacyClassificationRequestMapper()
+                        endpointConfig.getEndpoint()
                 );
 
-        return new PythonClassificationPredictionProvider(client);
+        LegacyClassificationRequestMapper requestMapper =
+                new LegacyClassificationRequestMapper();
+
+        return new PythonClassificationPredictionProvider(client, requestMapper);
     }
 
     /**
@@ -80,7 +83,7 @@ public final class PredictionProviderFactory {
      * @throws IllegalArgumentException if the trading plan references an
      *         endpoint with a different prediction type
      */
-    public PredictionProvider<ClassificationWithVolatilityPrediction> createClassificationWithVolatilityProvider(
+    public PredictionProvider<DataBatch, ClassificationWithVolatilityPrediction> createClassificationWithVolatilityProvider(
             ResolvedTradingPlan tradingPlan
         ) {
 
@@ -97,11 +100,13 @@ public final class PredictionProviderFactory {
 
         PythonPredictionClient client =
                 new PythonPredictionClient(
-                        endpointConfig.getEndpoint(),
-                        new ClassificationWithVolatilityRequestMapper()
+                        endpointConfig.getEndpoint()
                 );
 
-        return new PythonClassificationWithVolatilityPredictionProvider(client);
+        ClassificationWithVolatilityRequestMapper requestMapper =
+                new ClassificationWithVolatilityRequestMapper();
+
+        return new PythonClassificationWithVolatilityPredictionProvider(client, requestMapper);
     }
 
     /**

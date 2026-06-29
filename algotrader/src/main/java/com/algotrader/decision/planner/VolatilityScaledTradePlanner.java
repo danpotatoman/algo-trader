@@ -138,7 +138,7 @@ public final class VolatilityScaledTradePlanner
             );
         }
 
-        if (prediction.getProbability() < minConfidenceThreshold) {
+        if (prediction.probability() < minConfidenceThreshold) {
             return List.of();
         }
 
@@ -147,7 +147,7 @@ public final class VolatilityScaledTradePlanner
         Instant exitTime = entryTime.plus(EXIT_DELAY_MINUTES, ChronoUnit.MINUTES);
 
         double zScore =
-                (prediction.getVolatility() - volatilityMean) / volatilityStd;
+                (prediction.volatility() - volatilityMean) / volatilityStd;
 
         double riskScore = clamp(
                 0.5 - 0.15 * zScore,

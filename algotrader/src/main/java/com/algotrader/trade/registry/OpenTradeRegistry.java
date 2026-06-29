@@ -1,4 +1,4 @@
-package com.algotrader.runtime;
+package com.algotrader.trade.registry;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import com.algotrader.decision.dataobjects.RoundTripTrade;
  * inspect the registry and produce {@code PortfolioAction}s when open trades
  * become due for exit.
  */
-public final class OpenTradeRegistry {
+public final class OpenTradeRegistry implements OpenTradeRegistryView {
 
     private final List<RoundTripTrade> openTrades;
 
@@ -49,40 +49,5 @@ public final class OpenTradeRegistry {
         return openTrades.stream()
                 .filter(trade -> !trade.exitTime().isAfter(timestamp))
                 .toList();
-    }
-
-    /**
-     * Applies an update to the open trade registry.
-     *
-     * <p>Implementation intentionally left for a later iteration.
-     *
-     * @param update registry update to apply
-     */
-    public synchronized void apply(OpenTradeRegistryUpdate update) {
-        if (update == null) {
-            throw new IllegalArgumentException(
-                    "Open trade registry update cannot be null.");
-        }
-
-        throw new UnsupportedOperationException(
-                "OpenTradeRegistry.apply is not implemented yet.");
-    }
-
-    /**
-     * Applies updates to the open trade registry in order.
-     *
-     * @param updates registry updates to apply
-     */
-    public synchronized void applyAll(
-            List<OpenTradeRegistryUpdate> updates) {
-
-        if (updates == null) {
-            throw new IllegalArgumentException(
-                    "Open trade registry updates cannot be null.");
-        }
-
-        for (OpenTradeRegistryUpdate update : updates) {
-            apply(update);
-        }
     }
 }

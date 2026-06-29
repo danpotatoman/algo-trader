@@ -14,6 +14,7 @@ import com.algotrader.decision.planner.VolatilityScaledTradePlanner;
 import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderFactory;
 import com.algotrader.marketdata.provider.PriceProvider;
+import com.algotrader.marketdata.model.DataBatch;
 import com.algotrader.portfolio.PortfolioView;
 import com.algotrader.marketcalendar.MarketCalendar;
 import com.algotrader.runtime.ResolvedTradingPlan;
@@ -143,7 +144,7 @@ public final class TradeGeneratorFactory {
     private TradeGenerator createThresholdClassification(
             ResolvedTradingPlan tradingPlan
         ) {
-        PredictionProvider<ClassificationPrediction> provider =
+        PredictionProvider<DataBatch, ClassificationPrediction> provider =
                 predictionProviderFactory.createClassificationProvider(
                         tradingPlan
                 );
@@ -185,7 +186,7 @@ public final class TradeGeneratorFactory {
     private TradeGenerator createVolatilityFilteredClassification(
         ResolvedTradingPlan tradingPlan
     ) {
-        PredictionProvider<ClassificationWithVolatilityPrediction> provider =
+        PredictionProvider<DataBatch, ClassificationWithVolatilityPrediction> provider =
                 predictionProviderFactory.createClassificationWithVolatilityProvider(
                         tradingPlan
                 );
@@ -233,7 +234,7 @@ public final class TradeGeneratorFactory {
     private TradeGenerator createVolatilityScaledClassification(
         ResolvedTradingPlan tradingPlan, PortfolioView portfolio
     ) {
-        PredictionProvider<ClassificationWithVolatilityPrediction> provider =
+        PredictionProvider<DataBatch, ClassificationWithVolatilityPrediction> provider =
                 predictionProviderFactory.createClassificationWithVolatilityProvider(
                         tradingPlan
                 );

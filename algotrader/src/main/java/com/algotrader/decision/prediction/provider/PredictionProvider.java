@@ -1,31 +1,29 @@
 package com.algotrader.decision.prediction.provider;
 
-import com.algotrader.decision.dataobjects.ModelPrediction;
-import com.algotrader.marketdata.model.DataBatch;
-
 /**
- * Produces model predictions from market data.
+ * Produces model predictions from model inputs.
  *
  * <p>A {@code PredictionProvider} encapsulates the logic required to convert
- * a {@link DataBatch} into a prediction produced by a machine learning model.
+ * an input object into a prediction produced by a machine learning model.
  * Implementations may obtain predictions from local models, remote services,
  * mock providers, or other prediction sources.
  *
- * <p>The prediction type is represented by the generic parameter
- * {@code T}, allowing implementations to return different prediction
- * representations such as classification or regression predictions.
+ * <p>The input type and prediction type are represented by the generic
+ * parameters {@code I} and {@code O}, allowing implementations to support
+ * different prediction workflows such as single-batch and batch inference.
  *
- * @param <T> the prediction type produced by this provider
+ * @param <I> input type accepted by the provider
+ * @param <O> prediction type produced by the provider
  */
-public interface PredictionProvider<T extends ModelPrediction> {
+public interface PredictionProvider<I, O> {
 
     /**
-     * Generates a prediction for the supplied market data batch.
+     * Generates a prediction for the supplied model input.
      *
-     * @param batch market data used as model input
+     * @param input model input
      * @return the resulting prediction
-     * @throws IllegalArgumentException if {@code batch} is invalid
+     * @throws IllegalArgumentException if {@code input} is invalid
      * @throws PredictionProviderException if prediction generation fails
      */
-    T makePrediction(DataBatch batch) throws PredictionProviderException;
+    O predict(I input) throws PredictionProviderException;
 }

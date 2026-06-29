@@ -54,9 +54,24 @@ class ClassificationVolatilityPredictRequest(BaseModel):
     rows: List[PredictionRow]
 
 class ClassificationWithVolatilityResponse(BaseModel):
+    ticker: str
     probability: float
     volatility: float
     horizonMinutes: int
+
+class ClassificationVolatilityBatchPredictRequest(BaseModel):
+    batches: List[ClassificationVolatilityPredictRequest]
+
+
+class ClassificationWithVolatilityPrediction(BaseModel):
+    ticker: str
+    probability: float
+    volatility: float
+    horizonMinutes: int
+
+
+class ClassificationWithVolatilityBatchResponse(BaseModel):
+    predictions: List[ClassificationWithVolatilityPrediction]
 
 class CnnV1Config:
     model_id = "cnn-v1"
@@ -97,6 +112,14 @@ def validate_shape(
             detail=f"Expected {shape_name} shape {expected_shape}, got {data.shape}",
         )
 
+def batch_rows_to_cnn_tensor(
+        batches: List[ClassificationVolatilityPredictRequest],
+) -> torch.Tensor:
+    tensors = [rows_to_cnn_tensor(batch.rows) for batch in batches]
+
+    # each tensor is [1, features, timesteps]
+    # result is [batch, features, timesteps]
+    return torch.cat(tensors, dim=0)
 
 def cnn_v1_ohlcv_to_tensor(ohlcv: np.ndarray) -> torch.Tensor:
     validate_shape(
@@ -246,7 +269,45 @@ def predict_cnn_classification_volatility_v1(
         volatility = volatility_output.item()
 
     return ClassificationWithVolatilityResponse(
+        ticker = request.ticker,
         probability=probability,
         volatility=volatility,
         horizonMinutes=CnnClassificationVolatilityV1Config.horizon_minutes,
     )
+
+@app.post(
+    "/predict/cnn-classification-volatility-v1/batch",
+    response_model=ClassificationWithVolatilityBatchResponse,
+)
+def predict_cnn_classification_volatility_v1_batch(
+        request: ClassificationVolatilityBatchPredictRequest,
+):
+    if len(request.batches) == 0:
+        return ClassificationWithVolatilityBatchResponse(predictions=[])
+
+    x = batch_rows_to_cnn_tensor(request.batches)
+
+    with torch.no_grad():
+        classification_logits = classification_volatility_v1_classification_model(x)
+        probabilities = torch.sigmoid(classification_logits).squeeze(-1)
+
+        volatility_outputs = classification_volatility_v1_volatility_model(x)
+        volatilities = volatility_outputs.squeeze(-1)
+
+    predictions = []
+
+    for batch, probability, volatility in zip(
+            request.batches,
+            probabilities.tolist(),
+            volatilities.tolist(),
+    ):
+        predictions.append(
+            ClassificationWithVolatilityPrediction(
+                ticker=batch.ticker,
+                probability=probability,
+                volatility=volatility,
+                horizonMinutes=CnnClassificationVolatilityV1Config.horizon_minutes,
+            )
+        )
+
+    return ClassificationWithVolatilityBatchResponse(predictions=predictions)

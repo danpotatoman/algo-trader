@@ -12,30 +12,14 @@ import com.algotrader.marketdata.model.TimeInterval;
  * probability represents the model's upward classification confidence, while
  * volatility provides the risk metric used by volatility-aware strategies.
  */
-public final class ClassificationWithVolatilityPrediction
-        implements ModelPrediction {
+public record ClassificationWithVolatilityPrediction(
+        DataBatch batch,
+        double probability,
+        double volatility,
+        int horizonMinutes
+) implements ModelPrediction {
 
-    private final DataBatch batch;
-    private final double probability;
-    private final double volatility;
-    private final int horizonMinutes;
-
-    /**
-     * Creates a validated classification-with-volatility prediction.
-     *
-     * @param batch source market data batch
-     * @param probability upward classification probability from {@code 0.0}
-     *        through {@code 1.0}
-     * @param volatility non-negative forecast volatility
-     * @param horizonMinutes prediction horizon in minutes
-     * @throws IllegalArgumentException if any argument is invalid
-     */
-    public ClassificationWithVolatilityPrediction(
-            DataBatch batch,
-            double probability,
-            double volatility,
-            int horizonMinutes
-    ) {
+    public ClassificationWithVolatilityPrediction {
         if (batch == null) {
             throw new IllegalArgumentException(
                     "batch cannot be null"
@@ -45,34 +29,8 @@ public final class ClassificationWithVolatilityPrediction
         validateProbability(probability);
         validateVolatility(volatility);
         validateHorizonMinutes(horizonMinutes);
-
-        this.batch = batch;
-        this.probability = probability;
-        this.volatility = volatility;
-        this.horizonMinutes = horizonMinutes;
     }
 
-    public DataBatch getBatch() {
-        return batch;
-    }
-
-    public double getProbability() {
-        return probability;
-    }
-
-    public double getVolatility() {
-        return volatility;
-    }
-
-    public int getHorizonMinutes() {
-        return horizonMinutes;
-    }
-
-    /**
-     * Returns a concise human-readable prediction summary.
-     *
-     * @return prediction summary
-     */
     @Override
     public String summary() {
         return String.format(

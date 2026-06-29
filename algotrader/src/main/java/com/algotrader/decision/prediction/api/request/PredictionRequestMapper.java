@@ -1,19 +1,24 @@
 package com.algotrader.decision.prediction.api.request;
 
-import com.algotrader.marketdata.model.DataBatch;
-
 /**
- * Converts market data batches into endpoint-specific prediction request DTOs.
+ * Maps an input object into the request DTO expected by a prediction endpoint.
  *
- * @param <T> request DTO type produced by the mapper
+ * <p>This interface is intentionally generic over both the input type and the
+ * request DTO type. Implementations may map a single market data batch, a
+ * collection of batches, or any other prediction input into the endpoint's
+ * expected request shape.
+ *
+ * @param <I> input type accepted by the mapper
+ * @param <O> request DTO type produced by the mapper
  */
-public interface PredictionRequestMapper<T> {
+public interface PredictionRequestMapper<I, O> {
 
     /**
-     * Maps a market data batch into the request shape expected by an endpoint.
+     * Maps the supplied input into the request DTO expected by a prediction
+     * endpoint.
      *
-     * @param batch market data batch to map
+     * @param input input object to map
      * @return endpoint request DTO
      */
-    T map(DataBatch batch);
+    O map(I input);
 }

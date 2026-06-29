@@ -1,8 +1,10 @@
 package com.algotrader.decision.generator;
 
+import java.time.Instant;
 import java.util.List;
 
 import com.algotrader.decision.dataobjects.PortfolioDecisionResult;
+import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.marketdata.model.DataBatch;
 import com.algotrader.portfolio.PortfolioSnapshot;
 
@@ -39,6 +41,8 @@ public interface PortfolioDecisionGenerator {
      */
     PortfolioDecisionResult generateDecision(
             List<DataBatch> batches,
-            PortfolioSnapshot portfolio
-    );
+            PortfolioSnapshot portfolio,
+            List<RoundTripTrade> openTrades,
+            Instant cycleTime
+    ) throws DecisionGenerationException;
 }

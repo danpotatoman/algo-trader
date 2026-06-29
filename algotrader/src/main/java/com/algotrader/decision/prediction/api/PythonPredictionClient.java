@@ -6,41 +6,34 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-import com.algotrader.decision.prediction.api.request.PredictionRequestMapper;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
-import com.algotrader.marketdata.model.DataBatch;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Thin HTTP client for sending prediction requests to a Python model service.
  *
- * <p>This class is transport-focused. It converts a {@link DataBatch} into the
- * request DTO expected by the configured endpoint, serializes it as JSON, and
- * returns the raw JSON response.
+ * <p>This class is transport-focused. It serializes already-mapped request DTOs
+ * as JSON, sends them to the configured endpoint, and returns the raw JSON
+ * response.
  *
- * <p>This client intentionally does not interpret prediction semantics.
- * Prediction-type-specific parsing should be handled by higher-level
- * prediction provider classes.
+ * <p>This client intentionally does not know about market data, request mapping,
+ * or prediction semantics. Prediction-specific request mapping and response
+ * parsing should be handled by higher-level prediction provider classes.
  */
 public final class PythonPredictionClient {
 
     private final URI endpoint;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
-    private final PredictionRequestMapper<?> requestMapper;
 
     /**
      * Creates a prediction client for a single prediction endpoint.
      *
      * @param endpoint HTTP endpoint used to request predictions
-     * @param requestMapper maps market data batches to endpoint request DTOs
-     * @throws IllegalArgumentException if {@code endpoint} is null or blank
+     * @throws IllegalArgumentException if {@code endpoint} is null or not absolute
      */
-    public PythonPredictionClient(
-            URI endpoint,
-            PredictionRequestMapper<?> requestMapper
-    ) {
+    public PythonPredictionClient(URI endpoint) {
         if (endpoint == null) {
             throw new IllegalArgumentException("Endpoint URI cannot be null.");
         }
@@ -49,46 +42,35 @@ public final class PythonPredictionClient {
             throw new IllegalArgumentException("Endpoint URI must be absolute.");
         }
 
-        if (requestMapper == null) {
-            throw new IllegalArgumentException("requestMapper cannot be null.");
-        }
-
         this.endpoint = endpoint;
-        this.requestMapper = requestMapper;
         this.objectMapper = new ObjectMapper();
         this.httpClient = HttpClient.newHttpClient();
     }
+
     /**
-     * Sends a prediction request to the configured Python endpoint.
+     * Sends an already-mapped prediction request DTO to the configured Python
+     * endpoint.
      *
-     * <p>The supplied batch is converted by the configured request mapper
-     * before being serialized and sent.
-     *
-     * @param batch market data batch to send to the model service
+     * @param requestBody endpoint-specific request DTO
      * @return raw JSON response returned by the prediction endpoint
-     * @throws IllegalArgumentException if {@code batch} is null
+     * @throws IllegalArgumentException if {@code requestBody} is null
      * @throws PredictionProviderException if request serialization, HTTP
      *         communication, non-success responses, or response parsing fails
      */
-    public JsonNode predict(DataBatch batch)
+    public JsonNode post(Object requestBody)
             throws PredictionProviderException {
-        if (batch == null) {
-            throw new IllegalArgumentException(
-                    "DataBatch cannot be null."
-            );
+        if (requestBody == null) {
+            throw new IllegalArgumentException("requestBody cannot be null.");
         }
 
         try {
-            Object requestBody = requestMapper.map(batch);
-
-            String requestJson =
-                    objectMapper.writeValueAsString(requestBody);
+            String requestJson = objectMapper.writeValueAsString(requestBody);
 
             HttpRequest request = HttpRequest.newBuilder()
-                .uri(endpoint)
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestJson))
-                .build();
+                    .uri(endpoint)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestJson))
+                    .build();
 
             HttpResponse<String> response = httpClient.send(
                     request,

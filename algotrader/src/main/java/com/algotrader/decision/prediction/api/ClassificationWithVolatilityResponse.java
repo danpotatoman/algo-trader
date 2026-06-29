@@ -10,6 +10,7 @@ package com.algotrader.decision.prediction.api;
  *
  * <pre>
  * {
+ *   "ticker": "AAPL",
  *   "probability": 0.73,
  *   "volatility": 0.0045,
  *   "horizonMinutes": 30
@@ -17,6 +18,10 @@ package com.algotrader.decision.prediction.api;
  * </pre>
  */
 public record ClassificationWithVolatilityResponse(
+
+        /** Ticker symbol associated with the prediction. */
+        String ticker,
+
         /** Upward classification probability. */
         double probability,
 
