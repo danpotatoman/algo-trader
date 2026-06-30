@@ -2,6 +2,7 @@ package com.algotrader.config;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -41,7 +42,7 @@ public final class TradingSessionConfig {
     private final String endpointId;
     private final String strategyId;
 
-    private final String ticker;
+    private final List<String> tickers;
 
     private final Duration minTimeBeforeClose;
 
@@ -55,7 +56,7 @@ public final class TradingSessionConfig {
      * @param endpointId identifier of the endpoint configuration used by the session
      * @param strategyId identifier of the trade generation strategy used by
      *        the session
-     * @param ticker ticker symbol to trade
+     * @param tickers ticker symbols to trade
      * @param minTimeBeforeClose minimum time remaining before market close
      *        required to initiate new trades
      * @param firstCandleTimestamp timestamp of the first candle available for
@@ -69,7 +70,7 @@ public final class TradingSessionConfig {
             @JsonProperty("sessionId") String sessionId,
             @JsonProperty("endpointId") String endpointId,
             @JsonProperty("strategyId") String strategyId,
-            @JsonProperty("ticker") String ticker,
+            @JsonProperty("tickers") List<String> tickers,
             @JsonProperty("minTimeBeforeClose") Duration minTimeBeforeClose,
             @JsonProperty("firstCandleTimestamp") Instant firstCandleTimestamp,
             @JsonProperty("lastCandleTimestamp") Instant lastCandleTimestamp)
@@ -78,7 +79,7 @@ public final class TradingSessionConfig {
                 sessionId,
                 endpointId,
                 strategyId,
-                ticker,
+                tickers,
                 minTimeBeforeClose,
                 firstCandleTimestamp,
                 lastCandleTimestamp
@@ -87,7 +88,10 @@ public final class TradingSessionConfig {
         this.sessionId = sessionId;
         this.endpointId = endpointId;
         this.strategyId = strategyId;
-        this.ticker = ticker.toUpperCase();
+        this.tickers = tickers.stream()
+                .map(String::toUpperCase)
+                .distinct()
+                .toList();
 
         this.minTimeBeforeClose = minTimeBeforeClose;
 
@@ -105,7 +109,7 @@ public final class TradingSessionConfig {
             String sessionId,
             String endpointId,
             String strategyId,
-            String ticker,
+            List<String> tickers,
             Duration minTimeBeforeClose,
             Instant firstCandleTimestamp,
             Instant lastCandleTimestamp
@@ -118,7 +122,7 @@ public final class TradingSessionConfig {
 
         if (endpointId == null || endpointId.isBlank()) {
             throw new IllegalArgumentException(
-                    "Model ID cannot be null or blank."
+                    "Endpoint ID cannot be null or blank."
             );
         }
 
@@ -128,10 +132,18 @@ public final class TradingSessionConfig {
             );
         }
 
-        if (ticker == null || ticker.isBlank()) {
+        if (tickers == null || tickers.isEmpty()) {
             throw new IllegalArgumentException(
-                    "Ticker cannot be null or blank."
+                    "Tickers cannot be null or empty."
             );
+        }
+
+        for (String ticker : tickers) {
+            if (ticker == null || ticker.isBlank()) {
+                throw new IllegalArgumentException(
+                        "Ticker cannot be null or blank."
+                );
+            }
         }
 
         if (minTimeBeforeClose == null) {
@@ -142,19 +154,19 @@ public final class TradingSessionConfig {
 
         if (firstCandleTimestamp == null) {
             throw new IllegalArgumentException(
-                    "Starting timestamp cannot be null."
+                    "First candle timestamp cannot be null."
             );
         }
 
         if (lastCandleTimestamp == null) {
             throw new IllegalArgumentException(
-                    "Ending timestamp cannot be null."
+                    "Last candle timestamp cannot be null."
             );
         }
 
         if (!firstCandleTimestamp.isBefore(lastCandleTimestamp)) {
             throw new IllegalArgumentException(
-                    "Starting candle timestamp must be before ending candle timestamp."
+                    "First candle timestamp must be before last candle timestamp."
             );
         }
     }
@@ -171,8 +183,24 @@ public final class TradingSessionConfig {
         return strategyId;
     }
 
+    public List<String> getTickers() {
+        return tickers;
+    }
+
+    /**
+     * Convenience method for legacy single-ticker callers.
+     *
+     * @throws IllegalStateException if this session contains zero or multiple tickers
+     */
     public String getTicker() {
-        return ticker;
+        if (tickers.size() != 1) {
+            throw new IllegalStateException(
+                    "getTicker() is only valid for single-ticker sessions. " +
+                    "This session has " + tickers.size() + " tickers."
+            );
+        }
+
+        return tickers.get(0);
     }
 
     public Duration getMinTimeBeforeClose() {
@@ -193,7 +221,7 @@ public final class TradingSessionConfig {
                 "sessionId='" + sessionId + '\'' +
                 ", endpointId='" + endpointId + '\'' +
                 ", strategyId='" + strategyId + '\'' +
-                ", ticker='" + ticker + '\'' +
+                ", tickers='" + tickers + '\'' +
                 ", minTimeBeforeClose=" + minTimeBeforeClose +
                 ", firstCandleTimestamp=" + firstCandleTimestamp +
                 ", lastCandleTimestamp=" + lastCandleTimestamp +

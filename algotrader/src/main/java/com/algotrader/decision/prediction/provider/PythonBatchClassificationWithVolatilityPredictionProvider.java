@@ -7,7 +7,7 @@ import java.util.Map;
 
 import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
 import com.algotrader.decision.prediction.api.PythonPredictionClient;
-import com.algotrader.decision.prediction.api.request.BatchClassificationWithVolatilityRequest;
+import com.algotrader.decision.prediction.api.request.BatchClassificationVolatilityRequest;
 import com.algotrader.decision.prediction.api.request.PredictionRequestMapper;
 import com.algotrader.marketdata.model.DataBatch;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,11 +22,11 @@ public final class PythonBatchClassificationWithVolatilityPredictionProvider
                 List<ClassificationWithVolatilityPrediction>> {
 
     private final PythonPredictionClient client;
-    private final PredictionRequestMapper<List<DataBatch>, BatchClassificationWithVolatilityRequest> requestMapper;
+    private final PredictionRequestMapper<List<DataBatch>, BatchClassificationVolatilityRequest> requestMapper;
 
     public PythonBatchClassificationWithVolatilityPredictionProvider(
             PythonPredictionClient client,
-            PredictionRequestMapper<List<DataBatch>, BatchClassificationWithVolatilityRequest> requestMapper
+            PredictionRequestMapper<List<DataBatch>, BatchClassificationVolatilityRequest> requestMapper
     ) {
         if (client == null) {
             throw new IllegalArgumentException("PythonPredictionClient cannot be null.");

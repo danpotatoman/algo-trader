@@ -113,7 +113,7 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
                                 !openTradesByTicker.containsKey(prediction.getTicker()))
                         .toList();
 
-        List<CapitalAllocation> capitalAllocations = //TODO: reconsider allocation logic if needed.
+        List<CapitalAllocation> capitalAllocations = //TODO: reconsider allocation logic eventually.
                 buildCapitalAllocations(
                         newAllocationCandidates,
                         portfolio,
@@ -217,6 +217,7 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
         return allocations;
     }
 
+    //TODO: use volatility statistics (mean/std) for scoring
     private double score(ClassificationWithVolatilityPrediction prediction) {
         double probabilityEdge =
                 prediction.probability() - minProbabilityThreshold;

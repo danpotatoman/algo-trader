@@ -7,10 +7,10 @@ import java.util.List;
  *
  * @param batches endpoint-specific single-batch prediction requests
  */
-public record BatchClassificationWithVolatilityRequest(
+public record BatchClassificationVolatilityRequest(
         List<ClassificationWithVolatilityRequest> batches
 ) {
-    public BatchClassificationWithVolatilityRequest {
+    public BatchClassificationVolatilityRequest {
         if (batches == null) {
             throw new IllegalArgumentException("batches cannot be null.");
         }

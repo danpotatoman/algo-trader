@@ -13,12 +13,15 @@ import com.algotrader.execution.TradeExecutor;
 import com.algotrader.execution.validation.PriceAvailabilityValidator;
 import com.algotrader.logging.TradingCycleLogger;
 import com.algotrader.marketcalendar.UsMarketCalendar2026Loader;
+import com.algotrader.marketdata.provider.DefaultMultiTickerWindowProvider;
 import com.algotrader.marketdata.provider.MarketDataProvider;
+import com.algotrader.marketdata.provider.MultiTickerWindowProvider;
 import com.algotrader.marketdata.provider.PriceProvider;
 import com.algotrader.marketdata.provider.SlidingWindowProvider;
 import com.algotrader.marketdata.provider.SlidingWindowProviderFactory;
 import com.algotrader.portfolio.PortfolioManager;
 import com.algotrader.portfolio.PortfolioState;
+import com.algotrader.runtime.MultiTickerTradingCycleEvaluator;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
@@ -162,5 +165,10 @@ public final class TradingCycleRunnerFactory {
                 priceAvailabilityValidator,
                 tradingCycleLogger
         );
+    }
+
+    public MultiTickerTradingCycleEvaluator createMultiTickerTradingCycleEvaluator(TradingSessionConfig sessionConfig) {
+        MultiTickerWindowProvider windowProvider = new DefaultMultiTickerWindowProvider(null, null, 0, null);
+        return new MultiTickerTradingCycleEvaluator(windowProvider, null, null, null);
     }
 }

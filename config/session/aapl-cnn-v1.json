@@ -3,7 +3,7 @@
   "endointId": "cnn-v1",
   "strategyId": "threshold-strategy-v1",
 
-  "ticker": "AAPL",
+  "tickers": ["AAPL"],
 
   "minTimeBeforeClose": "PT30M",
 

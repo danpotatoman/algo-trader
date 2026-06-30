@@ -44,5 +44,10 @@ public enum PredictionType {
      *
      * <p>This prediction type is fully supported by the trading system.
      */
-    CLASSIFICATION_WITH_VOLATILITY
+    CLASSIFICATION_WITH_VOLATILITY,
+
+    /**
+     * Classification with volatility for a batch of tickers
+     */
+    BATCH_CLASSIFICATION_WITH_VOLATILITY
 }

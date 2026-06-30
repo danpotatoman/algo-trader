@@ -1,5 +1,7 @@
 package com.algotrader.decision.generator;
 
+import java.util.List;
+
 import com.algotrader.config.EndpointConfig;
 import com.algotrader.config.PredictionType;
 import com.algotrader.config.TradeGeneratorType;
@@ -34,10 +36,6 @@ import com.algotrader.runtime.ResolvedTradingPlan;
  * <p>Classification and classification-with-volatility pipelines are
  * supported. Regression prediction types remain placeholders and are not yet
  * supported end-to-end.
- *
- * <p><b>TODO:</b> This factory currently supports classification and
- * classification-with-volatility threshold strategies. Add regression-based
- * trade generator construction as regression strategy support is completed.
  */
 public final class TradeGeneratorFactory {
 
@@ -124,6 +122,35 @@ public final class TradeGeneratorFactory {
                 );
             }
             return createVolatilityScaledClassification(tradingPlan, portfolioView);
+        }
+
+        throw new IllegalArgumentException(
+                "Unsupported model/trade generator combination: "
+                        + predictionType
+                        + " / "
+                        + generatorType
+        );
+    }
+
+    public PortfolioDecisionGenerator createPortfolioDecisionGenerator(
+                ResolvedTradingPlan tradingPlan, PortfolioView portfolioView) {
+        if (tradingPlan == null) {
+                throw new IllegalArgumentException(
+                "ResolvedTradingPlan cannot be null."
+                );
+        }
+        if (portfolioView == null) {
+                throw new IllegalArgumentException(
+                        "PortfolioView cannot be null for volatility-scaled-threshold trade generator."
+                );
+        }
+
+        PredictionType predictionType = tradingPlan.getPredictionType();
+        TradeGeneratorType generatorType = tradingPlan.getStrategyType();
+
+        if (predictionType == PredictionType.BATCH_CLASSIFICATION_WITH_VOLATILITY
+                && generatorType == TradeGeneratorType.VOLATILITY_SCALED_THRESHOLD) {
+            return createClassificationVolatilityPortfolioDecisionGenerator(tradingPlan, portfolioView);
         }
 
         throw new IllegalArgumentException(
@@ -291,5 +318,36 @@ public final class TradeGeneratorFactory {
                 tradePlanner,
                 tradeValidator
         );
+    }
+
+    private ClassificationVolatilityPortfolioDecisionGenerator createClassificationVolatilityPortfolioDecisionGenerator(
+                ResolvedTradingPlan tradingPlan, PortfolioView portfolioView) {
+        PredictionProvider<List<DataBatch>, List<ClassificationWithVolatilityPrediction>> predictionProvider
+                    = predictionProviderFactory.createBatchClassificationVolatilityProvider(tradingPlan);
+
+        TradeGeneratorConfig tradeGeneratorConfig = tradingPlan.getTradeGeneratorConfig();
+
+        double minConfidenceThreshold = 
+                tradeGeneratorConfig.getParameters().getRequiredDouble(
+                        "minConfidenceThreshold"
+                );
+
+        double cashAllocationFraction =
+                tradeGeneratorConfig.getParameters().getRequiredDouble(
+                        "cashAllocationFractionPerCycle"
+                );
+
+        double maxAllocationFractionPerTicker =
+                tradeGeneratorConfig.getParameters().getRequiredDouble(
+                        "maxAllocationFractionPerTickerPerCycle"
+                );
+
+        return new ClassificationVolatilityPortfolioDecisionGenerator(
+                predictionProvider,
+                minConfidenceThreshold,
+                cashAllocationFraction,
+                maxAllocationFractionPerTicker,
+                tradingPlan.getStrategyId()
+                );
     }
 }

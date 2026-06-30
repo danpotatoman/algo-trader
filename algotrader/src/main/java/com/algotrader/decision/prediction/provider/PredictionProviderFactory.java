@@ -1,10 +1,13 @@
 package com.algotrader.decision.prediction.provider;
 
+import java.util.List;
+
 import com.algotrader.config.EndpointConfig;
 import com.algotrader.config.PredictionType;
 import com.algotrader.decision.dataobjects.ClassificationPrediction;
 import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
 import com.algotrader.decision.prediction.api.PythonPredictionClient;
+import com.algotrader.decision.prediction.api.request.BatchClassificationVolatilityRequestMapper;
 import com.algotrader.decision.prediction.api.request.ClassificationWithVolatilityRequestMapper;
 import com.algotrader.decision.prediction.api.request.LegacyClassificationRequestMapper;
 import com.algotrader.marketdata.model.DataBatch;
@@ -107,6 +110,32 @@ public final class PredictionProviderFactory {
                 new ClassificationWithVolatilityRequestMapper();
 
         return new PythonClassificationWithVolatilityPredictionProvider(client, requestMapper);
+    }
+
+    public PredictionProvider<List<DataBatch>, List<ClassificationWithVolatilityPrediction>>
+                createBatchClassificationVolatilityProvider(ResolvedTradingPlan tradingPlan) {
+
+        if (tradingPlan == null) {
+                throw new IllegalArgumentException("ResolvedTradingPlan cannot be null.");
+        }
+
+        EndpointConfig endpointConfig = tradingPlan.getEndpointConfig();
+
+        validateEndpointConfig(
+                endpointConfig,
+                PredictionType.BATCH_CLASSIFICATION_WITH_VOLATILITY
+        );
+
+        PythonPredictionClient client =
+                new PythonPredictionClient(
+                        endpointConfig.getEndpoint()
+                );
+
+        BatchClassificationVolatilityRequestMapper requestMapper =
+                new BatchClassificationVolatilityRequestMapper(
+                        new ClassificationWithVolatilityRequestMapper());
+
+        return new PythonBatchClassificationWithVolatilityPredictionProvider(client, requestMapper);
     }
 
     /**
