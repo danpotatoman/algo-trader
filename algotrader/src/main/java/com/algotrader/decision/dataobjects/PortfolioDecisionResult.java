@@ -2,6 +2,8 @@ package com.algotrader.decision.dataobjects;
 
 import java.util.List;
 
+import com.algotrader.trade.registry.OpenTradeAdjustment;
+
 /**
  * Result of evaluating portfolio decisions for a single trading cycle.
  *

@@ -1,20 +1,19 @@
 package com.algotrader.execution;
 
 import com.algotrader.decision.dataobjects.Action;
-import com.algotrader.decision.dataobjects.PortfolioAction;
+import com.algotrader.decision.dataobjects.BuyInstruction;
+import com.algotrader.decision.dataobjects.SellInstruction;
 import com.algotrader.decision.dataobjects.TradeInstruction;
 import com.algotrader.marketdata.cache.DataCacheException;
 import com.algotrader.marketdata.provider.PriceProvider;
-import com.algotrader.portfolio.PortfolioManager;
-import com.algotrader.portfolio.PortfolioState;
 
 /**
  * Trade executor that simulates trade execution using market data.
  *
  * <p>This executor does not place real orders. Instead, it looks up the
- * market price associated with a {@link TradeInstruction}, applies the
- * transaction to a {@link PortfolioState}, and records the result as an
- * {@link PortfolioAction}.
+ * market price associated with a {@link TradeInstruction} and returns the
+ * simulated result as a {@link TradeExecutionResult}. Portfolio mutation is
+ * handled by the orchestration layer after execution succeeds.
  *
  * <p>It is primarily intended for backtesting and simulation workflows,
  * where historical market data is used to estimate trade execution prices.
@@ -28,85 +27,74 @@ import com.algotrader.portfolio.PortfolioState;
  */
 public class HistoricalPaperTradeExecutor implements TradeExecutor {
 
-    private final PriceProvider priceProvider;
+        private final PriceProvider priceProvider;
 
-    private final PortfolioManager portfolioManager;
-
-    /**
-     * Creates a paper-trading executor.
-     *
-     * @param priceProvider price source used to determine simulated execution
-     *        prices
-     * @param portfolioManager portfolio manager updated by simulated executions
-     * @throws IllegalArgumentException if either dependency is null
-     */
-    public HistoricalPaperTradeExecutor(PriceProvider priceProvider, PortfolioManager portfolioManager) {
-        if (priceProvider == null) {
-            throw new IllegalArgumentException(
-                    "PriceProvider cannot be null."
-            );
-        }
-
-        if (portfolioManager == null) {
-            throw new IllegalArgumentException(
-                "PortfolioManager cannot be null."
-            );
-        }
-
-        this.priceProvider = priceProvider;
-        this.portfolioManager = portfolioManager;
-    }
-
-    /**
-     * Simulates execution of a trade instruction.
-     *
-     * <p>The instruction is executed against the configured
-     * {@link PortfolioState} using the market price returned by the configured
-     * {@link PriceProvider} for the instruction timestamp.
-     *
-     * @param instruction instruction to execute
-     * @return a portfolio action describing the simulated execution
-     * @throws IllegalArgumentException if {@code instruction} is null
-     * @throws IllegalStateException if the account rejects the transaction
-     * @throws RuntimeException if execution pricing data cannot be retrieved
-     */
-    @Override
-    public PortfolioAction handleInstruction(
-                TradeInstruction instruction
-        ) {
-                if (instruction == null) {
-                        throw new IllegalArgumentException(
-                                "Instruction cannot be null."
-                        );
+        /**
+         * Creates a paper-trading executor.
+         *
+         * @param priceProvider price source used to determine simulated execution
+         *        prices
+         * @throws IllegalArgumentException if {@code priceProvider} is null
+         */
+        public HistoricalPaperTradeExecutor(PriceProvider priceProvider) {
+                if (priceProvider == null) {
+                throw new IllegalArgumentException(
+                        "PriceProvider cannot be null."
+                );
                 }
 
-                try {
-                        double executionPrice = priceProvider.getTickerPrice(
-                                instruction.ticker(),
-                                instruction.executionTime()
-                        ).price();
+                this.priceProvider = priceProvider;
+        }
 
-                        PortfolioAction action = switch (instruction.action()) {
-                                case BUY -> new PortfolioAction(instruction.ticker(),
+        /**
+         * Simulates execution of a trade instruction.
+         *
+         * <p>The instruction is executed against the configured
+         * {@link PriceProvider} for the instruction timestamp.
+         *
+         * @param instruction instruction to execute
+         * @return result describing the simulated execution
+         * @throws IllegalArgumentException if {@code instruction} is null
+         * @throws TradeExecutionException if execution pricing data cannot be retrieved
+         */
+        @Override
+        public TradeExecutionResult handleInstruction(TradeInstruction instruction) {
+                if (instruction == null) {
+                        throw new IllegalArgumentException("Instruction cannot be null.");
+                }
+                try { 
+                        double price = priceProvider.getTickerPrice(instruction.ticker(), instruction.executionTime()).price();
+
+                        if (instruction instanceof BuyInstruction buy) {
+                                return new TradeExecutionResult(
+                                        buy.ticker(),
                                         Action.BUY,
-                                        instruction.executionTime(),
-                                        executionPrice,
-                                        instruction.quantity());
-                                case SELL -> new PortfolioAction(instruction.ticker(),
+                                        buy.executionTime(),
+                                        price,
+                                        buy.cashAmount() / price,
+                                        buy.cashAmount()
+                                );
+                        }
+
+                        if (instruction instanceof SellInstruction sell) {
+                                return new TradeExecutionResult(
+                                        sell.ticker(),
                                         Action.SELL,
-                                        instruction.executionTime(),
-                                        executionPrice,
-                                        instruction.quantity());
-                        };
+                                        sell.executionTime(),
+                                        price,
+                                        sell.quantity(),
+                                        sell.quantity() * price
+                                );
+                        }
 
-                        portfolioManager.apply(action);
+                        throw new TradeExecutionException(
+                                "Unsupported trade instruction type: "
+                                        + instruction.getClass().getName()
+                        );
 
-                        return action;
-
-                } catch (DataCacheException e) {
-                        throw new RuntimeException(
-                                "Failed to simulate trade instruction: "
-                                        + instruction, e
+                } catch(DataCacheException e) {
+                        throw new TradeExecutionException(
+                                "Unable to get price for " + instruction.ticker() + " at " + instruction.executionTime()
                         );
                 }
         }

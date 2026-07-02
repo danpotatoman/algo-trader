@@ -1,11 +1,12 @@
 package com.algotrader.portfolio;
 
+import java.util.List;
 import java.util.Map;
 
-import com.algotrader.decision.dataobjects.PortfolioAction;
+import com.algotrader.execution.TradeExecutionResult;
 
 /**
- * Applies executed trading actions to a {@link PortfolioState}.
+ * Applies trade execution results to a {@link PortfolioState}.
  *
  * <p>The portfolio manager is responsible for keeping the portfolio state
  * synchronized with successfully executed trades. It does not make trading
@@ -49,14 +50,14 @@ public final class PortfolioManager implements PortfolioView {
     }
 
     /**
-     * Applies an executed trading action to the portfolio state.
+     * Applies a trade execution result to the portfolio state.
      *
-     * @param action executed portfolio action
+     * @param action execution result to apply
      * @throws IllegalArgumentException if {@code action} is null
      * @throws IllegalStateException if applying the action would violate
      *         portfolio invariants
      */
-    public void apply(PortfolioAction action) {
+    public void apply(TradeExecutionResult action) {
         if (action == null) {
             throw new IllegalArgumentException(
                     "Portfolio action cannot be null.");
@@ -75,6 +76,25 @@ public final class PortfolioManager implements PortfolioView {
 
             default -> throw new IllegalArgumentException(
                     "Unsupported action: " + action.action());
+        }
+    }
+
+    /**
+     * Applies trade execution results to the portfolio state in order.
+     *
+     * @param executionResults execution results to apply
+     * @throws IllegalArgumentException if {@code actions} is null or contains null
+     * @throws IllegalStateException if applying any action would violate portfolio
+     *         invariants
+     */
+    public void applyAll(List<TradeExecutionResult> executionResults) {
+        if (executionResults == null) {
+            throw new IllegalArgumentException(
+                    "Execution results cannot be null.");
+        }
+
+        for (TradeExecutionResult executionResult : executionResults) {
+            apply(executionResult);
         }
     }
 }

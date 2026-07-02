@@ -36,13 +36,13 @@ public class Main {
         TradingCycleRunnerFactory tradingCycleRunnerFactory =
                 new TradingCycleRunnerFactory(
                         marketDataCache,
-                        marketDataCache,
-                        tradingCycleLogger
+                        marketDataCache
                 );
 
         TradingCycleRunner tradingCycleRunner =
-                tradingCycleRunnerFactory.create(
-                        sessionConfig
+                tradingCycleRunnerFactory.createTradingCycleRunner(
+                        sessionConfig,
+                        tradingCycleLogger
                 );
         
         try {

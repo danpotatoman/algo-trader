@@ -10,14 +10,21 @@ import java.util.stream.Collectors;
 
 import com.algotrader.decision.dataobjects.CapitalAllocation;
 import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
-import com.algotrader.decision.dataobjects.OpenTradeAdjustment;
 import com.algotrader.decision.dataobjects.PortfolioDecisionResult;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
 import com.algotrader.marketdata.model.DataBatch;
 import com.algotrader.portfolio.PortfolioSnapshot;
+import com.algotrader.trade.registry.OpenTradeAdjustment;
 
+/**
+ * Generates multi-ticker portfolio decisions from classification-with-volatility
+ * predictions.
+ *
+ * <p>Signals above the probability threshold may extend existing open trades
+ * or allocate cash to new positions, subject to configured allocation limits.
+ */
 public final class ClassificationVolatilityPortfolioDecisionGenerator
         implements PortfolioDecisionGenerator {
 
@@ -33,6 +40,16 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
     private final double maxAllocationFractionPerTicker;
     private final String strategyId;
 
+    /**
+     * Creates a classification-with-volatility portfolio decision generator.
+     *
+     * @param predictionProvider provider used to fetch predictions for batches
+     * @param minProbabilityThreshold minimum upward probability required
+     * @param cashAllocationFraction fraction of available cash to deploy
+     * @param maxAllocationFractionPerTicker maximum cash fraction per ticker
+     * @param strategyId strategy identifier assigned to generated allocations
+     * @throws IllegalArgumentException if any dependency or threshold is invalid
+     */
     public ClassificationVolatilityPortfolioDecisionGenerator(
             PredictionProvider<
                     List<DataBatch>,
@@ -72,6 +89,16 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
         this.strategyId = strategyId;
     }
 
+    /**
+     * Generates allocation and open-trade adjustment decisions for one cycle.
+     *
+     * @param batches market data batches for the current cycle
+     * @param portfolio portfolio snapshot provider for allocation sizing
+     * @param openTrades trades already open at the start of the cycle
+     * @param cycleTime trading cycle timestamp
+     * @return portfolio decision result for the cycle
+     * @throws DecisionGenerationException if prediction generation fails
+     */
     @Override
     public PortfolioDecisionResult generateDecision(
             List<DataBatch> batches,

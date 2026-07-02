@@ -4,17 +4,16 @@ import java.time.Instant;
 import java.util.List;
 
 import com.algotrader.decision.dataobjects.CapitalAllocation;
-import com.algotrader.decision.dataobjects.OpenTradeAdjustment;
 import com.algotrader.portfolio.PortfolioSnapshot;
+import com.algotrader.trade.registry.OpenTradeAdjustment;
 
 /**
  * Result of evaluating a single multi-ticker trading cycle.
  *
  * <p>A {@code MultiTickerCycleEvaluation} captures the outcome of evaluating
  * the market and current portfolio state at a specific cycle time. It
- * contains the portfolio snapshot used during evaluation together with the
- * portfolio actions and open-trade registry updates that should be applied
- * by the caller.
+ * contains the portfolio snapshot used during evaluation together with new
+ * capital allocations and open-trade registry updates for the caller to apply.
  *
  * <p>This class does not imply that any actions have been executed or applied.
  *
@@ -34,7 +33,8 @@ public record MultiTickerCycleEvaluation(
     /**
      * Creates an immutable trading cycle evaluation.
      *
-     * <p>The supplied action and registry update lists are defensively copied.
+     * <p>The supplied allocation and registry update lists are defensively
+     * copied.
      */
     public MultiTickerCycleEvaluation {
         newCapitalAllocations = List.copyOf(newCapitalAllocations);

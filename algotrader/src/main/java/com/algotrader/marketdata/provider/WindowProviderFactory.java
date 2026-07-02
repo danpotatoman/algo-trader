@@ -3,18 +3,9 @@ package com.algotrader.marketdata.provider;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
- * Factory for constructing {@link SlidingWindowProvider} instances from
- * {@link ResolvedTradingPlan} definitions.
- *
- * <p>This factory translates trading-plan configuration into a fully
- * configured sliding-window provider capable of producing model input
- * batches for the requested ticker, interval, and time range.
- *
- * <p>The returned provider is not initialized automatically. Callers are
- * responsible for invoking {@link SlidingWindowProvider#initialize()}
- * before requesting windows.
+ * Factory for creating market-data window providers from resolved plans.
  */
-public class SlidingWindowProviderFactory {
+public class WindowProviderFactory {
     private final MarketDataProvider marketDataProvider;
 
     /**
@@ -24,7 +15,7 @@ public class SlidingWindowProviderFactory {
      *        providers to load market data
      * @throws IllegalArgumentException if {@code marketDataProvider} is null
      */
-    public SlidingWindowProviderFactory(
+    public WindowProviderFactory(
             MarketDataProvider marketDataProvider
     ) {
         if (marketDataProvider == null) {
@@ -34,6 +25,36 @@ public class SlidingWindowProviderFactory {
         }
 
         this.marketDataProvider = marketDataProvider;
+    }
+
+    /**
+     * Creates a multi-ticker window provider configured from the supplied
+     * trading plan.
+     *
+     * <p>The returned provider is not initialized. Market data is loaded
+     * when {@link MultiTickerWindowProvider#initialize()} is invoked.
+     *
+     * @param tradingPlan resolved trading plan used to configure the provider
+     * @return an uninitialized multi-ticker window provider
+     * @throws IllegalArgumentException if {@code tradingPlan} is null
+     */
+    public MultiTickerWindowProvider createMultiTickerWindowProvider(
+        ResolvedTradingPlan tradingPlan
+    ) {
+        if (tradingPlan == null) {
+            throw new IllegalArgumentException(
+                    "ResolvedTradingPlan cannot be null."
+            );
+        }
+
+        return new DefaultMultiTickerWindowProvider(
+            tradingPlan.getTickers(),
+            tradingPlan.getInterval(),
+            tradingPlan.getNumCandles(),
+            this.marketDataProvider,
+            tradingPlan.getStartingTimestamp(),
+            tradingPlan.getEndingTimestamp()
+        );
     }
 
     /**
@@ -47,7 +68,7 @@ public class SlidingWindowProviderFactory {
      * @return an uninitialized sliding-window provider
      * @throws IllegalArgumentException if {@code tradingPlan} is null
      */
-    public SlidingWindowProvider create(
+    public SlidingWindowProvider createSlidingWindowProvider(
             ResolvedTradingPlan tradingPlan
     ) {
         if (tradingPlan == null) {

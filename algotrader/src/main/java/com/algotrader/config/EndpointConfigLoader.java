@@ -72,7 +72,7 @@ public class EndpointConfigLoader {
     public EndpointConfig load(String endpointId) {
         if (endpointId == null || endpointId.isBlank()) {
             throw new IllegalArgumentException(
-                    "Model ID cannot be null or blank."
+                    "Endpoint ID cannot be null or blank."
             );
         }
 

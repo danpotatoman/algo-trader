@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.algotrader.decision.dataobjects.PortfolioAction;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.decision.dataobjects.TradeInstruction;
 import com.algotrader.decision.generator.TradeGenerator;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
+import com.algotrader.execution.TradeExecutionResult;
 import com.algotrader.execution.TradeExecutor;
 import com.algotrader.execution.validation.PriceAvailabilityValidator;
 import com.algotrader.logging.TradingCycleLog;
@@ -54,9 +54,9 @@ public class TradingCycleRunner {
     /**
      * Creates a trading cycle runner.
      *
-     * @param tradingPlan resolved trading plan containing session, model, and
+     * @param tradingPlan resolved trading plan containing session, endpoint, and
      *        strategy metadata
-     * @param dataProvider sliding-window provider used to supply model input
+     * @param dataProvider sliding-window provider used to supply endpoint input
      *        batches
      * @param tradeGenerator component that generates round-trip trades from
      *        market data
@@ -160,7 +160,7 @@ public class TradingCycleRunner {
             List<RoundTripTrade> trades =
                     tradeGenerator.generateTrades(batch);
 
-            List<PortfolioAction> actions = new ArrayList<>();
+            List<TradeExecutionResult> actions = new ArrayList<>();
 
             for (RoundTripTrade trade : trades) {
 
@@ -175,7 +175,7 @@ public class TradingCycleRunner {
                 for (TradeInstruction instruction
                         : trade.toInstructions()) {
 
-                    PortfolioAction action =
+                    TradeExecutionResult action =
                             tradeExecutor.handleInstruction(instruction);
 
                     actions.add(action);

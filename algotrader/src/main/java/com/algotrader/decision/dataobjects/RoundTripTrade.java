@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * Represents a complete planned trade consisting of a BUY entry followed by
- * a SELL exit of the same quantity.
+ * a planned SELL exit.
  *
  * <p>A {@code RoundTripTrade} describes a fully-defined trading opportunity,
  * including both entry and exit timestamps. By requiring both sides of the
@@ -17,10 +17,9 @@ import java.util.List;
  * based trading decisions and executable {@link TradeInstruction}
  * instances.
  *
- * <p>The entry and exit instructions produced by this object always
- * reference the same ticker and quantity, differing only in action type and
- * execution time. The strategy identifier remains attached to the round trip
- * for attribution.
+ * <p>The entry and exit instructions produced by this object reference the
+ * same ticker and execution plan. The strategy identifier remains attached to
+ * the round trip for attribution.
  */
 public record RoundTripTrade(
         String ticker,
@@ -74,9 +73,8 @@ public record RoundTripTrade(
      * @return the entry trade instruction
      */
     public TradeInstruction entryInstruction() {
-        return new TradeInstruction(
+        return new BuyInstruction(
                 ticker,
-                Action.BUY,
                 quantity,
                 entryTime
         );
@@ -89,9 +87,8 @@ public record RoundTripTrade(
      * @return the exit trade instruction
      */
     public TradeInstruction exitInstruction() {
-        return new TradeInstruction(
+        return new SellInstruction(
                 ticker,
-                Action.SELL,
                 quantity,
                 exitTime
         );

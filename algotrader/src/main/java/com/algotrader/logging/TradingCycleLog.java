@@ -2,14 +2,14 @@ package com.algotrader.logging;
 
 import java.util.List;
 
-import com.algotrader.decision.dataobjects.PortfolioAction;
+import com.algotrader.execution.TradeExecutionResult;
 import com.algotrader.marketdata.model.TimeInterval;
 
 /**
  * Immutable log object representing one completed trading cycle.
  *
  * <p>A {@code TradingCycleLog} captures the identifying metadata, execution
- * timing, strategy information, and executed actions produced during one run
+ * timing, strategy information, and execution results produced during one run
  * of the trading pipeline.
  *
  * <p>This object is intended to be serialized to JSON for persistence,
@@ -24,7 +24,7 @@ public final class TradingCycleLog {
 
     private final String strategyId;
 
-    private final List<PortfolioAction> actions;
+    private final List<TradeExecutionResult> tradeExecutionResults;
 
     /**
      * Creates a trading cycle log.
@@ -33,7 +33,7 @@ public final class TradingCycleLog {
      * @param cycleDurationMillis elapsed runtime of the cycle in milliseconds
      * @param metadata configuration metadata for the cycle
      * @param strategyId strategy used to generate trades
-     * @param actions executed trade actions produced by the cycle
+     * @param tradeExecutionResults trade execution results produced by the cycle
      * @throws IllegalArgumentException if any argument is invalid
      */
     public TradingCycleLog(
@@ -41,7 +41,7 @@ public final class TradingCycleLog {
             long cycleDurationMillis,
             Metadata metadata,
             String strategyId,
-            List<PortfolioAction> actions
+            List<TradeExecutionResult> tradeExecutionResults
     ) {
         if (cycleId == null || cycleId.isBlank()) {
             throw new IllegalArgumentException(
@@ -67,7 +67,7 @@ public final class TradingCycleLog {
             );
         }
 
-        if (actions == null) {
+        if (tradeExecutionResults == null) {
             throw new IllegalArgumentException(
                     "Actions cannot be null."
             );
@@ -80,7 +80,7 @@ public final class TradingCycleLog {
 
         this.strategyId = strategyId;
 
-        this.actions = List.copyOf(actions);
+        this.tradeExecutionResults = List.copyOf(tradeExecutionResults);
     }
 
     public String getCycleId() {
@@ -99,8 +99,8 @@ public final class TradingCycleLog {
         return strategyId;
     }
 
-    public List<PortfolioAction> getActions() {
-        return actions;
+    public List<TradeExecutionResult> getTradeExecutionResults() {
+        return tradeExecutionResults;
     }
 
     /**
@@ -151,7 +151,7 @@ public final class TradingCycleLog {
 
             if (endpointId == null || endpointId.isBlank()) {
                 throw new IllegalArgumentException(
-                        "Model ID cannot be null or blank."
+                        "Endpoint ID cannot be null or blank."
                 );
             }
 

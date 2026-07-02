@@ -46,22 +46,14 @@ public final class TradeGeneratorFactory {
     /**
      * Creates a trade generator factory.
      *
-     * @param predictionProviderFactory factory used to construct prediction
-     *        providers
      * @param marketCalendar market calendar used to validate generated trades
      * @param priceProvider price source used for position sizing
      * @throws IllegalArgumentException if any dependency is null
      */
     public TradeGeneratorFactory(
-            PredictionProviderFactory predictionProviderFactory,
             MarketCalendar marketCalendar,
             PriceProvider priceProvider
     ) {
-        if (predictionProviderFactory == null) {
-            throw new IllegalArgumentException(
-                    "PredictionProviderFactory cannot be null."
-            );
-        }
 
         if (marketCalendar == null) {
             throw new IllegalArgumentException(
@@ -75,7 +67,7 @@ public final class TradeGeneratorFactory {
             );
         }
 
-        this.predictionProviderFactory = predictionProviderFactory;
+        this.predictionProviderFactory = new PredictionProviderFactory();
         this.marketCalendar = marketCalendar;
         this.priceProvider = priceProvider;
     }

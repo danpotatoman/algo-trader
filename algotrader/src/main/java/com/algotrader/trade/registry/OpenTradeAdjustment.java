@@ -1,6 +1,8 @@
-package com.algotrader.decision.dataobjects;
+package com.algotrader.trade.registry;
 
 import java.time.Instant;
+
+import com.algotrader.decision.dataobjects.RoundTripTrade;
 
 /**
  * Represents a requested modification to the planned exit time of an open

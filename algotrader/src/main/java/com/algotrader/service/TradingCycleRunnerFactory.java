@@ -7,21 +7,17 @@ import com.algotrader.config.TradingSessionConfig;
 import com.algotrader.config.TradeGeneratorConfigLoader;
 import com.algotrader.decision.generator.TradeGenerator;
 import com.algotrader.decision.generator.TradeGeneratorFactory;
-import com.algotrader.decision.prediction.provider.PredictionProviderFactory;
 import com.algotrader.execution.HistoricalPaperTradeExecutor;
 import com.algotrader.execution.TradeExecutor;
 import com.algotrader.execution.validation.PriceAvailabilityValidator;
 import com.algotrader.logging.TradingCycleLogger;
 import com.algotrader.marketcalendar.UsMarketCalendar2026Loader;
-import com.algotrader.marketdata.provider.DefaultMultiTickerWindowProvider;
 import com.algotrader.marketdata.provider.MarketDataProvider;
-import com.algotrader.marketdata.provider.MultiTickerWindowProvider;
 import com.algotrader.marketdata.provider.PriceProvider;
 import com.algotrader.marketdata.provider.SlidingWindowProvider;
-import com.algotrader.marketdata.provider.SlidingWindowProviderFactory;
+import com.algotrader.marketdata.provider.WindowProviderFactory;
 import com.algotrader.portfolio.PortfolioManager;
 import com.algotrader.portfolio.PortfolioState;
-import com.algotrader.runtime.MultiTickerTradingCycleEvaluator;
 import com.algotrader.runtime.ResolvedTradingPlan;
 
 /**
@@ -38,40 +34,26 @@ import com.algotrader.runtime.ResolvedTradingPlan;
  * them into a {@link ResolvedTradingPlan}, and uses that resolved plan to
  * construct the runtime objects and shared portfolio state needed by the
  * runner.
- *
- * <p><b>TODO:</b> Revisit the dependency on {@link PriceAvailabilityValidator}
- * once the market data missing-price contract is redesigned.
  */
 public final class TradingCycleRunnerFactory {
 
     private final EndpointConfigLoader endpointConfigLoader;
     private final TradeGeneratorConfigLoader tradeGeneratorConfigLoader;
-    private final SlidingWindowProviderFactory slidingWindowProviderFactory;
+    private final WindowProviderFactory windowProviderFactory;
     private final TradeGeneratorFactory tradeGeneratorFactory;
     private final PriceProvider priceProvider;
-    private final TradingCycleLogger tradingCycleLogger;
-    private final PriceAvailabilityValidator priceAvailabilityValidator;
 
     /**
      * Creates a trading cycle runner factory.
      *
      * @param marketDataProvider provider used to supply historical OHLCV data
      * @param priceProvider provider used to look up simulated execution prices
-     * @param tradingCycleLogger logger used to persist completed cycle logs
      * @throws IllegalArgumentException if any dependency is null
      */
     public TradingCycleRunnerFactory(
             MarketDataProvider marketDataProvider,
-            PriceProvider priceProvider,
-            TradingCycleLogger tradingCycleLogger
+            PriceProvider priceProvider
     ) {
-
-        if (tradingCycleLogger == null) {
-            throw new IllegalArgumentException(
-                    "TradingCycleLogger cannot be null."
-            );
-        }
-
         if (marketDataProvider == null) {
             throw new IllegalArgumentException(
                     "MarketDataProvider cannot be null."
@@ -90,21 +72,16 @@ public final class TradingCycleRunnerFactory {
         this.tradeGeneratorConfigLoader =
                 new TradeGeneratorConfigLoader();
 
-        this.slidingWindowProviderFactory =
-                new SlidingWindowProviderFactory(marketDataProvider);      
+        this.windowProviderFactory =
+                new WindowProviderFactory(marketDataProvider);      
 
         this.tradeGeneratorFactory =
                 new TradeGeneratorFactory(
-                        new PredictionProviderFactory(),
                         new UsMarketCalendar2026Loader().load(),
                         priceProvider
                 );
         
         this.priceProvider = priceProvider;
-        
-        this.priceAvailabilityValidator = new PriceAvailabilityValidator(priceProvider);
-
-        this.tradingCycleLogger = tradingCycleLogger;
     }
 
     /**
@@ -119,9 +96,16 @@ public final class TradingCycleRunnerFactory {
      * @throws RuntimeException if referenced endpoint or trade generator
      *         configuration cannot be loaded
      */
-    public TradingCycleRunner create(
-            TradingSessionConfig sessionConfig
+    public TradingCycleRunner createTradingCycleRunner(
+            TradingSessionConfig sessionConfig,
+            TradingCycleLogger tradingCycleLogger
     ) {
+        if (tradingCycleLogger == null) {
+            throw new IllegalArgumentException(
+                    "TradingCycleLogger cannot be null."
+            );
+        }
+
         if (sessionConfig == null) {
             throw new IllegalArgumentException(
                     "TradingSessionConfig cannot be null."
@@ -141,7 +125,7 @@ public final class TradingCycleRunnerFactory {
         ResolvedTradingPlan tradingPlan = new ResolvedTradingPlan(sessionConfig, endpointConfig, tradeGeneratorConfig);
 
         SlidingWindowProvider dataProvider =
-                slidingWindowProviderFactory.create(
+                windowProviderFactory.createSlidingWindowProvider(
                         tradingPlan
                 );
 
@@ -154,7 +138,7 @@ public final class TradingCycleRunnerFactory {
         
         TradeExecutor tradeExecutor =
                 new HistoricalPaperTradeExecutor(
-                        priceProvider, portfolioManager
+                        priceProvider
                 );
 
         return new TradingCycleRunner(
@@ -162,13 +146,8 @@ public final class TradingCycleRunnerFactory {
                 dataProvider,
                 tradeGenerator,
                 tradeExecutor,
-                priceAvailabilityValidator,
+                new PriceAvailabilityValidator(priceProvider),
                 tradingCycleLogger
         );
-    }
-
-    public MultiTickerTradingCycleEvaluator createMultiTickerTradingCycleEvaluator(TradingSessionConfig sessionConfig) {
-        MultiTickerWindowProvider windowProvider = new DefaultMultiTickerWindowProvider(null, null, 0, null);
-        return new MultiTickerTradingCycleEvaluator(windowProvider, null, null, null);
     }
 }

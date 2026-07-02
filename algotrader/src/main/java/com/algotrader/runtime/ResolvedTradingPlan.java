@@ -2,6 +2,7 @@ package com.algotrader.runtime;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 import com.algotrader.config.EndpointConfig;
 import com.algotrader.config.PredictionType;
@@ -76,8 +77,22 @@ public final class ResolvedTradingPlan {
         return tradeGeneratorConfig;
     }
 
+    /**
+     * Convenience method for legacy single-ticker callers.
+     *
+     * @throws IllegalStateException if this session contains zero or multiple tickers
+     */
     public String getTicker() {
         return sessionConfig.getTicker();
+    }
+
+    /**
+     * Returns all tickers configured for the resolved session.
+     *
+     * @return configured tickers
+     */
+    public List<String> getTickers() {
+        return sessionConfig.getTickers();
     }
 
     public TimeInterval getInterval() {
