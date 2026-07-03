@@ -1,0 +1,17 @@
+{
+  "strategyId": "threshold-strategy-volatility-v1",
+
+  "strategyType": "VOLATILITY_SCALED_THRESHOLD",
+
+  "description": "Buys when prediction confidence exceeds a threshold, with quantity scaled by confidence and volatility.",
+
+  "parameters": {
+    "minConfidenceThreshold": 0.25,
+    "minPositionFraction": 0.10,
+    "maxPositionFraction": 1.00,
+    "cashAllocationFractionPerCycle": 0.4,
+    "maxAllocationFractionPerTickerPerCycle": 0.20
+  },
+
+  "version": "1.0.0"
+}

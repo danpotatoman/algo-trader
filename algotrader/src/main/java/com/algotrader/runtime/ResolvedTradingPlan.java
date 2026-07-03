@@ -115,11 +115,11 @@ public final class ResolvedTradingPlan {
         return endpointConfig.getNumCandles();
     }
 
-    public Instant getStartingTimestamp() {
+    public Instant getFirstCandleTimestamp() {
         return sessionConfig.getFirstCandleTimestamp();
     }
 
-    public Instant getEndingTimestamp() {
+    public Instant getLastCandleTimestamp() {
         return sessionConfig.getLastCandleTimestamp();
     }
 
@@ -133,6 +133,10 @@ public final class ResolvedTradingPlan {
 
     public PredictionType getPredictionType() {
         return endpointConfig.getPredictionType();
+    }
+
+    public double getStartingCash() {
+        return sessionConfig.getStartingCash();
     }
 
     private static void validateConstructorArgs(

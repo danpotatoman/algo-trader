@@ -1,10 +1,5 @@
 package com.algotrader.runtime;
 
-import com.algotrader.config.EndpointConfig;
-import com.algotrader.config.EndpointConfigLoader;
-import com.algotrader.config.TradeGeneratorConfig;
-import com.algotrader.config.TradeGeneratorConfigLoader;
-import com.algotrader.config.TradingSessionConfig;
 import com.algotrader.decision.generator.PortfolioDecisionGenerator;
 import com.algotrader.decision.generator.TradeGeneratorFactory;
 import com.algotrader.marketcalendar.UsMarketCalendar2026Loader;
@@ -12,7 +7,7 @@ import com.algotrader.marketdata.provider.MarketDataProvider;
 import com.algotrader.marketdata.provider.PriceProvider;
 import com.algotrader.marketdata.provider.WindowProviderFactory;
 import com.algotrader.portfolio.PortfolioView;
-import com.algotrader.trade.registry.OpenTradeRegistryView;
+import com.algotrader.registry.OpenTradeRegistryView;
 
 /**
  * Factory for constructing multi-ticker trading cycle evaluators from session
@@ -20,8 +15,6 @@ import com.algotrader.trade.registry.OpenTradeRegistryView;
  */
 public class MultiTickerTradingCycleEvaluatorFactory {
 
-    private EndpointConfigLoader endpointConfigLoader;
-    private TradeGeneratorConfigLoader tradeGeneratorConfigLoader;
     private TradeGeneratorFactory tradeGeneratorFactory;
     private WindowProviderFactory windowProviderFactory;
     
@@ -41,12 +34,6 @@ public class MultiTickerTradingCycleEvaluatorFactory {
             throw new IllegalArgumentException("MarkdetDataProvider cannot be null.");
         }
 
-        this.endpointConfigLoader =
-                new EndpointConfigLoader();
-
-        this.tradeGeneratorConfigLoader =
-                new TradeGeneratorConfigLoader();
-
         this.tradeGeneratorFactory = new TradeGeneratorFactory(
             new UsMarketCalendar2026Loader().load(),
             priceProvider
@@ -59,34 +46,22 @@ public class MultiTickerTradingCycleEvaluatorFactory {
     /**
      * Creates a multi-ticker evaluator for a trading session.
      *
-     * @param sessionConfig trading session configuration to resolve
+     * @param tradingPlan trading session configuration to resolve
      * @param portfolioView read-only portfolio view used during evaluation
      * @param openTradeRegistryView read-only open trade registry view
      * @return configured multi-ticker trading cycle evaluator
      * @throws IllegalArgumentException if {@code sessionConfig} is null
      */
     public MultiTickerTradingCycleEvaluator create(
-            TradingSessionConfig sessionConfig,
+            ResolvedTradingPlan tradingPlan,
             PortfolioView portfolioView,
             OpenTradeRegistryView openTradeRegistryView
         ) {
-        if (sessionConfig == null) {
+        if (tradingPlan == null) {
             throw new IllegalArgumentException(
                     "TradingSessionConfig cannot be null."
             );
-        }
-
-        EndpointConfig endpointConfig =
-                endpointConfigLoader.load(
-                        sessionConfig.getEndpointId()
-                );
-
-        TradeGeneratorConfig tradeGeneratorConfig =
-                tradeGeneratorConfigLoader.load(
-                        sessionConfig.getStrategyId()
-                );
-        
-        ResolvedTradingPlan tradingPlan = new ResolvedTradingPlan(sessionConfig, endpointConfig, tradeGeneratorConfig);       
+        }    
 
         PortfolioDecisionGenerator portfolioDecisionGenerator =
             tradeGeneratorFactory.createPortfolioDecisionGenerator(tradingPlan, portfolioView);

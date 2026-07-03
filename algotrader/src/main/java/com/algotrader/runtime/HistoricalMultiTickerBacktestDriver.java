@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.algotrader.clock.HistoricalCycleClock;
 import com.algotrader.decision.dataobjects.BuyInstruction;
 import com.algotrader.decision.dataobjects.CapitalAllocation;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
@@ -18,8 +19,8 @@ import com.algotrader.logging.MultiTickerTradingSessionLogger;
 import com.algotrader.logging.TradingSessionLog;
 import com.algotrader.marketdata.cache.DataCacheException;
 import com.algotrader.portfolio.PortfolioManager;
-import com.algotrader.trade.registry.OpenTradeAdjustment;
-import com.algotrader.trade.registry.OpenTradeRegistry;
+import com.algotrader.registry.OpenTradeAdjustment;
+import com.algotrader.registry.OpenTradeRegistry;
 
 /**
  * Drives a historical multi-ticker backtest.

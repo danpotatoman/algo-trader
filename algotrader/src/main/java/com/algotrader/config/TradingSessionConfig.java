@@ -38,9 +38,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public final class TradingSessionConfig {
 
     private final String sessionId;
-
     private final String endpointId;
-    private final String strategyId;
+    private final String strategyId;//TODO: rename to TradeGeneratorId
 
     private final List<String> tickers;
 
@@ -48,6 +47,8 @@ public final class TradingSessionConfig {
 
     private final Instant firstCandleTimestamp;
     private final Instant lastCandleTimestamp;
+
+    private final double startingCash;
 
     /**
      * Creates a trading session configuration.
@@ -73,7 +74,8 @@ public final class TradingSessionConfig {
             @JsonProperty("tickers") List<String> tickers,
             @JsonProperty("minTimeBeforeClose") Duration minTimeBeforeClose,
             @JsonProperty("firstCandleTimestamp") Instant firstCandleTimestamp,
-            @JsonProperty("lastCandleTimestamp") Instant lastCandleTimestamp)
+            @JsonProperty("lastCandleTimestamp") Instant lastCandleTimestamp,
+            @JsonProperty("startingCash") double startingCash)
     {
         validateConstructorArgs(
                 sessionId,
@@ -82,7 +84,8 @@ public final class TradingSessionConfig {
                 tickers,
                 minTimeBeforeClose,
                 firstCandleTimestamp,
-                lastCandleTimestamp
+                lastCandleTimestamp,
+                startingCash
         );
 
         this.sessionId = sessionId;
@@ -97,6 +100,8 @@ public final class TradingSessionConfig {
 
         this.firstCandleTimestamp = firstCandleTimestamp;
         this.lastCandleTimestamp = lastCandleTimestamp;
+
+        this.startingCash = startingCash;
     }
 
     /**
@@ -112,7 +117,8 @@ public final class TradingSessionConfig {
             List<String> tickers,
             Duration minTimeBeforeClose,
             Instant firstCandleTimestamp,
-            Instant lastCandleTimestamp
+            Instant lastCandleTimestamp,
+            double startingCash
     ) {
         if (sessionId == null || sessionId.isBlank()) {
             throw new IllegalArgumentException(
@@ -169,6 +175,16 @@ public final class TradingSessionConfig {
                     "First candle timestamp must be before last candle timestamp."
             );
         }
+
+        if (startingCash <= 0.0) {
+            throw new IllegalArgumentException(
+                    "Starting cash must be greater than zero."
+            );
+        }
+    }
+
+    public double getStartingCash() {
+        return startingCash;
     }
 
     public String getSessionId() {
@@ -225,6 +241,7 @@ public final class TradingSessionConfig {
                 ", minTimeBeforeClose=" + minTimeBeforeClose +
                 ", firstCandleTimestamp=" + firstCandleTimestamp +
                 ", lastCandleTimestamp=" + lastCandleTimestamp +
+                ", startingCash=" + startingCash +
                 '}';
     }
 }

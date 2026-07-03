@@ -1,0 +1,20 @@
+{
+  "endpointId": "batch-cnn-v1",
+
+  "predictionType": "BATCH_CLASSIFICATION_WITH_VOLATILITY",
+
+  "endpoint": "http://127.0.0.1:8000/predict/cnn-classification-volatility-v1/batch",
+
+  "description": "Predicts whether price will increase by at least 0.2% within 30 minutes and forecasts 30-minute volatility for multiple tickers with one API call.",
+
+  "interval": "FIVE_MINUTES",
+
+  "numCandles": 30,
+
+  "outputStatistics": {
+    "volatilityMean": 0.00099081,
+    "volatilityStd": 0.00032641
+  },
+
+  "version": "1.0.0"
+}

@@ -52,8 +52,8 @@ public class WindowProviderFactory {
             tradingPlan.getInterval(),
             tradingPlan.getNumCandles(),
             this.marketDataProvider,
-            tradingPlan.getStartingTimestamp(),
-            tradingPlan.getEndingTimestamp()
+            tradingPlan.getFirstCandleTimestamp(),
+            tradingPlan.getLastCandleTimestamp()
         );
     }
 
@@ -82,8 +82,8 @@ public class WindowProviderFactory {
                 tradingPlan.getTicker(),
                 tradingPlan.getInterval(),
                 tradingPlan.getNumCandles(),
-                tradingPlan.getStartingTimestamp(),
-                tradingPlan.getEndingTimestamp()
+                tradingPlan.getFirstCandleTimestamp(),
+                tradingPlan.getLastCandleTimestamp()
         );
     }
 }

@@ -7,7 +7,7 @@ import com.algotrader.decision.dataobjects.CapitalAllocation;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.execution.TradeExecutionException;
 import com.algotrader.execution.TradeExecutionResult;
-import com.algotrader.trade.registry.OpenTradeAdjustment;
+import com.algotrader.registry.OpenTradeAdjustment;
 
 /**
  * Log of a multi-ticker trading cycle.

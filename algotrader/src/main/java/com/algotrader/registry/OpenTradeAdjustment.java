@@ -1,4 +1,4 @@
-package com.algotrader.trade.registry;
+package com.algotrader.registry;
 
 import java.time.Instant;
 

@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.algotrader.decision.dataobjects.CapitalAllocation;
 import com.algotrader.portfolio.PortfolioSnapshot;
-import com.algotrader.trade.registry.OpenTradeAdjustment;
+import com.algotrader.registry.OpenTradeAdjustment;
 
 /**
  * Result of evaluating a single multi-ticker trading cycle.

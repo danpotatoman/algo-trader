@@ -16,7 +16,7 @@ import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
 import com.algotrader.marketdata.model.DataBatch;
 import com.algotrader.portfolio.PortfolioSnapshot;
-import com.algotrader.trade.registry.OpenTradeAdjustment;
+import com.algotrader.registry.OpenTradeAdjustment;
 
 /**
  * Generates multi-ticker portfolio decisions from classification-with-volatility

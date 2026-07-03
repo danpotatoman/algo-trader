@@ -13,7 +13,7 @@ import com.algotrader.marketdata.model.DataBatch;
 import com.algotrader.marketdata.provider.MultiTickerWindowProvider;
 import com.algotrader.portfolio.PortfolioSnapshot;
 import com.algotrader.portfolio.PortfolioView;
-import com.algotrader.trade.registry.OpenTradeRegistryView;
+import com.algotrader.registry.OpenTradeRegistryView;
 
 /**
  * Evaluates a single multi-ticker trading cycle.
