@@ -115,7 +115,7 @@ public final class HistoricalMultiTickerBacktestDriver {
                         );
                 }
 
-                logger.start();
+                logger.start(portfolioManager.cash());
 
                 int cycle = 0;
                 int totalCycles = cycleClock.getTotalCycles();
@@ -139,7 +139,7 @@ public final class HistoricalMultiTickerBacktestDriver {
                                 }
                         }
 
-                        TradingSessionLog sessionLog = logger.finish();
+                        TradingSessionLog sessionLog = logger.finish(portfolioManager.cash());
 
                         new TradingSessionLogWriter().write(
                                 sessionLog,
@@ -149,7 +149,7 @@ public final class HistoricalMultiTickerBacktestDriver {
                         return sessionLog;
 
                 } catch (Exception e) {
-                        TradingSessionLog sessionLog = logger.finish(e);
+                        TradingSessionLog sessionLog = logger.finish(portfolioManager.cash(), e);
 
                         new TradingSessionLogWriter().write(
                                 sessionLog,

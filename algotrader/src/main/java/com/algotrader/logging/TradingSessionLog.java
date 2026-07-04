@@ -27,6 +27,16 @@ public record TradingSessionLog(
         Instant endTime,
 
         /**
+         * Portfolio cash available when the session began.
+         */
+        double startingCash,
+
+        /**
+         * Portfolio cash available when the session completed.
+         */
+        double endingCash,
+
+        /**
          * Log for each evaluated trading cycle, in chronological order.
          */
         List<MultiTickerTradingCycleLog> cycleLogs,
@@ -65,6 +75,16 @@ public record TradingSessionLog(
         if (cycleLogs == null) {
             throw new IllegalArgumentException(
                     "Cycle logs cannot be null.");
+        }
+
+        if (startingCash < 0.0) {
+            throw new IllegalArgumentException(
+                    "Starting cash cannot be negative.");
+        }
+
+        if (endingCash < 0.0) {
+            throw new IllegalArgumentException(
+                    "Ending cash cannot be negative.");
         }
 
         cycleLogs = List.copyOf(cycleLogs);

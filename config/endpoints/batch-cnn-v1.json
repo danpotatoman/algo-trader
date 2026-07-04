@@ -5,7 +5,7 @@
 
   "endpoint": "http://127.0.0.1:8000/predict/cnn-classification-volatility-v1/batch",
 
-  "description": "Predicts whether price will increase by at least 0.2% within 30 minutes and forecasts 30-minute volatility for multiple tickers with one API call.",
+  "description": "First production CNN model, outputs confidence price will increase by at least 0.2% within 30 minutes and forecasts 30-minute volatility",
 
   "interval": "FIVE_MINUTES",
 

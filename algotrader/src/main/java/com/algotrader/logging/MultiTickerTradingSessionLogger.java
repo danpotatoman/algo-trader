@@ -15,6 +15,7 @@ import java.util.List;
 public final class MultiTickerTradingSessionLogger {
 
     private Instant startTime;
+    private double startingCash;
 
     private final List<MultiTickerTradingCycleLog> cycleLogs =
             new ArrayList<>();
@@ -24,13 +25,14 @@ public final class MultiTickerTradingSessionLogger {
      *
      * @throws IllegalStateException if a session has already been started
      */
-    public void start() {
+    public void start(double startingCash) {
         if (startTime != null) {
             throw new IllegalStateException(
                     "Trading session has already been started.");
         }
 
         startTime = Instant.now();
+        this.startingCash = startingCash;
         cycleLogs.clear();
     }
 
@@ -61,8 +63,8 @@ public final class MultiTickerTradingSessionLogger {
      * @return completed trading session log
      * @throws IllegalStateException if the session has not been started
      */
-    public TradingSessionLog finish() {
-        return finish(null);
+    public TradingSessionLog finish(double endingCash) {
+        return finish(endingCash, null);
     }
 
     /**
@@ -71,7 +73,9 @@ public final class MultiTickerTradingSessionLogger {
      * @return completed trading session log
      * @throws IllegalStateException if the session has not been started
      */
-    public TradingSessionLog finish(Exception sessionFailure) {
+    public TradingSessionLog finish(
+        double endingCash,
+        Exception sessionFailure) {
         if (startTime == null) {
             throw new IllegalStateException(
                     "Trading session has not been started.");
@@ -79,7 +83,9 @@ public final class MultiTickerTradingSessionLogger {
 
         TradingSessionLog sessionLog = new TradingSessionLog(
                 startTime,
-                Instant.now(),
+                Instant.now(),//TODO: start and end times are for candle times used, not for how long a session took to run on my machine.
+                startingCash,
+                endingCash,
                 List.copyOf(cycleLogs),
                 SessionFailureLog.from(sessionFailure)
         );
