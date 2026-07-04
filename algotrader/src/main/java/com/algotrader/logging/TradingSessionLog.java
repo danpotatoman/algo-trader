@@ -34,7 +34,7 @@ public record TradingSessionLog(
         /**
          * Exception that caused the session to fail, null if session succeeded.
          */
-        Exception sessoinFailure
+        SessionFailureLog sessionFailure
 
 ) {
 

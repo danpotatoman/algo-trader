@@ -81,7 +81,7 @@ public final class MultiTickerTradingSessionLogger {
                 startTime,
                 Instant.now(),
                 List.copyOf(cycleLogs),
-                sessionFailure
+                SessionFailureLog.from(sessionFailure)
         );
 
         startTime = null;

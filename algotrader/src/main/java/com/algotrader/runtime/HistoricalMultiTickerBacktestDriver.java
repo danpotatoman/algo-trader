@@ -1,5 +1,6 @@
 package com.algotrader.runtime;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +17,9 @@ import com.algotrader.execution.TradeExecutor;
 import com.algotrader.logging.MultiTickerCycleEvaluation;
 import com.algotrader.logging.MultiTickerTradingCycleLog;
 import com.algotrader.logging.MultiTickerTradingSessionLogger;
+import com.algotrader.logging.TradeExecutionFailureLog;
 import com.algotrader.logging.TradingSessionLog;
+import com.algotrader.logging.TradingSessionLogWriter;
 import com.algotrader.marketdata.cache.DataCacheException;
 import com.algotrader.portfolio.PortfolioManager;
 import com.algotrader.registry.OpenTradeAdjustment;
@@ -114,20 +117,46 @@ public final class HistoricalMultiTickerBacktestDriver {
 
                 logger.start();
 
+                int cycle = 0;
+                int totalCycles = cycleClock.getTotalCycles();
+
                 try {
                         while (cycleClock.hasNext()) {
-                        Instant cycleTime = cycleClock.next();
+                                Instant cycleTime = cycleClock.next();
 
-                        MultiTickerTradingCycleLog cycleLog =
-                                runCycle(cycleTime);
+                                MultiTickerTradingCycleLog cycleLog =
+                                        runCycle(cycleTime);
 
-                        logger.logCycle(cycleLog);
+                                logger.logCycle(cycleLog);
+
+                                cycle++;
+                                if (cycle % 100 == 0) {
+                                        double percent = 100.0 * cycle / totalCycles;
+                                        System.out.printf("Progress: %.1f%% (%d/%d)%n",
+                                                percent,
+                                                cycle,
+                                                totalCycles);
+                                }
                         }
 
-                        return logger.finish();
+                        TradingSessionLog sessionLog = logger.finish();
+
+                        new TradingSessionLogWriter().write(
+                                sessionLog,
+                                Path.of("data", "logs", "latest-session.json")
+                        );
+
+                        return sessionLog;
 
                 } catch (Exception e) {
-                        return logger.finish(e);
+                        TradingSessionLog sessionLog = logger.finish(e);
+
+                        new TradingSessionLogWriter().write(
+                                sessionLog,
+                                Path.of("data", "logs", "latest-session.json")
+                        );
+
+                        return sessionLog;
                 }
         }
 
@@ -137,7 +166,7 @@ public final class HistoricalMultiTickerBacktestDriver {
 
                 List<RoundTripTrade> successfullyClosedTrades = new ArrayList<>();
                 List<TradeExecutionResult> successfulExitExecutions = new ArrayList<>();
-                List<TradeExecutionException> failedExitExecutions = new ArrayList<>();
+                List<TradeExecutionFailureLog> failedExitExecutions = new ArrayList<>();
 
                 for (RoundTripTrade trade : tradesDueForExit) {
                         TradeInstruction exitInstruction = new SellInstruction(
@@ -159,7 +188,7 @@ public final class HistoricalMultiTickerBacktestDriver {
                                 successfullyClosedTrades.add(trade);
 
                         } catch (TradeExecutionException e) {
-                                failedExitExecutions.add(e);
+                                failedExitExecutions.add(TradeExecutionFailureLog.from(e));
                         }
                 }
 
@@ -173,7 +202,7 @@ public final class HistoricalMultiTickerBacktestDriver {
 
                 List<TradeExecutionResult> successfulEntryExecutions = new ArrayList<>();
                 List<RoundTripTrade> successfullyOpenedTrades = new ArrayList<>();
-                List<TradeExecutionException> failedEntryExecutions = new ArrayList<>();
+                List<TradeExecutionFailureLog> failedEntryExecutions = new ArrayList<>();
 
                 for (CapitalAllocation allocation : newCapitalAllocations) {
                         TradeInstruction entryInstruction = new BuyInstruction(
@@ -200,7 +229,7 @@ public final class HistoricalMultiTickerBacktestDriver {
                                 successfullyOpenedTrades.add(openedTrade);
 
                         } catch (TradeExecutionException e) {
-                                failedEntryExecutions.add(e);
+                                failedEntryExecutions.add(TradeExecutionFailureLog.from(e));
                         }
                 }
 

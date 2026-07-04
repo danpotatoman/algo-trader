@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.algotrader.decision.dataobjects.CapitalAllocation;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
-import com.algotrader.execution.TradeExecutionException;
 import com.algotrader.execution.TradeExecutionResult;
 import com.algotrader.registry.OpenTradeAdjustment;
 
@@ -19,7 +18,7 @@ import com.algotrader.registry.OpenTradeAdjustment;
 public record MultiTickerTradingCycleLog(
 
         /**
-         * Timestamp of the evaluated trading cycle.
+         * Timestamp of the trading cycle.
          */
         Instant cycleTime,
 
@@ -47,7 +46,7 @@ public record MultiTickerTradingCycleLog(
         /**
          * Exit executions that failed.
          */
-        List<TradeExecutionException> failedExitExecutions,
+        List<TradeExecutionFailureLog> failedExitExecutions,
 
         /**
          * Capital allocations produced by the decision generator.
@@ -67,7 +66,7 @@ public record MultiTickerTradingCycleLog(
         /**
          * Entry executions that failed.
          */
-        List<TradeExecutionException> failedEntryExecutions,
+        List<TradeExecutionFailureLog> failedEntryExecutions,
 
         /**
          * Requested modifications to existing open trades.
@@ -78,7 +77,7 @@ public record MultiTickerTradingCycleLog(
          * Cycle-level failure, if one occurred outside of individual trade
          * execution failures.
          */
-        Exception cycleFailure
+        CycleFailureLog cycleFailure
 ) {
 
     public MultiTickerTradingCycleLog {

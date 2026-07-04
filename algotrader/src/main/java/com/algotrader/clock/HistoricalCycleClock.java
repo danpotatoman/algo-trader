@@ -19,6 +19,7 @@ import com.algotrader.marketdata.model.TimeInterval;
  */
 public final class HistoricalCycleClock {
 
+    private final Instant startTime;
     private final Instant endTime;
     private final Duration step;
 
@@ -58,6 +59,7 @@ public final class HistoricalCycleClock {
                     "Start time must not be after end time.");
         }
 
+        this.startTime = startTime;
         this.endTime = endTime;
         this.step = interval.getDuration();
         this.nextTime = startTime;
@@ -97,5 +99,19 @@ public final class HistoricalCycleClock {
                 : candidate;
 
         return current;
+    }
+
+    /**
+     * Returns the total number of cycle timestamps this clock will produce.
+     *
+     * <p>The count includes both the start and end timestamps.
+     *
+     * @return total number of cycles
+     */
+    public int getTotalCycles() {
+        long durationMillis = Duration.between(startTime, endTime).toMillis();
+        long stepMillis = step.toMillis();
+
+        return Math.toIntExact(durationMillis / stepMillis + 1);
     }
 }
