@@ -1,6 +1,5 @@
 package com.algotrader.runtime;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -121,10 +120,6 @@ public final class ResolvedTradingPlan {
 
     public Instant getLastCandleTimestamp() {
         return sessionConfig.getLastCandleTimestamp();
-    }
-
-    public Duration getMinTimeBeforeClose() {
-        return sessionConfig.getMinTimeBeforeClose();
     }
 
     public TradeGeneratorType getStrategyType() {

@@ -1,6 +1,5 @@
 package com.algotrader.config;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -43,8 +42,6 @@ public final class TradingSessionConfig {
 
     private final List<String> tickers;
 
-    private final Duration minTimeBeforeClose;
-
     private final Instant firstCandleTimestamp;
     private final Instant lastCandleTimestamp;
 
@@ -58,8 +55,6 @@ public final class TradingSessionConfig {
      * @param strategyId identifier of the trade generation strategy used by
      *        the session
      * @param tickers ticker symbols to trade
-     * @param minTimeBeforeClose minimum time remaining before market close
-     *        required to initiate new trades
      * @param firstCandleTimestamp timestamp of the first candle available for
      *        model inference during the session
      * @param lastCandleTimestamp timestamp of the final candle available for
@@ -72,7 +67,6 @@ public final class TradingSessionConfig {
             @JsonProperty("endpointId") String endpointId,
             @JsonProperty("strategyId") String strategyId,
             @JsonProperty("tickers") List<String> tickers,
-            @JsonProperty("minTimeBeforeClose") Duration minTimeBeforeClose,
             @JsonProperty("firstCandleTimestamp") Instant firstCandleTimestamp,
             @JsonProperty("lastCandleTimestamp") Instant lastCandleTimestamp,
             @JsonProperty("startingCash") double startingCash)
@@ -82,7 +76,6 @@ public final class TradingSessionConfig {
                 endpointId,
                 strategyId,
                 tickers,
-                minTimeBeforeClose,
                 firstCandleTimestamp,
                 lastCandleTimestamp,
                 startingCash
@@ -95,8 +88,6 @@ public final class TradingSessionConfig {
                 .map(String::toUpperCase)
                 .distinct()
                 .toList();
-
-        this.minTimeBeforeClose = minTimeBeforeClose;
 
         this.firstCandleTimestamp = firstCandleTimestamp;
         this.lastCandleTimestamp = lastCandleTimestamp;
@@ -115,7 +106,6 @@ public final class TradingSessionConfig {
             String endpointId,
             String strategyId,
             List<String> tickers,
-            Duration minTimeBeforeClose,
             Instant firstCandleTimestamp,
             Instant lastCandleTimestamp,
             double startingCash
@@ -150,12 +140,6 @@ public final class TradingSessionConfig {
                         "Ticker cannot be null or blank."
                 );
             }
-        }
-
-        if (minTimeBeforeClose == null) {
-            throw new IllegalArgumentException(
-                    "minTimeBeforeClose cannot be null."
-            );
         }
 
         if (firstCandleTimestamp == null) {
@@ -219,10 +203,6 @@ public final class TradingSessionConfig {
         return tickers.get(0);
     }
 
-    public Duration getMinTimeBeforeClose() {
-        return minTimeBeforeClose;
-    }
-
     public Instant getFirstCandleTimestamp() {
         return firstCandleTimestamp;
     }
@@ -238,7 +218,6 @@ public final class TradingSessionConfig {
                 ", endpointId='" + endpointId + '\'' +
                 ", strategyId='" + strategyId + '\'' +
                 ", tickers='" + tickers + '\'' +
-                ", minTimeBeforeClose=" + minTimeBeforeClose +
                 ", firstCandleTimestamp=" + firstCandleTimestamp +
                 ", lastCandleTimestamp=" + lastCandleTimestamp +
                 ", startingCash=" + startingCash +

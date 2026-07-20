@@ -38,6 +38,7 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
     private final double minProbabilityThreshold;
     private final double cashAllocationFraction;
     private final double maxAllocationFractionPerTicker;
+    private final TradeExitTimePolicy tradeExitTimePolicy;
     private final String strategyId;
 
     /**
@@ -47,6 +48,7 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
      * @param minProbabilityThreshold minimum upward probability required
      * @param cashAllocationFraction fraction of available cash to deploy
      * @param maxAllocationFractionPerTicker maximum cash fraction per ticker
+     * @param tradeExitTimePolicy policy used to determine valid trading times
      * @param strategyId strategy identifier assigned to generated allocations
      * @throws IllegalArgumentException if any dependency or threshold is invalid
      */
@@ -58,13 +60,17 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
             double minProbabilityThreshold,
             double cashAllocationFraction,
             double maxAllocationFractionPerTicker,
+            TradeExitTimePolicy tradeExitTimePolicy,
             String strategyId
     ) {
         if (predictionProvider == null) {
             throw new IllegalArgumentException("predictionProvider cannot be null.");
         }
         if (strategyId == null || strategyId.isBlank()) {
-            throw new IllegalArgumentException("strategyId cannot be blank.");
+            throw new IllegalArgumentException("strategyId cannot be null or blank.");
+        }
+        if (tradeExitTimePolicy == null) {
+            throw new IllegalArgumentException("tradeExitTimePolicy cannot be null.");
         }
         if (minProbabilityThreshold < 0.0 || minProbabilityThreshold > 1.0) {
             throw new IllegalArgumentException(
@@ -86,6 +92,7 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
         this.minProbabilityThreshold = minProbabilityThreshold;
         this.cashAllocationFraction = cashAllocationFraction;
         this.maxAllocationFractionPerTicker = maxAllocationFractionPerTicker;
+        this.tradeExitTimePolicy = tradeExitTimePolicy;
         this.strategyId = strategyId;
     }
 
@@ -116,6 +123,17 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
                 throw new DecisionGenerationException(
                         "Failed to generate portfolio decision.",
                         e);
+        }
+
+        Instant latestAllowedExit =
+                tradeExitTimePolicy.latestAllowedExit(cycleTime);
+
+        if (cycleTime.plus(DEFAULT_HOLDING_PERIOD)
+                .isAfter(latestAllowedExit)) {
+                return new PortfolioDecisionResult(
+                        List.of(),
+                        List.of()
+                );
         }
 
         List<ClassificationWithVolatilityPrediction> acceptedPredictions =

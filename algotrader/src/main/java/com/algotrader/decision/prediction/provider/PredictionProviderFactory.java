@@ -70,7 +70,7 @@ public final class PredictionProviderFactory {
         LegacyClassificationRequestMapper requestMapper =
                 new LegacyClassificationRequestMapper();
 
-        return new PythonClassificationPredictionProvider(client, requestMapper);
+        return new PythonClassificationPredictionProvider(client, requestMapper, tradingPlan.getInterval());
     }
 
     /**
@@ -109,9 +109,22 @@ public final class PredictionProviderFactory {
         ClassificationWithVolatilityRequestMapper requestMapper =
                 new ClassificationWithVolatilityRequestMapper();
 
-        return new PythonClassificationWithVolatilityPredictionProvider(client, requestMapper);
+        return new PythonClassificationWithVolatilityPredictionProvider(client, requestMapper, tradingPlan.getInterval());
     }
 
+    /**
+     * Creates a batch classification-with-volatility prediction provider for
+     * the supplied trading plan.
+     *
+     * <p>The referenced endpoint configuration must declare a prediction type
+     * of {@code BATCH_CLASSIFICATION_WITH_VOLATILITY}.
+     *
+     * @param tradingPlan resolved trading plan containing the endpoint
+     *        configuration
+     * @return a batch classification-with-volatility prediction provider
+     * @throws IllegalArgumentException if the trading plan references an
+     *         endpoint with a different prediction type
+     */
     public PredictionProvider<List<DataBatch>, List<ClassificationWithVolatilityPrediction>>
                 createBatchClassificationVolatilityProvider(ResolvedTradingPlan tradingPlan) {
 
@@ -135,7 +148,7 @@ public final class PredictionProviderFactory {
                 new BatchClassificationVolatilityRequestMapper(
                         new ClassificationWithVolatilityRequestMapper());
 
-        return new PythonBatchClassificationWithVolatilityPredictionProvider(client, requestMapper);
+        return new PythonBatchClassificationWithVolatilityPredictionProvider(client, requestMapper, tradingPlan.getInterval());
     }
 
     /**

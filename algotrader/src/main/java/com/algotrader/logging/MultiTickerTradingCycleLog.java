@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.algotrader.decision.dataobjects.CapitalAllocation;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
+import com.algotrader.execution.FailedTradeExecution;
 import com.algotrader.execution.TradeExecutionResult;
 import com.algotrader.registry.OpenTradeAdjustment;
 
@@ -46,7 +47,7 @@ public record MultiTickerTradingCycleLog(
         /**
          * Exit executions that failed.
          */
-        List<TradeExecutionFailureLog> failedExitExecutions,
+        List<FailedTradeExecution> failedExitExecutions,
 
         /**
          * Capital allocations produced by the decision generator.
@@ -66,7 +67,7 @@ public record MultiTickerTradingCycleLog(
         /**
          * Entry executions that failed.
          */
-        List<TradeExecutionFailureLog> failedEntryExecutions,
+        List<FailedTradeExecution> failedEntryExecutions,
 
         /**
          * Requested modifications to existing open trades.

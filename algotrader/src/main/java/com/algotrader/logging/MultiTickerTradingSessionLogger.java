@@ -9,13 +9,14 @@ import java.util.List;
  *
  * <p>A logger instance is intended for a single trading session. Call
  * {@link #start()} before logging cycles, then call
- * {@link #finish()} once the session has completed to obtain the assembled
- * {@link TradingSessionLog}.
+ * {@link #finish(double)} or {@link #finish(double, Exception)} once the
+ * session has completed to obtain the assembled {@link TradingSessionLog}.
  */
 public final class MultiTickerTradingSessionLogger {
 
     private Instant startTime;
     private double startingCash;
+    private ForcedLiquidationResult liquidationResult = null;
 
     private final List<MultiTickerTradingCycleLog> cycleLogs =
             new ArrayList<>();
@@ -58,8 +59,24 @@ public final class MultiTickerTradingSessionLogger {
     }
 
     /**
+     * Records the end-of-session liquidation result for the current session.
+     *
+     * @param liquidationResult forced liquidation result to include in the
+     *        session log
+     * @throws IllegalStateException if liquidation has already been logged
+     */
+    public void logEndOfSessionLiquidation(ForcedLiquidationResult liquidationResult) {
+        if (this.liquidationResult != null) {
+            throw new IllegalStateException("logEndOfSessionLiquidation() can only be called once.");
+        }
+
+        this.liquidationResult = liquidationResult;
+    }
+
+    /**
      * Finishes the current trading session and returns its log.
      *
+     * @param endingCash cash balance at session completion
      * @return completed trading session log
      * @throws IllegalStateException if the session has not been started
      */
@@ -70,6 +87,9 @@ public final class MultiTickerTradingSessionLogger {
     /**
      * Finishes the current trading session and returns its log.
      *
+     * @param endingCash cash balance at session completion
+     * @param sessionFailure exception that ended the session, or null if the
+     *        session completed normally
      * @return completed trading session log
      * @throws IllegalStateException if the session has not been started
      */
@@ -87,6 +107,7 @@ public final class MultiTickerTradingSessionLogger {
                 startingCash,
                 endingCash,
                 List.copyOf(cycleLogs),
+                liquidationResult,
                 SessionFailureLog.from(sessionFailure)
         );
 

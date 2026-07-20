@@ -10,6 +10,7 @@ import com.algotrader.decision.prediction.api.PythonPredictionClient;
 import com.algotrader.decision.prediction.api.request.BatchClassificationVolatilityRequest;
 import com.algotrader.decision.prediction.api.request.PredictionRequestMapper;
 import com.algotrader.marketdata.model.DataBatch;
+import com.algotrader.marketdata.model.TimeInterval;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -23,10 +24,20 @@ public final class PythonBatchClassificationWithVolatilityPredictionProvider
 
     private final PythonPredictionClient client;
     private final PredictionRequestMapper<List<DataBatch>, BatchClassificationVolatilityRequest> requestMapper;
+    private final TimeInterval interval;
 
+    /**
+     * Creates a batch classification-with-volatility prediction provider.
+     *
+     * @param client client used to call the Python prediction endpoint
+     * @param requestMapper mapper from data batches to endpoint requests
+     * @param interval market data interval expected by each input batch
+     * @throws IllegalArgumentException if any argument is null
+     */
     public PythonBatchClassificationWithVolatilityPredictionProvider(
-            PythonPredictionClient client,
-            PredictionRequestMapper<List<DataBatch>, BatchClassificationVolatilityRequest> requestMapper
+        PythonPredictionClient client,
+        PredictionRequestMapper<List<DataBatch>, BatchClassificationVolatilityRequest> requestMapper,
+        TimeInterval interval
     ) {
         if (client == null) {
             throw new IllegalArgumentException("PythonPredictionClient cannot be null.");
@@ -36,8 +47,13 @@ public final class PythonBatchClassificationWithVolatilityPredictionProvider
             throw new IllegalArgumentException("requestMapper cannot be null.");
         }
 
+        if (interval == null) {
+            throw new IllegalArgumentException("interval cannot be null.");
+        }
+
         this.client = client;
         this.requestMapper = requestMapper;
+        this.interval = interval;
     }
 
     @Override
@@ -51,6 +67,8 @@ public final class PythonBatchClassificationWithVolatilityPredictionProvider
         if (batches.isEmpty()) {
             return List.of();
         }
+
+        validateIntervals(batches);
 
         Object requestBody = requestMapper.map(batches);
         JsonNode response = client.post(requestBody);
@@ -116,6 +134,16 @@ public final class PythonBatchClassificationWithVolatilityPredictionProvider
         return predictions;
     }
 
+    /**
+     * Returns the market data interval expected by this prediction provider.
+     *
+     * @return expected input interval
+     */
+    @Override
+    public TimeInterval getInterval() {
+        return interval;
+    }
+
     private static String requiredText(JsonNode node, String fieldName)
             throws PredictionProviderException {
         JsonNode field = node.get(fieldName);
@@ -127,6 +155,23 @@ public final class PythonBatchClassificationWithVolatilityPredictionProvider
         }
 
         return field.asText();
+    }
+
+    private void validateIntervals(List<DataBatch> batches)
+            throws PredictionProviderException {
+
+        for (DataBatch batch : batches) {
+            if (batch.getInterval() != interval) {
+                throw new PredictionProviderException(
+                        "Expected DataBatch interval "
+                                + interval
+                                + " but received "
+                                + batch.getInterval()
+                                + " for ticker "
+                                + batch.getTicker()
+                );
+            }
+        }
     }
 
     private static double requiredDouble(JsonNode node, String fieldName)

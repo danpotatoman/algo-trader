@@ -42,6 +42,11 @@ public record TradingSessionLog(
         List<MultiTickerTradingCycleLog> cycleLogs,
 
         /**
+         * Result for attempted end-of-session liquidation of remaining open positions.
+         */
+        ForcedLiquidationResult liquidationResult,
+
+        /**
          * Exception that caused the session to fail, null if session succeeded.
          */
         SessionFailureLog sessionFailure

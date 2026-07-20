@@ -2,7 +2,7 @@ package com.algotrader.runtime;
 
 import com.algotrader.decision.generator.PortfolioDecisionGenerator;
 import com.algotrader.decision.generator.TradeGeneratorFactory;
-import com.algotrader.marketcalendar.UsMarketCalendar2026Loader;
+import com.algotrader.marketcalendar.MarketCalendar;
 import com.algotrader.marketdata.provider.MarketDataProvider;
 import com.algotrader.marketdata.provider.PriceProvider;
 import com.algotrader.marketdata.provider.WindowProviderFactory;
@@ -23,9 +23,10 @@ public class MultiTickerTradingCycleEvaluatorFactory {
      *
      * @param priceProvider provider used by generated trade generators
      * @param marketDataProvider provider used by created window providers
-     * @throws IllegalArgumentException if either dependency is null
+     * @param calendar calendar used by generated trade generators
+     * @throws IllegalArgumentException if a required dependency is null
      */
-    public MultiTickerTradingCycleEvaluatorFactory(PriceProvider priceProvider, MarketDataProvider marketDataProvider) {
+    public MultiTickerTradingCycleEvaluatorFactory(PriceProvider priceProvider, MarketDataProvider marketDataProvider, MarketCalendar calendar) {
         if (priceProvider == null) {
             throw new IllegalArgumentException("PriceProvider cannot be null.");
         }
@@ -35,7 +36,7 @@ public class MultiTickerTradingCycleEvaluatorFactory {
         }
 
         this.tradeGeneratorFactory = new TradeGeneratorFactory(
-            new UsMarketCalendar2026Loader().load(),
+            calendar,
             priceProvider
         );
 
@@ -50,7 +51,7 @@ public class MultiTickerTradingCycleEvaluatorFactory {
      * @param portfolioView read-only portfolio view used during evaluation
      * @param openTradeRegistryView read-only open trade registry view
      * @return configured multi-ticker trading cycle evaluator
-     * @throws IllegalArgumentException if {@code sessionConfig} is null
+     * @throws IllegalArgumentException if {@code tradingPlan} is null
      */
     public MultiTickerTradingCycleEvaluator create(
             ResolvedTradingPlan tradingPlan,

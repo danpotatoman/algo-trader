@@ -6,6 +6,8 @@ import com.algotrader.config.TradeGeneratorConfig;
 import com.algotrader.config.TradeGeneratorConfigLoader;
 import com.algotrader.config.TradingSessionConfig;
 import com.algotrader.config.TradingSessionConfigLoader;
+import com.algotrader.marketcalendar.MarketCalendar;
+import com.algotrader.marketcalendar.UsMarketCalendar2026Loader;
 import com.algotrader.marketdata.cache.MarketDataCache;
 import com.algotrader.marketdata.source.SQLiteOHLCVSource;
 import com.algotrader.persistence.OHLCVRepository;
@@ -39,9 +41,11 @@ public class Main {
                         new SQLiteOHLCVSource(repository)
             );
         
-        MultiTickerTradingCycleEvaluatorFactory evaluatorFactory = new MultiTickerTradingCycleEvaluatorFactory(marketDataCache, marketDataCache);
+        MarketCalendar calendar = new UsMarketCalendar2026Loader().load();
 
-        MultiTickerTradingDriverFactory driverFactory = new MultiTickerTradingDriverFactory(evaluatorFactory, marketDataCache);
+        MultiTickerTradingCycleEvaluatorFactory evaluatorFactory = new MultiTickerTradingCycleEvaluatorFactory(marketDataCache, marketDataCache, calendar);
+
+        MultiTickerTradingDriverFactory driverFactory = new MultiTickerTradingDriverFactory(evaluatorFactory, marketDataCache, calendar);
 
         HistoricalMultiTickerBacktestDriver driver = driverFactory.createHistorical(tradingPlan);
         System.out.println("attempting to start cycle driver");

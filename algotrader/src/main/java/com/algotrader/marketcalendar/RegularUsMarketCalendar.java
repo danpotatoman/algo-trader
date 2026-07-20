@@ -7,6 +7,8 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import com.algotrader.marketdata.model.TimeInterval;
+
 /**
  * Simple market calendar for regular U.S. equity trading hours.
  *
@@ -164,6 +166,19 @@ public final class RegularUsMarketCalendar implements MarketCalendar {
                 && !isWeekend(firstDate)
                 && !isWeekend(secondDate);
     }
+
+    /**
+     * Regular-hours calendars do not provide interval-aware execution
+     * boundaries.
+     *
+     * @throws UnsupportedOperationException always
+     */
+    @Override
+    public Instant getLastExecutableTime(
+                Instant timestamp,
+                TimeInterval interval) {
+                throw new UnsupportedOperationException("getLastExecutableTime is not supported by RegularUSMarketCalendar");
+        }
 
     /**
      * Determines whether a market date falls on a weekend.

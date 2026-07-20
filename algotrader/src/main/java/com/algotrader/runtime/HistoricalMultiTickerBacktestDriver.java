@@ -11,13 +11,15 @@ import com.algotrader.decision.dataobjects.CapitalAllocation;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
 import com.algotrader.decision.dataobjects.SellInstruction;
 import com.algotrader.decision.dataobjects.TradeInstruction;
+import com.algotrader.decision.generator.TradeExitTimePolicy;
+import com.algotrader.execution.FailedTradeExecution;
 import com.algotrader.execution.TradeExecutionException;
 import com.algotrader.execution.TradeExecutionResult;
 import com.algotrader.execution.TradeExecutor;
+import com.algotrader.logging.ForcedLiquidationResult;
 import com.algotrader.logging.MultiTickerCycleEvaluation;
 import com.algotrader.logging.MultiTickerTradingCycleLog;
 import com.algotrader.logging.MultiTickerTradingSessionLogger;
-import com.algotrader.logging.TradeExecutionFailureLog;
 import com.algotrader.logging.TradingSessionLog;
 import com.algotrader.logging.TradingSessionLogWriter;
 import com.algotrader.marketdata.cache.DataCacheException;
@@ -47,6 +49,7 @@ public final class HistoricalMultiTickerBacktestDriver {
         private final PortfolioManager portfolioManager;
         private final OpenTradeRegistry openTradeRegistry;
         private final MultiTickerTradingSessionLogger logger;
+        private final TradeExitTimePolicy tradeExitTimePolicy;
 
         /**
          * Creates a historical multi-ticker backtest driver.
@@ -57,6 +60,7 @@ public final class HistoricalMultiTickerBacktestDriver {
          * @param portfolioManager manager updated after successful executions
          * @param openTradeRegistry registry of trades currently open
          * @param logger session logger that records cycle outcomes
+         * @param tradeExitTimePolicy policy used to determine valid forced liquidation times
          * @throws IllegalArgumentException if any dependency is null
          */
         public HistoricalMultiTickerBacktestDriver(
@@ -65,30 +69,35 @@ public final class HistoricalMultiTickerBacktestDriver {
                 TradeExecutor tradeExecutor,
                 PortfolioManager portfolioManager,
                 OpenTradeRegistry openTradeRegistry,
-                MultiTickerTradingSessionLogger logger
+                MultiTickerTradingSessionLogger logger,
+                TradeExitTimePolicy tradeExitTimePolicy
         ) {
                 if (evaluator == null) {
-                throw new IllegalArgumentException("Evaluator cannot be null.");
+                        throw new IllegalArgumentException("Evaluator cannot be null.");
                 }
 
                 if (cycleClock == null) {
-                throw new IllegalArgumentException("Cycle clock cannot be null.");
+                        throw new IllegalArgumentException("Cycle clock cannot be null.");
                 }
 
                 if (tradeExecutor == null) {
-                throw new IllegalArgumentException("Trade executor cannot be null.");
+                        throw new IllegalArgumentException("Trade executor cannot be null.");
                 }
 
                 if (portfolioManager == null) {
-                throw new IllegalArgumentException("Portfolio manager cannot be null.");
+                        throw new IllegalArgumentException("Portfolio manager cannot be null.");
                 }
 
                 if (openTradeRegistry == null) {
-                throw new IllegalArgumentException("Open trade registry cannot be null.");
+                        throw new IllegalArgumentException("Open trade registry cannot be null.");
                 }
 
                 if (logger == null) {
-                throw new IllegalArgumentException("Logger cannot be null.");
+                        throw new IllegalArgumentException("Logger cannot be null.");
+                }
+
+                if (tradeExitTimePolicy == null) {
+                        throw new IllegalArgumentException("tradeExitTimePolicy cannot be null.");
                 }
 
                 this.evaluator = evaluator;
@@ -97,6 +106,7 @@ public final class HistoricalMultiTickerBacktestDriver {
                 this.portfolioManager = portfolioManager;
                 this.openTradeRegistry = openTradeRegistry;
                 this.logger = logger;
+                this.tradeExitTimePolicy = tradeExitTimePolicy;
         }
 
         /**
@@ -139,6 +149,14 @@ public final class HistoricalMultiTickerBacktestDriver {
                                 }
                         }
 
+                        Instant liquidationTime =
+                                tradeExitTimePolicy.latestAllowedExit(cycleClock.getEndTime());
+
+                        ForcedLiquidationResult liquidationResult =
+                                liquidateRemainingTrades(liquidationTime);
+
+                        logger.logEndOfSessionLiquidation(liquidationResult);
+
                         TradingSessionLog sessionLog = logger.finish(portfolioManager.cash());
 
                         new TradingSessionLogWriter().write(
@@ -166,7 +184,7 @@ public final class HistoricalMultiTickerBacktestDriver {
 
                 List<RoundTripTrade> successfullyClosedTrades = new ArrayList<>();
                 List<TradeExecutionResult> successfulExitExecutions = new ArrayList<>();
-                List<TradeExecutionFailureLog> failedExitExecutions = new ArrayList<>();
+                List<FailedTradeExecution> failedExitExecutions = new ArrayList<>();
 
                 for (RoundTripTrade trade : tradesDueForExit) {
                         TradeInstruction exitInstruction = new SellInstruction(
@@ -176,19 +194,21 @@ public final class HistoricalMultiTickerBacktestDriver {
                         );
 
                         try {
-                                //TODO: in theory this step might take time, delaying calcluation
-                                // and allocation of new positions. If trading real trading is ever
-                                // implemented, this setup needs to change
-                                TradeExecutionResult execution =
-                                        tradeExecutor.handleInstruction(exitInstruction);
+                        TradeExecutionResult execution =
+                                tradeExecutor.handleInstruction(exitInstruction);
 
-                                portfolioManager.apply(execution);
+                        portfolioManager.apply(execution);
 
-                                successfulExitExecutions.add(execution);
-                                successfullyClosedTrades.add(trade);
+                        successfulExitExecutions.add(execution);
+                        successfullyClosedTrades.add(trade);
 
                         } catch (TradeExecutionException e) {
-                                failedExitExecutions.add(TradeExecutionFailureLog.from(e));
+                                failedExitExecutions.add(
+                                        new FailedTradeExecution(
+                                                exitInstruction,
+                                                e.getMessage()
+                                        )
+                                );
                         }
                 }
 
@@ -202,7 +222,7 @@ public final class HistoricalMultiTickerBacktestDriver {
 
                 List<TradeExecutionResult> successfulEntryExecutions = new ArrayList<>();
                 List<RoundTripTrade> successfullyOpenedTrades = new ArrayList<>();
-                List<TradeExecutionFailureLog> failedEntryExecutions = new ArrayList<>();
+                List<FailedTradeExecution> failedEntryExecutions = new ArrayList<>();
 
                 for (CapitalAllocation allocation : newCapitalAllocations) {
                         TradeInstruction entryInstruction = new BuyInstruction(
@@ -229,7 +249,7 @@ public final class HistoricalMultiTickerBacktestDriver {
                                 successfullyOpenedTrades.add(openedTrade);
 
                         } catch (TradeExecutionException e) {
-                                failedEntryExecutions.add(TradeExecutionFailureLog.from(e));
+                                failedEntryExecutions.add(FailedTradeExecution.from(entryInstruction, e));
                         }
                 }
 
@@ -253,6 +273,60 @@ public final class HistoricalMultiTickerBacktestDriver {
                         failedEntryExecutions,
                         adjustments,
                         null
+                );
+        }
+
+        private ForcedLiquidationResult liquidateRemainingTrades(
+                        Instant liquidationTime
+                ) {
+                List<RoundTripTrade> remainingTrades =
+                        openTradeRegistry.getOpenTrades();
+
+                List<RoundTripTrade> successfullyClosedTrades =
+                        new ArrayList<>();
+
+                List<TradeExecutionResult> successfulExecutions =
+                        new ArrayList<>();
+
+                List<FailedTradeExecution> failedExecutions =
+                        new ArrayList<>();
+
+                for (RoundTripTrade trade : remainingTrades) {
+                        SellInstruction instruction = new SellInstruction(
+                                trade.ticker(),
+                                trade.quantity(),
+                                liquidationTime
+                        );
+
+                        try {
+                        TradeExecutionResult execution =
+                                tradeExecutor.handleInstruction(instruction);
+
+                        portfolioManager.apply(execution);
+
+                        successfulExecutions.add(execution);
+                        successfullyClosedTrades.add(trade);
+
+                        } catch (TradeExecutionException e) {
+                        failedExecutions.add(
+                                new FailedTradeExecution(
+                                        instruction,
+                                        e.getMessage()
+                                )
+                        );
+                        }
+                }
+
+                openTradeRegistry.closeAll(successfullyClosedTrades);
+
+                boolean registryEmptyAfter = !openTradeRegistry.hasOpenTrades();
+
+                return new ForcedLiquidationResult(
+                        liquidationTime,
+                        remainingTrades,
+                        successfulExecutions,
+                        failedExecutions,
+                        registryEmptyAfter
                 );
         }
 }

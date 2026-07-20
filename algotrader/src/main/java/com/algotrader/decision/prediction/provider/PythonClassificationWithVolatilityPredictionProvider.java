@@ -5,6 +5,7 @@ import com.algotrader.decision.prediction.api.PythonPredictionClient;
 import com.algotrader.decision.prediction.api.request.ClassificationWithVolatilityRequest;
 import com.algotrader.decision.prediction.api.request.PredictionRequestMapper;
 import com.algotrader.marketdata.model.DataBatch;
+import com.algotrader.marketdata.model.TimeInterval;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -17,10 +18,20 @@ public final class PythonClassificationWithVolatilityPredictionProvider
 
     private final PythonPredictionClient client;
     private final PredictionRequestMapper<DataBatch, ClassificationWithVolatilityRequest> requestMapper;
+    private final TimeInterval interval;
 
+    /**
+     * Creates a classification-with-volatility prediction provider.
+     *
+     * @param client client used to call the Python prediction endpoint
+     * @param requestMapper mapper from data batches to endpoint requests
+     * @param interval market data interval expected by the endpoint
+     * @throws IllegalArgumentException if any argument is null
+     */
     public PythonClassificationWithVolatilityPredictionProvider(
             PythonPredictionClient client,
-            PredictionRequestMapper<DataBatch, ClassificationWithVolatilityRequest> requestMapper
+            PredictionRequestMapper<DataBatch, ClassificationWithVolatilityRequest> requestMapper,
+            TimeInterval interval
     ) {
         if (client == null) {
             throw new IllegalArgumentException(
@@ -34,8 +45,13 @@ public final class PythonClassificationWithVolatilityPredictionProvider
             );
         }
 
+        if (interval == null) {
+            throw new IllegalArgumentException("interval cannot be null.");
+        }
+
         this.client = client;
         this.requestMapper = requestMapper;
+        this.interval = interval;
     }
 
     /**
@@ -123,5 +139,15 @@ public final class PythonClassificationWithVolatilityPredictionProvider
                     "volatility must be non-negative."
             );
         }
+    }
+
+    /**
+     * Returns the market data interval expected by this prediction provider.
+     *
+     * @return expected input interval
+     */
+    @Override
+    public TimeInterval getInterval() {
+        return interval;
     }
 }

@@ -114,4 +114,13 @@ public final class HistoricalCycleClock {
 
         return Math.toIntExact(durationMillis / stepMillis + 1);
     }
+
+    /**
+     * Returns the final timestamp in the historical clock range.
+     *
+     * @return configured end timestamp
+     */
+    public Instant getEndTime() {
+        return endTime;
+    }
 }

@@ -181,10 +181,11 @@ public final class TradeGeneratorFactory {
                         tradingPlan.getStrategyId()
                 );
 
+        TradeExitTimePolicy tradeExitTimePolicy = new TradeExitTimePolicy(marketCalendar, tradingPlan.getInterval(), tradingPlan.getLastCandleTimestamp());
+
         RoundTripTradeValidator tradeValidator =
                 new RoundTripTradeValidator(
-                        marketCalendar,
-                        tradingPlan.getMinTimeBeforeClose()
+                        tradeExitTimePolicy
                 );
 
         return new GenericTradeGenerator<>(
@@ -229,10 +230,11 @@ public final class TradeGeneratorFactory {
                         tradingPlan.getStrategyId()
                 );
 
+        TradeExitTimePolicy tradeExitTimePolicy = new TradeExitTimePolicy(marketCalendar, tradingPlan.getInterval(), tradingPlan.getLastCandleTimestamp());
+
         RoundTripTradeValidator tradeValidator =
                 new RoundTripTradeValidator(
-                        marketCalendar,
-                        tradingPlan.getMinTimeBeforeClose()
+                        tradeExitTimePolicy
                 );
 
         return new GenericTradeGenerator<>(
@@ -299,10 +301,11 @@ public final class TradeGeneratorFactory {
                         maxPositionFraction
                 );
 
+        TradeExitTimePolicy tradeExitTimePolicy = new TradeExitTimePolicy(marketCalendar, tradingPlan.getInterval(), tradingPlan.getLastCandleTimestamp());
+
         RoundTripTradeValidator tradeValidator =
                 new RoundTripTradeValidator(
-                        marketCalendar,
-                        tradingPlan.getMinTimeBeforeClose()
+                        tradeExitTimePolicy
                 );
 
         return new GenericTradeGenerator<>(
@@ -334,11 +337,14 @@ public final class TradeGeneratorFactory {
                         "maxAllocationFractionPerTickerPerCycle"
                 );
 
+        TradeExitTimePolicy tradeExitTimePolicy = new TradeExitTimePolicy(marketCalendar, tradingPlan.getInterval(), tradingPlan.getLastCandleTimestamp());
+
         return new ClassificationVolatilityPortfolioDecisionGenerator(
                 predictionProvider,
                 minConfidenceThreshold,
                 cashAllocationFraction,
                 maxAllocationFractionPerTicker,
+                tradeExitTimePolicy,
                 tradingPlan.getStrategyId()
                 );
     }

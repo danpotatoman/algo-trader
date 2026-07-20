@@ -1,71 +1,50 @@
 package com.algotrader.decision.generator.validation;
 
-import java.time.Duration;
 import java.time.Instant;
 
 import com.algotrader.decision.dataobjects.RoundTripTrade;
-import com.algotrader.marketcalendar.MarketCalendar;
+import com.algotrader.decision.generator.TradeExitTimePolicy;
 
 /**
- * Validates whether a {@link RoundTripTrade} satisfies market calendar
+ * Validates whether a {@link RoundTripTrade} satisfies configured trade timing
  * constraints.
  *
- * <p>This validator ensures that a proposed trade can be executed within a
- * valid trading session and exited before the market closes. Trades that
- * violate market-hours rules or extend across multiple trading sessions are
- * considered invalid.
+ * <p>This validator delegates market-close and trading-session boundaries to
+ * {@link TradeExitTimePolicy}.
  *
- * <p>Validation rules currently include:
+ * <p>Validation rules include:
  * <ul>
  *     <li>The exit time must occur after the entry time</li>
- *     <li>The entry time must occur during market trading hours</li>
- *     <li>The exit time must occur during market trading hours</li>
- *     <li>The entry and exit must occur within the same trading session</li>
- *     <li>The exit must occur at least a configured duration before market
- *         close</li>
+ *     <li>The exit time must not be later than the latest exit permitted by
+ *         the trade exit-time policy</li>
  * </ul>
- *
- * <p>This class is typically used by trade generation components to filter
- * out trades that cannot be safely executed according to the configured
- * market calendar.
  */
 public final class RoundTripTradeValidator {
 
-    private final MarketCalendar marketCalendar;
-    private final Duration minTimeBeforeClose;
+    private final TradeExitTimePolicy tradeExitTimePolicy;
 
     /**
      * Creates a round-trip trade validator.
      *
-     * @param marketCalendar market calendar used to determine trading sessions
-     *        and market hours
-     * @param minTimeBeforeClose minimum amount of time that must remain before
-     *        market close when a trade exits
-     * @throws IllegalArgumentException if any argument is invalid
+     * @param tradeExitTimePolicy policy used to determine the latest valid exit
+     *        time for a trade
+     * @throws IllegalArgumentException if {@code tradeExitTimePolicy} is null
      */
     public RoundTripTradeValidator(
-            MarketCalendar marketCalendar,
-            Duration minTimeBeforeClose
+            TradeExitTimePolicy tradeExitTimePolicy
     ) {
-        if (marketCalendar == null) {
+        if (tradeExitTimePolicy == null) {
             throw new IllegalArgumentException(
-                    "MarketCalendar cannot be null."
+                    "TradeExitTimePolicy cannot be null."
             );
         }
 
-        if (minTimeBeforeClose == null || minTimeBeforeClose.isNegative()) {
-            throw new IllegalArgumentException(
-                    "Minimum time before close cannot be null or negative."
-            );
-        }
-
-        this.marketCalendar = marketCalendar;
-        this.minTimeBeforeClose = minTimeBeforeClose;
+        this.tradeExitTimePolicy = tradeExitTimePolicy;
     }
 
     /**
-     * Determines whether a round-trip trade satisfies all configured market
-     * calendar constraints.
+     * Determines whether a round-trip trade satisfies all configured timing
+     * constraints.
      *
      * @param trade trade to validate
      * @return {@code true} if the trade is valid; {@code false} otherwise
@@ -87,23 +66,8 @@ public final class RoundTripTradeValidator {
             return false;
         }
 
-        if (!marketCalendar.isTradingTime(entryTime)) {
-            return false;
-        }
-
-        if (!marketCalendar.isTradingTime(exitTime)) {
-            return false;
-        }
-
-        if (!marketCalendar.isSameTradingSession(entryTime, exitTime)) {
-            return false;
-        }
-
-        Instant marketClose =
-                marketCalendar.getMarketClose(exitTime);
-
         Instant latestAllowedExit =
-                marketClose.minus(minTimeBeforeClose);
+                tradeExitTimePolicy.latestAllowedExit(entryTime);
 
         return !exitTime.isAfter(latestAllowedExit);
     }

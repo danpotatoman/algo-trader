@@ -1,5 +1,7 @@
 package com.algotrader.decision.prediction.provider;
 
+import com.algotrader.marketdata.model.TimeInterval;
+
 /**
  * Produces model predictions from model inputs.
  *
@@ -26,4 +28,11 @@ public interface PredictionProvider<I, O> {
      * @throws PredictionProviderException if prediction generation fails
      */
     O predict(I input) throws PredictionProviderException;
+
+    /**
+     * Returns the market data interval expected by this prediction provider.
+     *
+     * @return expected input interval
+     */
+    public TimeInterval getInterval();
 }

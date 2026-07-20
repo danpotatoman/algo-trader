@@ -7,8 +7,6 @@
     "AMZN", "META", "TSLA", "JPM", "V",
     "XOM", "UNH", "COST", "SPY", "QQQ"],
 
-  "minTimeBeforeClose": "PT10M",
-
   "firstCandleTimestamp": "2026-05-18T19:15:00Z",
   "lastCandleTimestamp": "2026-07-02T20:00:00Z",
 
