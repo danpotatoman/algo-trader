@@ -18,14 +18,21 @@ import com.algotrader.registry.OpenTradeAdjustment;
  * <p>This class does not imply that any actions have been executed or applied.
  *
  * @param cycleTime trading cycle timestamp
- * @param cycleDurationMillis evaluation duration in milliseconds
+ * @param evaluationDurationNanos evaluation duration from a monotonic clock
  * @param portfolioSnapshot portfolio state used during evaluation
  * @param newCapitalAllocations capital to allocate to new trades this cycle
  * @param openTradeAdjustments updates to exit times of trades in the open trade registry
  */
 public record MultiTickerCycleEvaluation(
         Instant cycleTime,
-        long cycleDurationMillis,
+        long evaluationDurationNanos,
+        long windowDurationNanos,
+        long predictionDurationNanos,
+        long decisionDurationNanos,
+        List<String> usableTickers,
+        int inferenceBatchSize,
+        String inferenceStatus,
+        List<com.algotrader.decision.dataobjects.SignalDecision> signals,
         PortfolioSnapshot portfolioSnapshot,
         List<CapitalAllocation> newCapitalAllocations,
         List<OpenTradeAdjustment> openTradeAdjustments) {
@@ -37,6 +44,8 @@ public record MultiTickerCycleEvaluation(
      * copied.
      */
     public MultiTickerCycleEvaluation {
+        usableTickers = List.copyOf(usableTickers);
+        signals = List.copyOf(signals);
         newCapitalAllocations = List.copyOf(newCapitalAllocations);
         openTradeAdjustments = List.copyOf(openTradeAdjustments);
     }

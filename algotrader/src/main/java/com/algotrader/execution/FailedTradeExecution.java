@@ -14,8 +14,13 @@ import com.algotrader.decision.dataobjects.TradeInstruction;
  */
 public record FailedTradeExecution(
         TradeInstruction instruction,
-        String errorMessage
+        String errorMessage,
+        String tradeId
 ) {
+
+    public FailedTradeExecution(TradeInstruction instruction, String errorMessage) {
+        this(instruction, errorMessage, null);
+    }
 
     /**
      * Creates a failed trade execution record.

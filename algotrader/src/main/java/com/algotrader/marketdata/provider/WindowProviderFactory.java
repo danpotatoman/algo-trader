@@ -33,6 +33,8 @@ public class WindowProviderFactory {
      *
      * <p>The returned provider is not initialized. Market data is loaded
      * when {@link MultiTickerWindowProvider#initialize()} is invoked.
+     * Preloading includes the completed history needed by the first decision
+     * and execution candles through the session end.
      *
      * @param tradingPlan resolved trading plan used to configure the provider
      * @return an uninitialized multi-ticker window provider
@@ -52,7 +54,8 @@ public class WindowProviderFactory {
             tradingPlan.getInterval(),
             tradingPlan.getNumCandles(),
             this.marketDataProvider,
-            tradingPlan.getFirstCandleTimestamp(),
+            tradingPlan.getFirstCandleTimestamp().minus(
+                tradingPlan.getInterval().getDuration().multipliedBy(tradingPlan.getNumCandles())),
             tradingPlan.getLastCandleTimestamp()
         );
     }

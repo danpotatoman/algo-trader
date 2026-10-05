@@ -19,6 +19,10 @@ import com.algotrader.marketdata.model.TimeInterval;
  */
 public interface PredictionProvider<I, O> {
 
+    default com.fasterxml.jackson.databind.JsonNode provenance() throws PredictionProviderException {
+        return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+    }
+
     /**
      * Generates a prediction for the supplied model input.
      *

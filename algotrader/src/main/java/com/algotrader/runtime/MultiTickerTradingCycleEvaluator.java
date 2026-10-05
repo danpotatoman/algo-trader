@@ -2,7 +2,6 @@ package com.algotrader.runtime;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import com.algotrader.decision.dataobjects.PortfolioDecisionResult;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
@@ -82,6 +81,10 @@ public final class MultiTickerTradingCycleEvaluator {
         windowProvider.initialize();
     }
 
+    public com.fasterxml.jackson.databind.JsonNode provenance() throws Exception {
+        return portfolioDecisionGenerator.provenance();
+    }
+
     /**
      * Evaluates one multi-ticker trading cycle at the supplied timestamp.
      *
@@ -100,6 +103,7 @@ public final class MultiTickerTradingCycleEvaluator {
 
         try {
             List<DataBatch> batches = windowProvider.windowsAt(cycleTime);
+            long windowNanos = System.nanoTime() - startNanos;
 
             PortfolioSnapshot portfolioSnapshot =
                     portfolioView.snapshot();
@@ -107,6 +111,7 @@ public final class MultiTickerTradingCycleEvaluator {
             List<RoundTripTrade> openTrades =
                     openTradeRegistryView.getOpenTrades();
             
+            long decisionStart = System.nanoTime();
             PortfolioDecisionResult decisionResult =
                     portfolioDecisionGenerator.generateDecision(
                             batches,
@@ -115,12 +120,18 @@ public final class MultiTickerTradingCycleEvaluator {
                             cycleTime
                     );
 
-            long cycleDurationMillis = TimeUnit.NANOSECONDS.toMillis(
-                    System.nanoTime() - startNanos);
+            long decisionNanos = System.nanoTime() - decisionStart;
 
             return new MultiTickerCycleEvaluation(
                     cycleTime,
-                    cycleDurationMillis,
+                    System.nanoTime() - startNanos,
+                    windowNanos,
+                    decisionResult.predictionDurationNanos(),
+                    Math.max(0, decisionNanos - decisionResult.predictionDurationNanos()),
+                    batches.stream().map(DataBatch::getTicker).toList(),
+                    decisionResult.inferenceBatchSize(),
+                    batches.isEmpty() ? "SKIPPED_EMPTY_WINDOWS" : "COMPLETED",
+                    decisionResult.signals(),
                     portfolioSnapshot,
                     decisionResult.newCapitalAllocations(),
                     decisionResult.openTradeAdjustments());

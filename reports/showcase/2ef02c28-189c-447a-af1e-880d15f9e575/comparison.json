@@ -1,0 +1,447 @@
+{
+  "schema": "showcase-unit-repair-comparison-v1",
+  "legacy_run_id": "4b966e0f-d9c1-4de3-8a09-5d4b5af44332",
+  "corrected_run_id": "2ef02c28-189c-447a-af1e-880d15f9e575",
+  "purpose": "Engineering defect repair on the same predetermined evaluation; corrected run is authoritative regardless of financial outcome.",
+  "signal_path_invariants": {
+    "session_equal": true,
+    "strategy_equal": true,
+    "endpoint_equal": true,
+    "calendar_equal": true,
+    "execution_assumptions_equal": true,
+    "snapshot_sha256_equal": true,
+    "model_identities_equal": true,
+    "cycle_timestamps_equal": true,
+    "market_cycles": 4571,
+    "inference_cycles": 2773,
+    "inference_pattern_equal": true,
+    "prediction_count": 41595,
+    "classifier_probabilities_exactly_equal": true,
+    "classifier_probability_max_abs_difference": 0.0,
+    "canonical_volatility_max_abs_difference": 2.3096799819932734e-10,
+    "canonical_volatility_matches_float32_conversion": true,
+    "probability_eligibility_equal": true,
+    "normalized_decision_reasons_equal": true,
+    "extension_events_equal": true,
+    "extensions": 4550,
+    "matched_entries": 545,
+    "exit_times_equal": true,
+    "entry_prices_equal": true,
+    "exit_prices_equal": true,
+    "holding_periods_equal": true,
+    "per_trade_extensions_equal": true,
+    "trade_return_max_abs_difference": 0.0,
+    "shared_trade_ids": 0,
+    "trade_id_interpretation": "UUIDs identify lifecycles within a run, not corresponding trades across runs; match ticker and entry timestamp."
+  },
+  "capital_allocation_differences": {
+    "comparison": "Actual complete recorded trajectories, including all downstream cash effects; not the fixed-state counterfactual.",
+    "cash_tolerance": 1e-08,
+    "quantity_tolerance": 1e-10,
+    "entry_requests": 545,
+    "changed_requests": 543,
+    "changed_requests_over_one_cent": 543,
+    "changed_quantities": 543,
+    "entry_cycles": 370,
+    "changed_entry_cycles": 368,
+    "cycles_with_changed_total_deployment": 367,
+    "changed_request_abs_dollars": {
+      "n": 543,
+      "mean": 35.531960797466674,
+      "min": 0.024147881511794367,
+      "p25": 2.846605151042354,
+      "median": 12.665511820165989,
+      "p75": 41.12506209023749,
+      "p90": 99.55542834396425,
+      "p95": 163.20345780063207,
+      "p99": 258.87980653352804,
+      "max": 350.37190536249204
+    },
+    "changed_request_relative_delta": {
+      "n": 543,
+      "mean": -0.01679227076083098,
+      "min": -0.3198181570185936,
+      "p25": -0.029877688319904554,
+      "median": -0.001737185808318477,
+      "p75": 0.00044733520809952544,
+      "p90": 0.041810005314401266,
+      "p95": 0.10369427945388893,
+      "p99": 0.20218566991332756,
+      "max": 0.3514803446634966
+    },
+    "reason_changes": 12,
+    "capped_legacy": 339,
+    "capped_corrected": 339,
+    "legacy_total_entry_notional": 640720.7037712395,
+    "corrected_total_entry_notional": 636237.1526795859,
+    "equity_samples_changed": 4570,
+    "max_abs_equity_difference": 27.281464433048313,
+    "terminal_equity_difference": -17.19505829074842,
+    "zero_price_return_trades": 2,
+    "flat_price_cash_roundoff_max_abs": 2.842170943040401e-14,
+    "roundoff_note": "Strict cash-P&L signs retain legacy methodology: corrected losses/flat are 258/1 versus 257/2. One unchanged-price trade has -2.842e-14 dollars of floating-point residue. Economically both runs have two flat-price trades; winning count is unchanged."
+  },
+  "metrics": [
+    {
+      "metric": "total_return",
+      "legacy": 0.018043574643743954,
+      "corrected": 0.01632406881466908,
+      "delta": -0.0017195058290748744
+    },
+    {
+      "metric": "gross_pnl",
+      "legacy": 180.43574643741516,
+      "corrected": 163.24068814667862,
+      "delta": -17.19505829073654
+    },
+    {
+      "metric": "max_drawdown",
+      "legacy": -0.022220186900987704,
+      "corrected": -0.023363617515592017,
+      "delta": -0.0011434306146043127
+    },
+    {
+      "metric": "spy_total_return",
+      "legacy": 0.022991430489823328,
+      "corrected": 0.022991430489823328,
+      "delta": 0.0
+    },
+    {
+      "metric": "win_rate",
+      "legacy": 0.5247706422018349,
+      "corrected": 0.5247706422018349,
+      "delta": 0.0
+    },
+    {
+      "metric": "profit_factor",
+      "legacy": 1.1241050679829543,
+      "corrected": 1.1108271654325914,
+      "delta": -0.013277902550362874
+    },
+    {
+      "metric": "equity_turnover",
+      "legacy": 127.5867597363747,
+      "corrected": 126.88064238126097,
+      "delta": -0.706117355113733
+    },
+    {
+      "metric": "total_traded_notional",
+      "legacy": 1281621.8432889166,
+      "corrected": 1272637.5460473183,
+      "delta": -8984.297241598368
+    },
+    {
+      "metric": "linear_break_even_cost_bps",
+      "legacy": 1.4078704056289986,
+      "corrected": 1.2826958363258059,
+      "delta": -0.1251745693031927
+    },
+    {
+      "metric": "max_single_ticker_equity_weight",
+      "legacy": 0.20343548399068362,
+      "corrected": 0.2034326844859055,
+      "delta": -2.7995047781059768e-06
+    },
+    {
+      "metric": "max_top3_equity_weight",
+      "legacy": 0.5148557660903458,
+      "corrected": 0.5127622427407632,
+      "delta": -0.002093523349582571
+    },
+    {
+      "metric": "full_backtest_wall_seconds",
+      "legacy": 30.7423115,
+      "corrected": 27.2949995,
+      "delta": -3.447312
+    },
+    {
+      "metric": "predictions_per_full_wall_second",
+      "legacy": 1353.0212261364927,
+      "corrected": 1523.9055051090952,
+      "delta": 170.8842789726025
+    },
+    {
+      "metric": "prediction_seconds",
+      "legacy": 28.0456968,
+      "corrected": 24.496086199999997,
+      "delta": -3.5496106000000047
+    },
+    {
+      "metric": "mean_exposure",
+      "legacy": 0.2152845527787202,
+      "corrected": 0.21651826186981304,
+      "delta": 0.001233709091092855
+    },
+    {
+      "metric": "peak_exposure",
+      "legacy": 0.886664511953926,
+      "corrected": 0.8872982310875246,
+      "delta": 0.0006337191335985537
+    },
+    {
+      "metric": "mean_invested_hhi",
+      "legacy": 0.4802673705291667,
+      "corrected": 0.4838952714594095,
+      "delta": 0.0036279009302428444
+    },
+    {
+      "metric": "prediction_ms_median",
+      "legacy": 9.9791,
+      "corrected": 8.2659,
+      "delta": -1.7132000000000005
+    },
+    {
+      "metric": "prediction_ms_p95",
+      "legacy": 11.74042,
+      "corrected": 11.13028,
+      "delta": -0.6101399999999995
+    },
+    {
+      "metric": "prediction_ms_mean",
+      "legacy": 10.113846664262532,
+      "corrected": 8.833785142445004,
+      "delta": -1.2800615218175277
+    },
+    {
+      "metric": "prediction_ms_max",
+      "legacy": 81.9599,
+      "corrected": 50.0559,
+      "delta": -31.904000000000003
+    }
+  ],
+  "cost_sensitivity_fixed_fills": [
+    {
+      "one_way_bps": 1,
+      "legacy_pnl": 52.27356210852349,
+      "corrected_pnl": 35.97693354194679,
+      "delta": -16.2966285665767
+    },
+    {
+      "one_way_bps": 5,
+      "legacy_pnl": -460.37517520704324,
+      "corrected_pnl": -473.0780848769806,
+      "delta": -12.702909669937355
+    },
+    {
+      "one_way_bps": 10,
+      "legacy_pnl": -1101.1860968515016,
+      "corrected_pnl": -1109.3968579006398,
+      "delta": -8.210761049138227
+    }
+  ],
+  "ticker_allocations": [
+    {
+      "ticker": "AAPL",
+      "trades": 30,
+      "legacy_entry_notional": 31199.285282365377,
+      "corrected_entry_notional": 30786.807727889947,
+      "legacy_entry_share": 0.048694048902631765,
+      "corrected_entry_share": 0.048388887065503434,
+      "legacy_pnl": 113.95883002038357,
+      "corrected_pnl": 112.92348539175649,
+      "legacy_mean_equity_weight": 0.007062721806953615,
+      "corrected_mean_equity_weight": 0.006993227555627856
+    },
+    {
+      "ticker": "MSFT",
+      "trades": 37,
+      "legacy_entry_notional": 37569.216899837564,
+      "corrected_entry_notional": 36399.0554267233,
+      "legacy_entry_share": 0.058635871571977694,
+      "corrected_entry_share": 0.057209886711935165,
+      "legacy_pnl": -9.533957995077515,
+      "corrected_pnl": -12.155742251880127,
+      "legacy_mean_equity_weight": 0.00839635657256822,
+      "corrected_mean_equity_weight": 0.008132724841506019
+    },
+    {
+      "ticker": "NVDA",
+      "trades": 45,
+      "legacy_entry_notional": 47564.0911300123,
+      "corrected_entry_notional": 47101.264840202675,
+      "legacy_entry_share": 0.07423529605029651,
+      "corrected_entry_share": 0.07403098772498633,
+      "legacy_pnl": 27.427319783986867,
+      "corrected_pnl": 28.367637304585003,
+      "legacy_mean_equity_weight": 0.018397392142709634,
+      "corrected_mean_equity_weight": 0.018430599460610868
+    },
+    {
+      "ticker": "AMD",
+      "trades": 90,
+      "legacy_entry_notional": 136382.18229796883,
+      "corrected_entry_notional": 138686.47787408862,
+      "legacy_entry_share": 0.21285746112968157,
+      "corrected_entry_share": 0.21797921936811548,
+      "legacy_pnl": 160.50809618935267,
+      "corrected_pnl": 152.91407393038946,
+      "legacy_mean_equity_weight": 0.06413683317925532,
+      "corrected_mean_equity_weight": 0.06676609211587643
+    },
+    {
+      "ticker": "GOOGL",
+      "trades": 37,
+      "legacy_entry_notional": 39375.58899242442,
+      "corrected_entry_notional": 38430.87994351043,
+      "legacy_entry_share": 0.061455153174639614,
+      "corrected_entry_share": 0.060403388550408235,
+      "legacy_pnl": -50.532834897191904,
+      "corrected_pnl": -51.54627530384178,
+      "legacy_mean_equity_weight": 0.012022822827661072,
+      "corrected_mean_equity_weight": 0.01174432678483481
+    },
+    {
+      "ticker": "AMZN",
+      "trades": 38,
+      "legacy_entry_notional": 31524.588368253368,
+      "corrected_entry_notional": 31168.26149864677,
+      "legacy_entry_share": 0.049201763237400845,
+      "corrected_entry_share": 0.04898843358546111,
+      "legacy_pnl": -31.20279734640265,
+      "corrected_pnl": -30.31641067639825,
+      "legacy_mean_equity_weight": 0.0071978116894350335,
+      "corrected_mean_equity_weight": 0.007097825270756083
+    },
+    {
+      "ticker": "META",
+      "trades": 78,
+      "legacy_entry_notional": 89108.2551390156,
+      "corrected_entry_notional": 87896.69042048516,
+      "legacy_entry_share": 0.1390750363060384,
+      "corrected_entry_share": 0.13815082952999233,
+      "legacy_pnl": 53.33015626012988,
+      "corrected_pnl": 49.606804846235775,
+      "legacy_mean_equity_weight": 0.031640316636474916,
+      "corrected_mean_equity_weight": 0.03149839993574274
+    },
+    {
+      "ticker": "TSLA",
+      "trades": 105,
+      "legacy_entry_notional": 133550.09043938943,
+      "corrected_entry_notional": 132317.89656477893,
+      "legacy_entry_share": 0.20843729514798331,
+      "corrected_entry_share": 0.20796945919851884,
+      "legacy_pnl": -123.07195700751848,
+      "corrected_pnl": -122.7139017776656,
+      "legacy_mean_equity_weight": 0.04246818171936097,
+      "corrected_mean_equity_weight": 0.04207353888468995
+    },
+    {
+      "ticker": "JPM",
+      "trades": 16,
+      "legacy_entry_notional": 13448.08477034427,
+      "corrected_entry_notional": 13355.52634684832,
+      "legacy_entry_share": 0.020988996751922853,
+      "corrected_entry_share": 0.020991427945696015,
+      "legacy_pnl": -0.2501357264724078,
+      "corrected_pnl": -0.07807336888110683,
+      "legacy_mean_equity_weight": 0.0035631428734531666,
+      "corrected_mean_equity_weight": 0.0035097077828353663
+    },
+    {
+      "ticker": "V",
+      "trades": 6,
+      "legacy_entry_notional": 4558.540597328626,
+      "corrected_entry_notional": 4428.25509333453,
+      "legacy_entry_share": 0.007114707813400377,
+      "corrected_entry_share": 0.006960069959266643,
+      "legacy_pnl": 0.011848724500595154,
+      "corrected_pnl": 0.20981237888335613,
+      "legacy_mean_equity_weight": 0.0012835129543695848,
+      "corrected_mean_equity_weight": 0.0012351799028011551
+    },
+    {
+      "ticker": "XOM",
+      "trades": 29,
+      "legacy_entry_notional": 38955.865909307366,
+      "corrected_entry_notional": 38776.92032755169,
+      "legacy_entry_share": 0.06080007354220915,
+      "corrected_entry_share": 0.060947274399550916,
+      "legacy_pnl": 27.45910627031867,
+      "corrected_pnl": 26.41854597554618,
+      "legacy_mean_equity_weight": 0.010196057816464378,
+      "corrected_mean_equity_weight": 0.010215277438745956
+    },
+    {
+      "ticker": "UNH",
+      "trades": 18,
+      "legacy_entry_notional": 23976.252128699714,
+      "corrected_entry_notional": 23671.397200541902,
+      "legacy_entry_share": 0.037420754452879526,
+      "corrected_entry_share": 0.03720530481573906,
+      "legacy_pnl": 15.665181028437473,
+      "corrected_pnl": 13.021475188456861,
+      "legacy_mean_equity_weight": 0.006026745953401112,
+      "corrected_mean_equity_weight": 0.00599264842975959
+    },
+    {
+      "ticker": "COST",
+      "trades": 2,
+      "legacy_entry_notional": 3137.5914643371375,
+      "corrected_entry_notional": 3143.138033729231,
+      "legacy_entry_share": 0.00489697218440029,
+      "corrected_entry_share": 0.0049401988244344806,
+      "legacy_pnl": 12.912211926930468,
+      "corrected_pnl": 12.961669536199679,
+      "legacy_mean_equity_weight": 0.0008402725550666054,
+      "corrected_mean_equity_weight": 0.0008418910156816139
+    },
+    {
+      "ticker": "SPY",
+      "trades": 3,
+      "legacy_entry_notional": 1331.6246468499573,
+      "corrected_entry_notional": 1284.279016840725,
+      "legacy_entry_share": 0.002078323111789744,
+      "corrected_entry_share": 0.0020185539486838144,
+      "legacy_pnl": 1.7989172985838593,
+      "corrected_pnl": 1.7522662810116003,
+      "legacy_mean_equity_weight": 0.0002298343707176649,
+      "corrected_mean_equity_weight": 0.00022112648501412395
+    },
+    {
+      "ticker": "QQQ",
+      "trades": 11,
+      "legacy_entry_notional": 9039.445705105552,
+      "corrected_entry_notional": 8790.302364413594,
+      "legacy_entry_share": 0.014108246622748377,
+      "corrected_entry_share": 0.013816078371708137,
+      "legacy_pnl": -18.044238092545925,
+      "corrected_pnl": -18.12467930771888,
+      "legacy_mean_equity_weight": 0.001822549680828907,
+      "corrected_mean_equity_weight": 0.0017656959653304953
+    }
+  ],
+  "recorded_source_hash_differences": [
+    {
+      "path": "algotrader/src/test/java/com/algotrader/logging/VolatilityUnitsIntegrationTest.java",
+      "legacy": null,
+      "corrected": "3fc1968f6acd6266740680c51ffca16a20b7256817333c3bd245eac7caad8d58"
+    },
+    {
+      "path": "analytics/analyze_showcase.py",
+      "legacy": null,
+      "corrected": "89b03a27eb77fa1b07fde4ac4c40507932ac88e3291035ae7a544be7c35b1c2c"
+    },
+    {
+      "path": "analytics/tests/test_analytics.py",
+      "legacy": null,
+      "corrected": "de8aaae043ed38417c32d667f0c993ee7483570321a8f386e3c91639e98ff849"
+    },
+    {
+      "path": "python-model/app/model_server.py",
+      "legacy": "67d2b6f2ea6b4d777fca62e000ad92a3ba0e9dbeb5c463613b4e916c948b03f8",
+      "corrected": "252215878438499c4205a8ec4b7eef4230823efb2379cbb557e54a229d00e16e"
+    },
+    {
+      "path": "python-model/app/volatility_units.py",
+      "legacy": null,
+      "corrected": "2779004de03039e1090e18b9b0f109c84ea7cef3a227a98ea7c0342fe2296a9f"
+    },
+    {
+      "path": "python-model/tests/test_volatility_units.py",
+      "legacy": null,
+      "corrected": "d12f999e426eec7cf3fe0d39e3b64a81dd60c944329d4854cd5ffe2cd3040821"
+    }
+  ],
+  "latency_qualification": "Two single runs on the recorded local CPU environments, not randomized repeated measurements. Observed differences cannot isolate conversion overhead or establish a performance regression/speedup."
+}

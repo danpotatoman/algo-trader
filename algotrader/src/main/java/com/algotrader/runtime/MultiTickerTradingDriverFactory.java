@@ -52,7 +52,8 @@ public final class MultiTickerTradingDriverFactory {
      * @return configured historical backtest driver
      */
     public HistoricalMultiTickerBacktestDriver createHistorical(
-            ResolvedTradingPlan tradingPlan
+            ResolvedTradingPlan tradingPlan,
+            com.algotrader.logging.RunArtifacts artifacts
     ) {
 
 
@@ -68,7 +69,7 @@ public final class MultiTickerTradingDriverFactory {
                 evaluatorFactory.create(tradingPlan, portfolioManager, openTradeRegistry);
 
         HistoricalCycleClock cycleClock =
-                historicalClockFactory.create(tradingPlan);
+                historicalClockFactory.create(tradingPlan, calendar);
 
         TradeExecutor tradeExecutor =
                 new HistoricalPaperTradeExecutor(priceProvider);
@@ -83,7 +84,8 @@ public final class MultiTickerTradingDriverFactory {
                 portfolioManager,
                 openTradeRegistry,
                 logger,
-                tradeExitTimePolicy
+                new com.algotrader.portfolio.PortfolioValuator(priceProvider),
+                artifacts
         );
     }
 }

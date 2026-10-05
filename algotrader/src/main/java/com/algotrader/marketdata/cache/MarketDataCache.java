@@ -171,7 +171,7 @@ public class MarketDataCache
      * <p>
      * The cache searches all supported intervals for a candle whose timestamp
      * exactly matches the requested timestamp. If a matching candle is found,
-     * its close price is returned as a {@link MarketPrice}.
+     * its open price is returned as a {@link MarketPrice}.
      *
      * <p>
      * The lookup first searches already-cached data and then attempts to load

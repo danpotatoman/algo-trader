@@ -1,5 +1,7 @@
 # Algotrader Agent Instructions
 
+These instructions apply only when the user requests a documentation audit or documentation-focused cleanup. They do not govern general implementation, debugging, or testing tasks.
+
 ## Project Context
 
 - Java orchestrates trading workflows.

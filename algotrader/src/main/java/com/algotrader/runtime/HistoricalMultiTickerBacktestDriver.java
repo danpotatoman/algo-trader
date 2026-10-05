@@ -1,332 +1,189 @@
 package com.algotrader.runtime;
 
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Objects;
+import java.util.UUID;
 import com.algotrader.clock.HistoricalCycleClock;
-import com.algotrader.decision.dataobjects.BuyInstruction;
-import com.algotrader.decision.dataobjects.CapitalAllocation;
-import com.algotrader.decision.dataobjects.RoundTripTrade;
-import com.algotrader.decision.dataobjects.SellInstruction;
-import com.algotrader.decision.dataobjects.TradeInstruction;
-import com.algotrader.decision.generator.TradeExitTimePolicy;
-import com.algotrader.execution.FailedTradeExecution;
-import com.algotrader.execution.TradeExecutionException;
-import com.algotrader.execution.TradeExecutionResult;
-import com.algotrader.execution.TradeExecutor;
-import com.algotrader.logging.ForcedLiquidationResult;
-import com.algotrader.logging.MultiTickerCycleEvaluation;
-import com.algotrader.logging.MultiTickerTradingCycleLog;
-import com.algotrader.logging.MultiTickerTradingSessionLogger;
-import com.algotrader.logging.TradingSessionLog;
-import com.algotrader.logging.TradingSessionLogWriter;
-import com.algotrader.marketdata.cache.DataCacheException;
+import com.algotrader.decision.dataobjects.*;
+import com.algotrader.execution.*;
+import com.algotrader.logging.*;
 import com.algotrader.portfolio.PortfolioManager;
+import com.algotrader.portfolio.PortfolioValuator;
 import com.algotrader.registry.OpenTradeAdjustment;
 import com.algotrader.registry.OpenTradeRegistry;
 
-/**
- * Drives a historical multi-ticker backtest.
- *
- * <p>This class owns the historical cycle loop and performs the side effects
- * intentionally excluded from {@link MultiTickerTradingCycleEvaluator}:
- *
- * <ul>
- *     <li>executing scheduled exits</li>
- *     <li>executing new capital allocations</li>
- *     <li>mutating the portfolio model</li>
- *     <li>mutating the open trade registry</li>
- *     <li>logging cycle outcomes</li>
- * </ul>
- */
+/** Executes historical cycles and retains partial results and marked portfolio states. */
 public final class HistoricalMultiTickerBacktestDriver {
+    private final MultiTickerTradingCycleEvaluator evaluator;
+    private final HistoricalCycleClock cycleClock;
+    private final TradeExecutor tradeExecutor;
+    private final PortfolioManager portfolioManager;
+    private final OpenTradeRegistry openTradeRegistry;
+    private final MultiTickerTradingSessionLogger logger;
+    private final PortfolioValuator valuator;
+    private final RunArtifacts artifacts;
 
-        private final MultiTickerTradingCycleEvaluator evaluator;
-        private final HistoricalCycleClock cycleClock;
-        private final TradeExecutor tradeExecutor;
-        private final PortfolioManager portfolioManager;
-        private final OpenTradeRegistry openTradeRegistry;
-        private final MultiTickerTradingSessionLogger logger;
-        private final TradeExitTimePolicy tradeExitTimePolicy;
+    public HistoricalMultiTickerBacktestDriver(MultiTickerTradingCycleEvaluator evaluator,
+            HistoricalCycleClock cycleClock, TradeExecutor tradeExecutor,
+            PortfolioManager portfolioManager, OpenTradeRegistry openTradeRegistry,
+            MultiTickerTradingSessionLogger logger, PortfolioValuator valuator, RunArtifacts artifacts) {
+        this.evaluator = Objects.requireNonNull(evaluator);
+        this.cycleClock = Objects.requireNonNull(cycleClock);
+        this.tradeExecutor = Objects.requireNonNull(tradeExecutor);
+        this.portfolioManager = Objects.requireNonNull(portfolioManager);
+        this.openTradeRegistry = Objects.requireNonNull(openTradeRegistry);
+        this.logger = Objects.requireNonNull(logger);
+        this.valuator = Objects.requireNonNull(valuator);
+        this.artifacts = Objects.requireNonNull(artifacts);
+    }
 
-        /**
-         * Creates a historical multi-ticker backtest driver.
-         *
-         * @param evaluator evaluator used to produce cycle decisions
-         * @param cycleClock clock that supplies historical cycle timestamps
-         * @param tradeExecutor executor used to simulate trade instructions
-         * @param portfolioManager manager updated after successful executions
-         * @param openTradeRegistry registry of trades currently open
-         * @param logger session logger that records cycle outcomes
-         * @param tradeExitTimePolicy policy used to determine valid forced liquidation times
-         * @throws IllegalArgumentException if any dependency is null
-         */
-        public HistoricalMultiTickerBacktestDriver(
-                MultiTickerTradingCycleEvaluator evaluator,
-                HistoricalCycleClock cycleClock,
-                TradeExecutor tradeExecutor,
-                PortfolioManager portfolioManager,
-                OpenTradeRegistry openTradeRegistry,
-                MultiTickerTradingSessionLogger logger,
-                TradeExitTimePolicy tradeExitTimePolicy
-        ) {
-                if (evaluator == null) {
-                        throw new IllegalArgumentException("Evaluator cannot be null.");
+    public TradingSessionLog run() {
+        long driverStart = System.nanoTime();
+        Instant lastTime = cycleClock.getStartTime();
+        logger.start(portfolioManager.cash());
+        logger.identify(artifacts.runId(), valuator.value(portfolioManager.snapshot(), lastTime, "INITIAL"));
+        Exception failure = null;
+        boolean liquidationAttempted = false;
+        try {
+            artifacts.modelProvenance(evaluator.provenance());
+            evaluator.initialize();
+            int count = 0;
+            while (cycleClock.hasNext()) {
+                lastTime = cycleClock.next();
+                MultiTickerTradingCycleLog cycle = runCycle(lastTime);
+                logger.logCycle(cycle);
+                if (cycle.cycleFailure() != null) {
+                    throw new TradingSessionException("Cycle failed at " + lastTime + " during " + cycle.failureStage());
                 }
-
-                if (cycleClock == null) {
-                        throw new IllegalArgumentException("Cycle clock cannot be null.");
-                }
-
-                if (tradeExecutor == null) {
-                        throw new IllegalArgumentException("Trade executor cannot be null.");
-                }
-
-                if (portfolioManager == null) {
-                        throw new IllegalArgumentException("Portfolio manager cannot be null.");
-                }
-
-                if (openTradeRegistry == null) {
-                        throw new IllegalArgumentException("Open trade registry cannot be null.");
-                }
-
-                if (logger == null) {
-                        throw new IllegalArgumentException("Logger cannot be null.");
-                }
-
-                if (tradeExitTimePolicy == null) {
-                        throw new IllegalArgumentException("tradeExitTimePolicy cannot be null.");
-                }
-
-                this.evaluator = evaluator;
-                this.cycleClock = cycleClock;
-                this.tradeExecutor = tradeExecutor;
-                this.portfolioManager = portfolioManager;
-                this.openTradeRegistry = openTradeRegistry;
-                this.logger = logger;
-                this.tradeExitTimePolicy = tradeExitTimePolicy;
+                if (++count % 100 == 0) System.out.printf("Progress: %d/%d%n", count, cycleClock.getTotalCycles());
+            }
+            // Never retroactively sell at a price preceding a cycle already processed.
+            liquidationAttempted = true;
+            liquidateRemainingTrades(lastTime);
+        } catch (Exception e) {
+            failure = e;
         }
+        logger.finalState(valuator.value(portfolioManager.snapshot(), lastTime,
+                liquidationAttempted ? "POST_FINAL_LIQUIDATION_ATTEMPT" : "AFTER_FAILURE"),
+                openTradeRegistry.getOpenTrades());
+        TradingSessionLog session = logger.finish(portfolioManager.cash(), failure);
+        long driverNanos = System.nanoTime() - driverStart;
+        long writeStart = System.nanoTime();
+        new TradingSessionLogWriter().write(session, artifacts.directory().resolve("session.json"));
+        long writeNanos = System.nanoTime() - writeStart;
+        try {
+            artifacts.complete(session, driverNanos, writeNanos);
+        } catch (java.io.IOException e) {
+            throw new TradingSessionException("Unable to write run completion marker", e);
+        }
+        System.out.println("Run artifact: " + artifacts.directory().toAbsolutePath());
+        return session;
+    }
 
-        /**
-         * Runs the historical session to completion.
-         *
-         * @return completed session log, including any session-level failure
-         * @throws TradingSessionException if evaluator initialization fails
-         */
-        public TradingSessionLog run() {
+    private MultiTickerTradingCycleLog runCycle(Instant time) {
+        long start = System.nanoTime();
+        long stageStart = start;
+        long exitNanos = 0, evaluationNanos = 0, entryNanos = 0;
+        String stage = "EXITS";
+        String failureStage = null;
+        CycleFailureLog failure = null;
+        var due = openTradeRegistry.getTradesDueForExit(time);
+        List<RoundTripTrade> closed = new ArrayList<>(), opened = new ArrayList<>();
+        List<TradeExecutionResult> exits = new ArrayList<>(), entries = new ArrayList<>();
+        List<FailedTradeExecution> failedExits = new ArrayList<>(), failedEntries = new ArrayList<>();
+        List<OpenTradeAdjustment> appliedAdjustments = new ArrayList<>();
+        MultiTickerCycleEvaluation evaluation = null;
+        List<CapitalAllocation> allocations = List.of();
+        try {
+            for (var trade : due) {
+                var instruction = new SellInstruction(trade.ticker(), trade.quantity(), time);
+                TradeExecutionResult fill;
                 try {
-                        evaluator.initialize();
-                } catch (DataCacheException e) {
-                        throw new TradingSessionException(
-                                "Failed to initialize trading session.",
-                                e
-                        );
+                    fill = tradeExecutor.handleInstruction(instruction).withTradeId(trade.tradeId());
+                } catch (TradeExecutionException e) {
+                    failedExits.add(new FailedTradeExecution(instruction, e.getMessage(), trade.tradeId()));
+                    continue;
                 }
-
-                logger.start(portfolioManager.cash());
-
-                int cycle = 0;
-                int totalCycles = cycleClock.getTotalCycles();
-
+                exits.add(fill);
+                portfolioManager.apply(fill);
+                valuator.observe(fill);
+                openTradeRegistry.close(trade);
+                closed.add(trade);
+            }
+            exitNanos = System.nanoTime() - stageStart;
+            stage = "EVALUATION";
+            stageStart = System.nanoTime();
+            evaluation = evaluator.evaluate(time);
+            evaluationNanos = System.nanoTime() - stageStart;
+            allocations = evaluation.newCapitalAllocations();
+            stage = "ENTRIES_AND_ADJUSTMENTS";
+            stageStart = System.nanoTime();
+            for (var allocation : allocations) {
+                String tradeId = UUID.randomUUID().toString();
+                var instruction = new BuyInstruction(allocation.ticker(), allocation.cashAmount(), time);
+                TradeExecutionResult fill;
                 try {
-                        while (cycleClock.hasNext()) {
-                                Instant cycleTime = cycleClock.next();
-
-                                MultiTickerTradingCycleLog cycleLog =
-                                        runCycle(cycleTime);
-
-                                logger.logCycle(cycleLog);
-
-                                cycle++;
-                                if (cycle % 100 == 0) {
-                                        double percent = 100.0 * cycle / totalCycles;
-                                        System.out.printf("Progress: %.1f%% (%d/%d)%n",
-                                                percent,
-                                                cycle,
-                                                totalCycles);
-                                }
-                        }
-
-                        Instant liquidationTime =
-                                tradeExitTimePolicy.latestAllowedExit(cycleClock.getEndTime());
-
-                        ForcedLiquidationResult liquidationResult =
-                                liquidateRemainingTrades(liquidationTime);
-
-                        logger.logEndOfSessionLiquidation(liquidationResult);
-
-                        TradingSessionLog sessionLog = logger.finish(portfolioManager.cash());
-
-                        new TradingSessionLogWriter().write(
-                                sessionLog,
-                                Path.of("data", "logs", "latest-session.json")
-                        );
-
-                        return sessionLog;
-
-                } catch (Exception e) {
-                        TradingSessionLog sessionLog = logger.finish(portfolioManager.cash(), e);
-
-                        new TradingSessionLogWriter().write(
-                                sessionLog,
-                                Path.of("data", "logs", "latest-session.json")
-                        );
-
-                        return sessionLog;
+                    fill = tradeExecutor.handleInstruction(instruction).withTradeId(tradeId);
+                } catch (TradeExecutionException e) {
+                    failedEntries.add(new FailedTradeExecution(instruction, e.getMessage(), tradeId));
+                    continue;
                 }
+                entries.add(fill);
+                portfolioManager.apply(fill);
+                valuator.observe(fill);
+                var trade = new RoundTripTrade(allocation.ticker(), fill.quantity(), time,
+                        allocation.plannedExitTime(), allocation.strategyId(), tradeId);
+                openTradeRegistry.add(trade);
+                opened.add(trade);
+            }
+            for (var adjustment : evaluation.openTradeAdjustments()) {
+                openTradeRegistry.adjust(adjustment);
+                appliedAdjustments.add(adjustment);
+            }
+            entryNanos = System.nanoTime() - stageStart;
+        } catch (Exception e) {
+            failure = CycleFailureLog.from(e);
+            failureStage = stage;
+            long elapsed = System.nanoTime() - stageStart;
+            switch (stage) {
+                case "EXITS" -> exitNanos = elapsed;
+                case "EVALUATION" -> evaluationNanos = elapsed;
+                default -> entryNanos = elapsed;
+            }
         }
+        long valueStart = System.nanoTime();
+        var value = valuator.value(portfolioManager.snapshot(), time,
+                failure == null ? "POST_CYCLE" : "PARTIAL_CYCLE_AFTER_FAILURE");
+        long valueNanos = System.nanoTime() - valueStart;
+        return new MultiTickerTradingCycleLog(time, evaluation, due, closed, exits, failedExits,
+                allocations, opened, entries, failedEntries, appliedAdjustments, failure, failureStage,
+                value, new CycleTiming(System.nanoTime() - start, exitNanos, evaluationNanos, entryNanos, valueNanos));
+    }
 
-        private MultiTickerTradingCycleLog runCycle(Instant cycleTime) {
-                List<RoundTripTrade> tradesDueForExit =
-                        openTradeRegistry.getTradesDueForExit(cycleTime);
-
-                List<RoundTripTrade> successfullyClosedTrades = new ArrayList<>();
-                List<TradeExecutionResult> successfulExitExecutions = new ArrayList<>();
-                List<FailedTradeExecution> failedExitExecutions = new ArrayList<>();
-
-                for (RoundTripTrade trade : tradesDueForExit) {
-                        TradeInstruction exitInstruction = new SellInstruction(
-                                trade.ticker(),
-                                trade.quantity(),
-                                cycleTime
-                        );
-
-                        try {
-                        TradeExecutionResult execution =
-                                tradeExecutor.handleInstruction(exitInstruction);
-
-                        portfolioManager.apply(execution);
-
-                        successfulExitExecutions.add(execution);
-                        successfullyClosedTrades.add(trade);
-
-                        } catch (TradeExecutionException e) {
-                                failedExitExecutions.add(
-                                        new FailedTradeExecution(
-                                                exitInstruction,
-                                                e.getMessage()
-                                        )
-                                );
-                        }
+    private void liquidateRemainingTrades(Instant time) {
+        var remaining = openTradeRegistry.getOpenTrades();
+        List<TradeExecutionResult> fills = new ArrayList<>();
+        List<FailedTradeExecution> failures = new ArrayList<>();
+        try {
+            for (var trade : remaining) {
+                var instruction = new SellInstruction(trade.ticker(), trade.quantity(), time);
+                TradeExecutionResult fill;
+                try {
+                    fill = tradeExecutor.handleInstruction(instruction).withTradeId(trade.tradeId());
+                } catch (TradeExecutionException e) {
+                    failures.add(new FailedTradeExecution(instruction, e.getMessage(), trade.tradeId()));
+                    continue;
                 }
-
-                openTradeRegistry.closeAll(successfullyClosedTrades);
-
-                MultiTickerCycleEvaluation evaluation =
-                        evaluator.evaluate(cycleTime);
-
-                List<CapitalAllocation> newCapitalAllocations =
-                        evaluation.newCapitalAllocations();
-
-                List<TradeExecutionResult> successfulEntryExecutions = new ArrayList<>();
-                List<RoundTripTrade> successfullyOpenedTrades = new ArrayList<>();
-                List<FailedTradeExecution> failedEntryExecutions = new ArrayList<>();
-
-                for (CapitalAllocation allocation : newCapitalAllocations) {
-                        TradeInstruction entryInstruction = new BuyInstruction(
-                                allocation.ticker(),
-                                allocation.cashAmount(),
-                                cycleTime
-                );
-
-                        try {
-                                TradeExecutionResult execution =
-                                        tradeExecutor.handleInstruction(entryInstruction);
-
-                                portfolioManager.apply(execution);
-
-                                RoundTripTrade openedTrade = new RoundTripTrade(
-                                        allocation.ticker(),
-                                        execution.quantity(),
-                                        cycleTime,
-                                        allocation.plannedExitTime(),
-                                        allocation.strategyId()
-                                );
-
-                                successfulEntryExecutions.add(execution);
-                                successfullyOpenedTrades.add(openedTrade);
-
-                        } catch (TradeExecutionException e) {
-                                failedEntryExecutions.add(FailedTradeExecution.from(entryInstruction, e));
-                        }
-                }
-
-                openTradeRegistry.addAll(successfullyOpenedTrades);
-
-                List<OpenTradeAdjustment> adjustments =
-                        evaluation.openTradeAdjustments();
-
-                openTradeRegistry.adjustAll(adjustments);
-
-                return new MultiTickerTradingCycleLog(
-                        cycleTime,
-                        evaluation,
-                        tradesDueForExit,
-                        successfullyClosedTrades,
-                        successfulExitExecutions,
-                        failedExitExecutions,
-                        newCapitalAllocations,
-                        successfullyOpenedTrades,
-                        successfulEntryExecutions,
-                        failedEntryExecutions,
-                        adjustments,
-                        null
-                );
+                fills.add(fill);
+                portfolioManager.apply(fill);
+                valuator.observe(fill);
+                openTradeRegistry.close(trade);
+            }
+        } finally {
+            logger.logEndOfSessionLiquidation(new ForcedLiquidationResult(
+                    time, remaining, fills, failures, !openTradeRegistry.hasOpenTrades()));
         }
-
-        private ForcedLiquidationResult liquidateRemainingTrades(
-                        Instant liquidationTime
-                ) {
-                List<RoundTripTrade> remainingTrades =
-                        openTradeRegistry.getOpenTrades();
-
-                List<RoundTripTrade> successfullyClosedTrades =
-                        new ArrayList<>();
-
-                List<TradeExecutionResult> successfulExecutions =
-                        new ArrayList<>();
-
-                List<FailedTradeExecution> failedExecutions =
-                        new ArrayList<>();
-
-                for (RoundTripTrade trade : remainingTrades) {
-                        SellInstruction instruction = new SellInstruction(
-                                trade.ticker(),
-                                trade.quantity(),
-                                liquidationTime
-                        );
-
-                        try {
-                        TradeExecutionResult execution =
-                                tradeExecutor.handleInstruction(instruction);
-
-                        portfolioManager.apply(execution);
-
-                        successfulExecutions.add(execution);
-                        successfullyClosedTrades.add(trade);
-
-                        } catch (TradeExecutionException e) {
-                        failedExecutions.add(
-                                new FailedTradeExecution(
-                                        instruction,
-                                        e.getMessage()
-                                )
-                        );
-                        }
-                }
-
-                openTradeRegistry.closeAll(successfullyClosedTrades);
-
-                boolean registryEmptyAfter = !openTradeRegistry.hasOpenTrades();
-
-                return new ForcedLiquidationResult(
-                        liquidationTime,
-                        remainingTrades,
-                        successfulExecutions,
-                        failedExecutions,
-                        registryEmptyAfter
-                );
-        }
+    }
 }

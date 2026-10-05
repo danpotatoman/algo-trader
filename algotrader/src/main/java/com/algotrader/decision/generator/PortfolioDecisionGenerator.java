@@ -31,6 +31,10 @@ import com.algotrader.portfolio.PortfolioSnapshot;
  */
 public interface PortfolioDecisionGenerator {
 
+    default com.fasterxml.jackson.databind.JsonNode provenance() throws Exception {
+        return com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+    }
+
     /**
      * Generates a portfolio decision for the current trading cycle.
      *

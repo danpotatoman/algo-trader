@@ -20,8 +20,18 @@ public record TradeExecutionResult(
         Instant executionTime,
         double price,
         double quantity,
-        double cashAmount
+        double cashAmount,
+        String tradeId
 ) {
+
+    public TradeExecutionResult(String ticker, Action action, Instant executionTime,
+                                double price, double quantity, double cashAmount) {
+        this(ticker, action, executionTime, price, quantity, cashAmount, null);
+    }
+
+    public TradeExecutionResult withTradeId(String id) {
+        return new TradeExecutionResult(ticker, action, executionTime, price, quantity, cashAmount, id);
+    }
 
     /**
      * Creates a trade execution result.

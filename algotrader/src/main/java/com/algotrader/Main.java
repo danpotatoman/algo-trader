@@ -22,19 +22,54 @@ import com.algotrader.runtime.ResolvedTradingPlan;
  */
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        if (args.length > 2 || (args.length == 2 && !"--validate-only".equals(args[1]))
+                || (args.length > 0 && args[0].startsWith("--"))) {
+            throw new IllegalArgumentException("Usage: java -jar algotrader.jar [session-id [--validate-only]]");
+        }
+        if (args.length == 2 && "--validate-only".equals(args[1])) {
+            var database = java.nio.file.Path.of("data", "ohlcv.db");
+            if (!java.nio.file.Files.isRegularFile(database)) {
+                throw new IllegalArgumentException("OHLCV database does not exist: " + database);
+            }
+            var coverage = new com.algotrader.runtime.HistoricalDataCoverageValidator(
+                    new SQLiteOHLCVRepository(database.toString()), new UsMarketCalendar2026Loader().load())
+                    .validate(loadPlan(args[0]));
+            var json = new com.fasterxml.jackson.databind.ObjectMapper()
+                    .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+                    .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            System.out.println(json.writerWithDefaultPrettyPrinter().writeValueAsString(coverage));
+            return;
+        }
+        var artifacts = new com.algotrader.logging.RunArtifacts(java.nio.file.Path.of("data", "logs", "runs"));
+        System.out.println("Preparing run: " + artifacts.directory().toAbsolutePath());
+        try {
+            run(args, artifacts);
+        } catch (Exception e) {
+            if (!java.nio.file.Files.exists(artifacts.directory().resolve("completion.json"))) {
+                artifacts.failSetup(e);
+            }
+            throw e;
+        }
+    }
 
+    private static ResolvedTradingPlan loadPlan(String sessionId) {
         TradingSessionConfigLoader tradingSessionConfigLoader = new TradingSessionConfigLoader();
         EndpointConfigLoader endpointConfigLoader = new EndpointConfigLoader();
         TradeGeneratorConfigLoader tradeGeneratorConfigLoader = new TradeGeneratorConfigLoader();
 
-        TradingSessionConfig sessionConfig = tradingSessionConfigLoader.load("batch-cnn-v1");
+        TradingSessionConfig sessionConfig = tradingSessionConfigLoader.load(sessionId);
         EndpointConfig endpointConfig = endpointConfigLoader.load(sessionConfig.getEndpointId());
         TradeGeneratorConfig tradeGeneratorConfig = tradeGeneratorConfigLoader.load(sessionConfig.getStrategyId());
 
-        ResolvedTradingPlan tradingPlan = new ResolvedTradingPlan(sessionConfig, endpointConfig, tradeGeneratorConfig);
+        return new ResolvedTradingPlan(sessionConfig, endpointConfig, tradeGeneratorConfig);
+    }
 
-        OHLCVRepository repository = new SQLiteOHLCVRepository("data/ohlcv.db");
+    private static void run(String[] args, com.algotrader.logging.RunArtifacts artifacts) throws Exception {
+        ResolvedTradingPlan tradingPlan = loadPlan(args.length == 0 ? "batch-cnn-v1" : args[0]);
+
+        artifacts.prepare(java.nio.file.Path.of("."), tradingPlan);
+        OHLCVRepository repository = new SQLiteOHLCVRepository(artifacts.database().toString());
 
         MarketDataCache marketDataCache =
             new MarketDataCache(
@@ -43,17 +78,27 @@ public class Main {
         
         MarketCalendar calendar = new UsMarketCalendar2026Loader().load();
 
+        var coverage = new com.algotrader.runtime.HistoricalDataCoverageValidator(repository, calendar).validate(tradingPlan);
+        artifacts.historicalCoverage(coverage);
+        System.out.println("Historical coverage validated: " + coverage.marketCycles() + " market cycles, "
+                + coverage.fullUniverseInferenceCycles() + " full-universe inference windows, "
+                + coverage.warmupCycles() + " morning warm-up cycles");
+
         MultiTickerTradingCycleEvaluatorFactory evaluatorFactory = new MultiTickerTradingCycleEvaluatorFactory(marketDataCache, marketDataCache, calendar);
 
         MultiTickerTradingDriverFactory driverFactory = new MultiTickerTradingDriverFactory(evaluatorFactory, marketDataCache, calendar);
 
-        HistoricalMultiTickerBacktestDriver driver = driverFactory.createHistorical(tradingPlan);
+        HistoricalMultiTickerBacktestDriver driver = driverFactory.createHistorical(tradingPlan, artifacts);
         System.out.println("attempting to start cycle driver");
         try {
-                driver.run();
+                var session = driver.run();
+                if (session.sessionFailure() != null) {
+                    throw new IllegalStateException("Run failed; inspect session.json and completion.json");
+                }
         } catch (Exception e) {
                 System.out.println("Encountered exception: " + e);
                 e.printStackTrace();
+                throw e;
         }
     }
 }

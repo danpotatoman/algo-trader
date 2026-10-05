@@ -25,6 +25,27 @@ public final class PythonBatchClassificationWithVolatilityPredictionProvider
     private final PythonPredictionClient client;
     private final PredictionRequestMapper<List<DataBatch>, BatchClassificationVolatilityRequest> requestMapper;
     private final TimeInterval interval;
+    private JsonNode serviceProvenance;
+
+    @Override
+    public JsonNode provenance() throws PredictionProviderException {
+        if (serviceProvenance == null) {
+            JsonNode metadata = client.provenance();
+            String id = metadata.path("serverInstanceId").asText();
+            if (!id.matches("[0-9a-fA-F-]{36}")
+                    || !client.getEndpoint().getPath().equals(metadata.path("batchEndpoint").asText())
+                    || !metadata.path("models").isArray() || metadata.path("models").size() != 2) {
+                throw new PredictionProviderException("Invalid prediction service provenance; restart the updated model server");
+            }
+            for (var model : metadata.path("models")) {
+                if (!model.path("sha256").asText().matches("[0-9a-f]{64}")) {
+                    throw new PredictionProviderException("Model provenance is missing a SHA-256 hash");
+                }
+            }
+            serviceProvenance = metadata;
+        }
+        return serviceProvenance.deepCopy();
+    }
 
     /**
      * Creates a batch classification-with-volatility prediction provider.
@@ -69,9 +90,13 @@ public final class PythonBatchClassificationWithVolatilityPredictionProvider
         }
 
         validateIntervals(batches);
+        String serverId = provenance().path("serverInstanceId").asText();
 
         Object requestBody = requestMapper.map(batches);
         JsonNode response = client.post(requestBody);
+        if (!serverId.equals(response.path("serverInstanceId").asText())) {
+            throw new PredictionProviderException("Prediction service changed during run; refusing mixed model provenance");
+        }
 
         JsonNode predictionsNode = response.get("predictions");
 
@@ -109,7 +134,7 @@ public final class PythonBatchClassificationWithVolatilityPredictionProvider
         for (JsonNode predictionNode : predictionsNode) {
             String ticker = requiredText(predictionNode, "ticker").toUpperCase();
 
-            DataBatch batch = batchesByTicker.get(ticker);
+            DataBatch batch = batchesByTicker.remove(ticker);
 
             if (batch == null) {
                 throw new PredictionProviderException(

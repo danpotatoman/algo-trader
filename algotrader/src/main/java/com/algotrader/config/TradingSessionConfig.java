@@ -20,15 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * before the session is executed.
  *
  * <p>The {@code firstCandleTimestamp} and {@code lastCandleTimestamp} define the
- * inclusive range of candle timestamps that are valid for the session.
- *
- * <p>The {@code firstCandleTimestamp} is the timestamp of the first candle,
- * chronologically, that is available for model inference. Candles with
- * earlier timestamps are excluded from the session.
- *
- * <p>The {@code lastCandleTimestamp} is the timestamp of the final candle that is
- * available for model inference. Candles with later timestamps are excluded
- * from the session.
+ * inclusive decision and execution time range for multi-ticker sessions.
+ * Prediction windows use completed candles preceding each cycle, including
+ * history before the session start. OHLCV timestamps identify candle opens.
  *
  * <p>Endpoint-specific requirements such as candle interval, batch size,
  * feature definitions, and prediction endpoints are defined by the
@@ -55,10 +49,8 @@ public final class TradingSessionConfig {
      * @param strategyId identifier of the trade generation strategy used by
      *        the session
      * @param tickers ticker symbols to trade
-     * @param firstCandleTimestamp timestamp of the first candle available for
-     *        model inference during the session
-     * @param lastCandleTimestamp timestamp of the final candle available for
-     *        model inference during the session
+     * @param firstCandleTimestamp first decision and execution time for multi-ticker sessions
+     * @param lastCandleTimestamp last decision and execution time for multi-ticker sessions
      * @throws IllegalArgumentException if any argument is invalid
      */
     @JsonCreator

@@ -28,12 +28,10 @@ MARKET_TIMEZONE = ZoneInfo("America/New_York")
 MARKET_OPEN_TIME = time(hour=9, minute=30)
 REGULAR_SESSION_MINUTES = 390.0
 
-EPSILON = 1e-8
-
-
 def rows_to_features(rows: list[dict[str, Any]]) -> np.ndarray:
     """
-    Converts API request rows into model features.
+    Converts request rows into model features, excluding the first context row.
+    The context close supplies the first model candle's preceding close.
 
     Expected row format:
     {
@@ -46,15 +44,15 @@ def rows_to_features(rows: list[dict[str, Any]]) -> np.ndarray:
     }
 
     Returns:
-        np.ndarray with shape [timesteps, 10]
+        np.ndarray with shape [len(rows) - 1, 10]
     """
-    if not rows:
-        raise ValueError("rows must not be empty")
+    if len(rows) < 2:
+        raise ValueError("rows must contain a context candle and at least one model candle")
 
     ohlcv = rows_to_ohlcv_array(rows)
     minutes_since_open = rows_to_minutes_since_open(rows)
 
-    return ohlcv_to_features(ohlcv, minutes_since_open)
+    return ohlcv_to_features(ohlcv, minutes_since_open)[1:]
 
 
 def rows_to_ohlcv_array(rows: list[dict[str, Any]]) -> np.ndarray:
@@ -69,7 +67,7 @@ def rows_to_ohlcv_array(rows: list[dict[str, Any]]) -> np.ndarray:
         for row in rows
     ]
 
-    return np.asarray(data, dtype=np.float32)
+    return np.asarray(data, dtype=np.float64)
 
 
 def rows_to_minutes_since_open(rows: list[dict[str, Any]]) -> np.ndarray:
@@ -78,7 +76,7 @@ def rows_to_minutes_since_open(rows: list[dict[str, Any]]) -> np.ndarray:
             timestamp_to_minutes_since_open(row["timestamp"])
             for row in rows
         ],
-        dtype=np.float32,
+        dtype=np.float64,
     )
 
 
@@ -119,8 +117,8 @@ def ohlcv_to_features(
         ohlcv: np.ndarray,
         minutes_since_open: np.ndarray,
 ) -> np.ndarray:
-    ohlcv = np.asarray(ohlcv, dtype=np.float32)
-    minutes_since_open = np.asarray(minutes_since_open, dtype=np.float32)
+    ohlcv = np.asarray(ohlcv, dtype=np.float64)
+    minutes_since_open = np.asarray(minutes_since_open, dtype=np.float64)
 
     validate_ohlcv_shape(ohlcv)
     validate_minutes_since_open_shape(minutes_since_open, ohlcv.shape[0])
@@ -131,20 +129,20 @@ def ohlcv_to_features(
     close = ohlcv[:, 3]
     volume = ohlcv[:, 4]
 
-    base_close = close[0]
+    base_close = close[-1]
 
-    open_rel = (open_ / (base_close + EPSILON)) - 1.0
-    high_rel = (high / (base_close + EPSILON)) - 1.0
-    low_rel = (low / (base_close + EPSILON)) - 1.0
-    close_rel = (close / (base_close + EPSILON)) - 1.0
+    open_rel = open_ / base_close - 1.0
+    high_rel = high / base_close - 1.0
+    low_rel = low / base_close - 1.0
+    close_rel = close / base_close - 1.0
 
     log_volume = np.log1p(volume)
 
-    close_return = np.zeros_like(close, dtype=np.float32)
-    close_return[1:] = (close[1:] / (close[:-1] + EPSILON)) - 1.0
+    close_return = np.zeros_like(close)
+    close_return[1:] = close[1:] / close[:-1] - 1.0
 
-    range_pct = (high - low) / (close + EPSILON)
-    body_pct = (close - open_) / (open_ + EPSILON)
+    range_pct = (high - low) / close
+    body_pct = (close - open_) / open_
 
     time_angle = (
         2.0

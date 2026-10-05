@@ -222,7 +222,8 @@ public final class OpenTradeRegistry implements OpenTradeRegistryView {
                 targetTrade.quantity(),
                 targetTrade.entryTime(),
                 adjustment.newExitTime(),
-                targetTrade.strategyId()
+                targetTrade.strategyId(),
+                targetTrade.tradeId()
         );
 
         validateTradeTiming(adjustedTrade);

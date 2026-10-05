@@ -9,7 +9,7 @@
 
   "interval": "FIVE_MINUTES",
 
-  "numCandles": 30,
+  "numCandles": 31,
 
   "outputStatistics": {
     "volatilityMean": 0.00099081,

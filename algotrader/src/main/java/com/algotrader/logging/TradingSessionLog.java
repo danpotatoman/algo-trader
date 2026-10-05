@@ -49,7 +49,12 @@ public record TradingSessionLog(
         /**
          * Exception that caused the session to fail, null if session succeeded.
          */
-        SessionFailureLog sessionFailure
+        SessionFailureLog sessionFailure,
+        String schemaVersion,
+        String runId,
+        com.algotrader.portfolio.PortfolioValuation initialPortfolio,
+        com.algotrader.portfolio.PortfolioValuation finalPortfolio,
+        List<com.algotrader.decision.dataobjects.RoundTripTrade> remainingOpenTrades
 
 ) {
 

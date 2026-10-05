@@ -113,9 +113,9 @@ public final class DefaultMultiTickerWindowProvider
     }
 
     /**
-     * Returns valid data windows ending at the supplied cycle time.
+     * Returns valid windows containing only candles completed by the cycle time.
      *
-     * @param cycleTime timestamp of the final candle in each returned window
+     * @param cycleTime decision and execution timestamp, aligned to the candle interval
      * @return model-ready data batches for tickers with complete windows
      * @throws DataCacheException if market data retrieval fails
      */
@@ -129,16 +129,17 @@ public final class DefaultMultiTickerWindowProvider
 
         List<DataBatch> batches = new ArrayList<>();
 
-        Instant windowStartTime = calculateWindowStartTime(cycleTime);
+        Instant lastCompletedCandleOpen = cycleTime.minus(interval.getDuration());
+        Instant windowStartTime = calculateWindowStartTime(lastCompletedCandleOpen);
 
         for (String ticker : tickers) {
             List<StampedOHLCV> rows = marketDataProvider.requestRange(
                     ticker,
                     interval,
                     windowStartTime,
-                    cycleTime);
+                    lastCompletedCandleOpen);
 
-            if (!isValidWindow(rows, windowStartTime, cycleTime)) {
+            if (!isValidWindow(rows, windowStartTime, lastCompletedCandleOpen)) {
                 continue;
             }
 
@@ -148,11 +149,11 @@ public final class DefaultMultiTickerWindowProvider
         return batches;
     }
 
-    private Instant calculateWindowStartTime(Instant cycleTime) {
+    private Instant calculateWindowStartTime(Instant lastCompletedCandleOpen) {
         Duration windowOffset = interval.getDuration()
                 .multipliedBy(windowSize - 1L);
 
-        return cycleTime.minus(windowOffset);
+        return lastCompletedCandleOpen.minus(windowOffset);
     }
 
     private boolean isValidWindow(

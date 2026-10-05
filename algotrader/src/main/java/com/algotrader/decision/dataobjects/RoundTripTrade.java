@@ -26,8 +26,14 @@ public record RoundTripTrade(
         double quantity,
         Instant entryTime,
         Instant exitTime,
-        String strategyId
+        String strategyId,
+        String tradeId
 ) {
+
+    public RoundTripTrade(String ticker, double quantity, Instant entryTime,
+                         Instant exitTime, String strategyId) {
+        this(ticker, quantity, entryTime, exitTime, strategyId, java.util.UUID.randomUUID().toString());
+    }
 
     /**
      * Creates a validated round-trip trade.
@@ -35,6 +41,7 @@ public record RoundTripTrade(
      * @throws IllegalArgumentException if any field is invalid
      */
     public RoundTripTrade {
+        if (tradeId == null || tradeId.isBlank()) throw new IllegalArgumentException("tradeId required");
         if (ticker == null || ticker.isBlank()) {
             throw new IllegalArgumentException(
                     "ticker cannot be null or blank");

@@ -30,11 +30,10 @@ public interface MultiTickerWindowProvider {
     void initialize() throws DataCacheException;
 
     /**
-     * Constructs all available data windows ending at the specified trading
-     * cycle time. cycleTime corresponds to the open time of the last candle
-     * to be included in each window.
+     * Constructs windows of candles completed by the decision and execution
+     * time. The final candle opens one interval before that time.
      *
-     * @param cycleTime the timestamp identifying the trading cycle
+     * @param cycleTime decision and execution timestamp, aligned to the candle interval
      * @return a list of successfully constructed data batches, one per ticker;
      *         the list may be empty if no valid windows are available
      * @throws DataCacheException if market data could not be retrieved

@@ -68,6 +68,7 @@ public final class PythonPredictionClient {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(endpoint)
+                    .timeout(java.time.Duration.ofSeconds(60))
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestJson))
                     .build();
@@ -81,8 +82,6 @@ public final class PythonPredictionClient {
                 throw new PredictionProviderException(
                         "Prediction request failed with status code "
                                 + response.statusCode()
-                                + ": "
-                                + response.body()
                 );
             }
 
@@ -106,5 +105,18 @@ public final class PythonPredictionClient {
 
     public URI getEndpoint() {
         return endpoint;
+    }
+
+    public JsonNode provenance() throws PredictionProviderException {
+        try {
+            var request = HttpRequest.newBuilder(endpoint.resolve("/provenance"))
+                    .timeout(java.time.Duration.ofSeconds(30)).GET().build();
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200) throw new PredictionProviderException("Prediction service provenance unavailable");
+            return objectMapper.readTree(response.body());
+        } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            throw new PredictionProviderException("Unable to read prediction service provenance", e);
+        }
     }
 }

@@ -15,7 +15,14 @@ import com.algotrader.registry.OpenTradeAdjustment;
  */
 public record PortfolioDecisionResult(
         List<CapitalAllocation> newCapitalAllocations,
-        List<OpenTradeAdjustment> openTradeAdjustments) {
+        List<OpenTradeAdjustment> openTradeAdjustments,
+        List<SignalDecision> signals,
+        long predictionDurationNanos,
+        int inferenceBatchSize) {
+
+    public PortfolioDecisionResult(List<CapitalAllocation> allocations, List<OpenTradeAdjustment> adjustments) {
+        this(allocations, adjustments, List.of(), 0, 0);
+    }
 
     /**
      * Creates an immutable portfolio decision result.
@@ -26,5 +33,6 @@ public record PortfolioDecisionResult(
     public PortfolioDecisionResult {
         newCapitalAllocations = List.copyOf(newCapitalAllocations);
         openTradeAdjustments = List.copyOf(openTradeAdjustments);
+        signals = List.copyOf(signals);
     }
 }

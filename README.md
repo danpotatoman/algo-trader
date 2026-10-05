@@ -25,6 +25,9 @@ The project supports:
 
 ## Quick Start
 
+For an analysis-ready multi-ticker run with equity valuations, immutable data,
+model provenance and timing, see [Showcase backtest](docs/showcase-backtest.md).
+
 ### Start the model server
 
 cd python-model
@@ -53,6 +56,23 @@ For detailed configuration information see:
 docs/configuration.md (i need to add this still)
 
 ## Architecture
+
+Classification-with-volatility endpoints require 31 completed candles per ticker:
+one preceding candle for return context followed by the 30 model candles.
+Python uses the context close to calculate the first model candle's return,
+then discards the context feature row. Prices are normalized against the final
+model candle's close, matching training. Model tensors remain 30 candles long
+and the forecast horizon remains 30 minutes. Restart the Python server when
+using the updated endpoint configs; older 30-row requests are rejected.
+
+The multi-ticker backtest treats each cycle timestamp as the decision and
+execution time. Prediction windows contain only candles completed by that
+time; OHLCV timestamps identify candle opens. At 10:05, a five-minute window
+ends with the 10:00 candle, entry is simulated at the 10:05 open, and a
+30-minute holding period ends at 10:35. Session configuration keys
+`firstCandleTimestamp` and `lastCandleTimestamp` bound these cycle times.
+Earlier candles are loaded to provide the first decision's input history.
+Fills at the cycle's opening price assume zero inference latency and no slippage.
 
 See:
 

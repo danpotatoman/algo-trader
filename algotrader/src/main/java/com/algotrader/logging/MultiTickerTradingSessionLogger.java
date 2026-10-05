@@ -17,6 +17,21 @@ public final class MultiTickerTradingSessionLogger {
     private Instant startTime;
     private double startingCash;
     private ForcedLiquidationResult liquidationResult = null;
+    private String runId;
+    private com.algotrader.portfolio.PortfolioValuation initialPortfolio;
+    private com.algotrader.portfolio.PortfolioValuation finalPortfolio;
+    private List<com.algotrader.decision.dataobjects.RoundTripTrade> remainingOpenTrades = List.of();
+
+    public void identify(String runId, com.algotrader.portfolio.PortfolioValuation initialPortfolio) {
+        this.runId = runId;
+        this.initialPortfolio = initialPortfolio;
+    }
+
+    public void finalState(com.algotrader.portfolio.PortfolioValuation finalPortfolio,
+                           List<com.algotrader.decision.dataobjects.RoundTripTrade> remainingOpenTrades) {
+        this.finalPortfolio = finalPortfolio;
+        this.remainingOpenTrades = List.copyOf(remainingOpenTrades);
+    }
 
     private final List<MultiTickerTradingCycleLog> cycleLogs =
             new ArrayList<>();
@@ -108,7 +123,8 @@ public final class MultiTickerTradingSessionLogger {
                 endingCash,
                 List.copyOf(cycleLogs),
                 liquidationResult,
-                SessionFailureLog.from(sessionFailure)
+                SessionFailureLog.from(sessionFailure),
+                RunArtifacts.SCHEMA, runId, initialPortfolio, finalPortfolio, remainingOpenTrades
         );
 
         startTime = null;

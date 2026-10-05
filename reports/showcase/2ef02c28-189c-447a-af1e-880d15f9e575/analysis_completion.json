@@ -1,0 +1,56 @@
+{
+  "run_id": "2ef02c28-189c-447a-af1e-880d15f9e575",
+  "input_unchanged": true,
+  "legacy_reports_unchanged": true,
+  "inputs": {
+    "data\\logs\\runs\\2ef02c28-189c-447a-af1e-880d15f9e575": {
+      "completion.json": "4124a5bdbaceda3e10ff9c971b10430963c11693145608cb6968aef88a68df53",
+      "manifest.json": "2ba83a15ea48ca615e3115a55aee31374c1c822298d3efd5269dd41e06f4ab1c",
+      "ohlcv.db": "ee143012073ed102bc8b2649ff4ea054dbf332e34e78dec2986d4ac50d11510f",
+      "session.json": "13597f100d40ea2007db6047a0ba1a5c4f6e4edf0c41540087b206507d0963cd"
+    },
+    "data\\logs\\runs\\4b966e0f-d9c1-4de3-8a09-5d4b5af44332": {
+      "completion.json": "8616ceab9ffb8a89a97219472b7f3a663988bd4567ce478ed1cca2b177f2321a",
+      "manifest.json": "36c5ea3f32c221b0dcbb17b560cd161ff30e38d544d4689526b5dcea53edd808",
+      "ohlcv.db": "ee143012073ed102bc8b2649ff4ea054dbf332e34e78dec2986d4ac50d11510f",
+      "session.json": "5720fb3bbc1516c452fa5ade20f0f2fcc824e0cc3092d45a131c01b4fb4be640"
+    },
+    "reports\\showcase\\4b966e0f-d9c1-4de3-8a09-5d4b5af44332": {
+      "analysis_completion.json": "25db7433da9e7036c615cbcda3bc981c9b96bd7bd7b1bf86d9ab9d49d3daa32e",
+      "attribution_exposure.png": "d312535e64e5cd51077b3b81ec6082ee82480f569a0d515beecab671d0be5b76",
+      "cycles.jsonl": "a8f774d7f6539c551983f751159780dd84a70f1854d1d631f8239a04b81093f0",
+      "engineering.png": "17e786c82fcbb25bf8c20322f3b501e07107dabb967617b2bdcb393268b3ab3f",
+      "equity_drawdown.png": "de33696a2f778f53b55584493e3796402ec09d447a461b6d9985d74d0ffa4b8b",
+      "findings.md": "ebfd83c021407d49e741aa03e40b1e36a0ec9010c434b35013a93c10a4e66a54",
+      "metrics.json": "c3a5e56cbcd74b9a90d1abc965027aac4b5b6a39bf2c00d33bbc1200012eaaae",
+      "prediction_diagnostics.png": "d5539a7e36f19540549b279c49f01e1126808b0abb2e9b06553644d4f54c6e43",
+      "predictions.jsonl": "dfea0b726253e9388cb35c71e9826de3546244e755db65c214a83978433a5253",
+      "report.md": "4511ca13ed99e242e55bf7cab6fc0fb7c10af04c2c1c8cd9dc211b4bbd9bbe31",
+      "resume_candidates.json": "106890ede62a2528fcf9573bb34cd7ea585e684cb3b18ce4c6479df754f40567",
+      "sessions.jsonl": "e7b190ddce68798467da868f41f878857badcbab439246b92a7d7e682a4229da",
+      "trades.jsonl": "3e9fe95f08b884e1ffb596f4a8b68b2515ac2f25fa5f393ab026508e432da1ae"
+    }
+  },
+  "analysis_source_sha256": {
+    "analyze_corrected.py": "d85cab882f076b9e6e31a33d124ff2383ddbdedfa2fa8e7371a0afd92908ae96",
+    "analyze_showcase.py": "d950658be4b840997f175b1d1b0d2b76e9161b0af4018e69089cad1ac64a2220"
+  },
+  "output_sha256": {
+    "attribution_exposure.png": "223b9e4c7d69e027d7b2bb5dc35a81438c08a351c3f3a5b270d38afd63512ae2",
+    "comparison.json": "c377f5711bba96dd278d3dc3a6b7c10a4d6c8f74398aa5fa41d2e72d58622b80",
+    "comparison.md": "9976ba2c3180780b07585fa7d53e482306d4056183f0febe32d9894272fcc926",
+    "comparison_allocations.jsonl": "7873fd3c24c022f6dc747944a6d83c44890253236ff604c65ed987b4cc5b2f5f",
+    "comparison_equity.jsonl": "eaeac077ec4ac033a8b72687b1d81907123fa7f9853fc6b1747d49b4a53c697b",
+    "cycles.jsonl": "d8e5ce881dafcefc0aa13f8f84b5a6c1fcd30f073541003760d19fe16a1762c8",
+    "engineering.png": "bbf41b073d9e14f5e5c3e764391d46abd9ea256e6ab7a39938cf87be9f9cf3f8",
+    "equity_drawdown.png": "c465270b477b8c543fcce21c28c31410e9dbb1faa3582026a92a586f103c68e0",
+    "findings.md": "4a9e315f573517a14a7acdfaa82aa28177e5a6c5fb9e895f9980de1d918f67bd",
+    "metrics.json": "d0b28f5df38505cc4cc2fb1fb5007f0203be13c78e70992eeb1ada738035eadb",
+    "predictions.jsonl": "8b4783a2215d66460f30ac8d034d6f871bac49c465909502c6c6759e4979221f",
+    "prediction_diagnostics.png": "9e18573f506502a04dd9e27f9e55b413f6176c8357a28ffd6a4a6b1a66d4dddd",
+    "report.md": "d8eb0ea4da0c796cd157c6d0747757f311a6899e9e5c66616ff79f7f1b22b77d",
+    "resume_candidates.json": "efc322351f8e2284eae6f3cf9d83ca4b1ddc12b21768830fc32a2576bf1b35bb",
+    "sessions.jsonl": "be1b9192ca26abe40d0b3fe5141dec42fdcee97fc9d6e0143ea0a0d067ffb84f",
+    "trades.jsonl": "5ad8f77ecef5fd69dbdd6b041518ba75e695d39af23377c364f373e00520bb2e"
+  }
+}

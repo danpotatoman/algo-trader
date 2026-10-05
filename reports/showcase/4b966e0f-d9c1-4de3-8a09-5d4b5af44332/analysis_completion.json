@@ -1,0 +1,24 @@
+{
+  "run_id": "4b966e0f-d9c1-4de3-8a09-5d4b5af44332",
+  "input_unchanged": true,
+  "input_sha256": {
+    "completion.json": "8616ceab9ffb8a89a97219472b7f3a663988bd4567ce478ed1cca2b177f2321a",
+    "manifest.json": "36c5ea3f32c221b0dcbb17b560cd161ff30e38d544d4689526b5dcea53edd808",
+    "ohlcv.db": "ee143012073ed102bc8b2649ff4ea054dbf332e34e78dec2986d4ac50d11510f",
+    "session.json": "5720fb3bbc1516c452fa5ade20f0f2fcc824e0cc3092d45a131c01b4fb4be640"
+  },
+  "output_sha256": {
+    "attribution_exposure.png": "d312535e64e5cd51077b3b81ec6082ee82480f569a0d515beecab671d0be5b76",
+    "cycles.jsonl": "a8f774d7f6539c551983f751159780dd84a70f1854d1d631f8239a04b81093f0",
+    "engineering.png": "17e786c82fcbb25bf8c20322f3b501e07107dabb967617b2bdcb393268b3ab3f",
+    "equity_drawdown.png": "de33696a2f778f53b55584493e3796402ec09d447a461b6d9985d74d0ffa4b8b",
+    "findings.md": "ebfd83c021407d49e741aa03e40b1e36a0ec9010c434b35013a93c10a4e66a54",
+    "metrics.json": "c3a5e56cbcd74b9a90d1abc965027aac4b5b6a39bf2c00d33bbc1200012eaaae",
+    "predictions.jsonl": "dfea0b726253e9388cb35c71e9826de3546244e755db65c214a83978433a5253",
+    "prediction_diagnostics.png": "d5539a7e36f19540549b279c49f01e1126808b0abb2e9b06553644d4f54c6e43",
+    "report.md": "4511ca13ed99e242e55bf7cab6fc0fb7c10af04c2c1c8cd9dc211b4bbd9bbe31",
+    "resume_candidates.json": "106890ede62a2528fcf9573bb34cd7ea585e684cb3b18ce4c6479df754f40567",
+    "sessions.jsonl": "e7b190ddce68798467da868f41f878857badcbab439246b92a7d7e682a4229da",
+    "trades.jsonl": "3e9fe95f08b884e1ffb596f4a8b68b2515ac2f25fa5f393ab026508e432da1ae"
+  }
+}

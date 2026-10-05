@@ -1,0 +1,53 @@
+[
+  {
+    "metric": "CPU batch prediction latency",
+    "value": {
+      "median_ms": 9.9791,
+      "p95_ms": 11.74042
+    },
+    "calculation": "numpy.quantile(predictionDurationNanos / 1e6, [0.5, 0.95]) on COMPLETED inference cycles only",
+    "denominator": "2,773 inference requests; 15 tickers each; 41,595 ticker predictions",
+    "artifact_fields": [
+      "session.json: cycleLogs[].evaluation.inferenceStatus",
+      "cycleLogs[].evaluation.inferenceBatchSize",
+      "cycleLogs[].evaluation.predictionDurationNanos",
+      "manifest.json: runtime and predictionService.runtime"
+    ],
+    "qualification": "One local CPU backtest, serial calls, fixed batch size. Includes first inference; excludes 1,798 empty-window cycles. HTTP round trip includes mapping, models and parsing. Not standalone single-ticker or pure neural-kernel latency.",
+    "why_defensible": "Every included observation and workload is logged; percentiles can be reproduced without rerunning models."
+  },
+  {
+    "metric": "End-to-end historical throughput",
+    "value": {
+      "seconds": 30.7423115,
+      "predictions_per_second": 1353.0212261364927
+    },
+    "calculation": "completion.fullBacktestWallNanos / 1e9; 41,595 / resulting seconds",
+    "denominator": "4,571 cycles, 2,773 inference batches, 41,595 predictions, 545 completed trades, 59 market sessions",
+    "artifact_fields": [
+      "completion.json: fullBacktestWallNanos, cycleCount",
+      "session.json: cycleLogs and execution records"
+    ],
+    "qualification": "Already-running Python service; excludes process startup, training and data download. Includes run setup/provenance, snapshot, execution and session serialization. One observed run, not a sustained load benchmark.",
+    "why_defensible": "Explicit monotonic timing scope and exact workload; warm-up cycles are not counted as ticker predictions."
+  },
+  {
+    "metric": "Auditable multi-ticker execution",
+    "value": {
+      "reconciled_round_trips": 545,
+      "stable_id_extensions": 4550,
+      "current_marks": 8166,
+      "failed_executions": 0,
+      "all_cash_position_registry_checks_passed": true
+    },
+    "calculation": "Join entries, exits and adjustments by tradeId; verify every entry closes once; reconcile quantities, fills, marked equity and terminal flat state",
+    "denominator": "545 entries, 545 exits, 4,550 applied extensions, 4,571 cycle valuations plus initial/final valuation",
+    "artifact_fields": [
+      "session.json: successfullyOpenedTrades, successfulEntryExecutions, successfullyClosedTrades, successfulExitExecutions, appliedOpenTradeAdjustments",
+      "portfolioAfterCycle, finalPortfolio, liquidationResult, remainingOpenTrades",
+      "manifest.json: data.sha256, git.sourceFileSha256; completion.json: sessionSha256"
+    ],
+    "qualification": "Historical paper execution with exact candle-open fills and no modeled costs. Zero failures describes this run, not production availability or future failure probability.",
+    "why_defensible": "Stable IDs, cash/position reconciliation, exact snapshot prices, immutable inputs and matching checksums support independent audit."
+  }
+]

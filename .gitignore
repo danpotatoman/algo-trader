@@ -36,6 +36,7 @@ saved_models/
 data/cache/
 data/ohlcv/
 data/ohlcv.db
+data/backups/
 
 # Environment variables
 .env

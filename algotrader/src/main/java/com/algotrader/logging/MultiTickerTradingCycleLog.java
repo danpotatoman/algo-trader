@@ -78,7 +78,10 @@ public record MultiTickerTradingCycleLog(
          * Cycle-level failure, if one occurred outside of individual trade
          * execution failures.
          */
-        CycleFailureLog cycleFailure
+        CycleFailureLog cycleFailure,
+        String failureStage,
+        com.algotrader.portfolio.PortfolioValuation portfolioAfterCycle,
+        CycleTiming timing
 ) {
 
     public MultiTickerTradingCycleLog {

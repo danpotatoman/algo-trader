@@ -12,6 +12,7 @@ import com.algotrader.decision.dataobjects.CapitalAllocation;
 import com.algotrader.decision.dataobjects.ClassificationWithVolatilityPrediction;
 import com.algotrader.decision.dataobjects.PortfolioDecisionResult;
 import com.algotrader.decision.dataobjects.RoundTripTrade;
+import com.algotrader.decision.dataobjects.SignalDecision;
 import com.algotrader.decision.prediction.provider.PredictionProvider;
 import com.algotrader.decision.prediction.provider.PredictionProviderException;
 import com.algotrader.marketdata.model.DataBatch;
@@ -40,6 +41,11 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
     private final double maxAllocationFractionPerTicker;
     private final TradeExitTimePolicy tradeExitTimePolicy;
     private final String strategyId;
+
+    @Override
+    public com.fasterxml.jackson.databind.JsonNode provenance() throws PredictionProviderException {
+        return predictionProvider.provenance();
+    }
 
     /**
      * Creates a classification-with-volatility portfolio decision generator.
@@ -115,15 +121,18 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
     ) throws DecisionGenerationException {
 
         List<ClassificationWithVolatilityPrediction> predictions;
-
+        long predictionStart = System.nanoTime();
         try {
                 predictions =
-                        predictionProvider.predict(batches);
+                        batches.isEmpty() ? List.of() : predictionProvider.predict(batches);
         } catch (PredictionProviderException e) {
                 throw new DecisionGenerationException(
                         "Failed to generate portfolio decision.",
                         e);
         }
+
+        long predictionNanos = batches.isEmpty() ? 0 : System.nanoTime() - predictionStart;
+        Map<String, SignalDecision> signals = new java.util.LinkedHashMap<>();
 
         Instant latestAllowedExit =
                 tradeExitTimePolicy.latestAllowedExit(cycleTime);
@@ -132,14 +141,20 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
                 .isAfter(latestAllowedExit)) {
                 return new PortfolioDecisionResult(
                         List.of(),
-                        List.of()
+                        List.of(),
+                        predictions.stream().map(p -> signal(p, null, "TOO_LATE_TO_ENTER_OR_EXTEND", 0)).toList(),
+                        predictionNanos, batches.size()
                 );
         }
 
-        List<ClassificationWithVolatilityPrediction> acceptedPredictions =
-                predictions.stream()
-                        .filter(this::passesSignalFilter)
-                        .toList();
+        List<ClassificationWithVolatilityPrediction> acceptedPredictions = new ArrayList<>();
+        for (var prediction : predictions) {
+            if (passesSignalFilter(prediction)) {
+                acceptedPredictions.add(prediction);
+            } else {
+                signals.put(prediction.getTicker(), signal(prediction, null, "BELOW_PROBABILITY_THRESHOLD", 0));
+            }
+        }
 
         Map<String, List<RoundTripTrade>> openTradesByTicker =
                 openTrades.stream()
@@ -154,21 +169,35 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
 
         List<ClassificationWithVolatilityPrediction> newAllocationCandidates =
                 acceptedPredictions.stream()
-                        .filter(prediction ->
-                                !openTradesByTicker.containsKey(prediction.getTicker()))
+                        .filter(prediction -> {
+                            if (openTradesByTicker.containsKey(prediction.getTicker())) {
+                                signals.put(prediction.getTicker(), signal(prediction, null, "EXTEND_EXISTING_TRADE", 0));
+                                return false;
+                            }
+                            return true;
+                        })
                         .toList();
 
         List<CapitalAllocation> capitalAllocations = //TODO: reconsider allocation logic eventually.
                 buildCapitalAllocations(
                         newAllocationCandidates,
                         portfolio,
-                        cycleTime
+                        cycleTime,
+                        signals
                 );
 
         return new PortfolioDecisionResult(
                 capitalAllocations,
-                openTradeAdjustments
+                openTradeAdjustments,
+                predictions.stream().map(p -> signals.get(p.getTicker())).toList(),
+                predictionNanos, batches.size()
         );
+    }
+
+    private SignalDecision signal(ClassificationWithVolatilityPrediction p, Double score,
+                                  String reason, double cash) {
+        return new SignalDecision(p.getTicker(), p.probability(), p.volatility(),
+                p.horizonMinutes(), score, reason, cash);
     }
 
     private boolean passesSignalFilter(
@@ -207,7 +236,8 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
     private List<CapitalAllocation> buildCapitalAllocations(
             List<ClassificationWithVolatilityPrediction> candidates,
             PortfolioSnapshot portfolio,
-            Instant cycleTime
+            Instant cycleTime,
+            Map<String, SignalDecision> signals
     ) {
         if (candidates.isEmpty()) {
             return List.of();
@@ -218,6 +248,7 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
         double maxCashPerAllocation = portfolio.cash() * maxAllocationFractionPerTicker;
 
         if (cashToDeploy <= 0.0) {
+            candidates.forEach(p -> signals.put(p.getTicker(), signal(p, null, "NO_DEPLOYABLE_CASH", 0)));
             return List.of();
         }
 
@@ -227,7 +258,12 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
                                 prediction,
                                 score(prediction)
                         ))
-                        .filter(scored -> scored.score() > 0.0)
+                        .filter(scored -> {
+                            if (scored.score() > 0.0) return true;
+                            var p = scored.prediction();
+                            signals.put(p.getTicker(), signal(p, scored.score(), "NON_POSITIVE_SCORE", 0));
+                            return false;
+                        })
                         .sorted(Comparator.comparingDouble(
                                 ScoredPrediction::score
                         ).reversed())
@@ -249,6 +285,11 @@ public final class ClassificationVolatilityPortfolioDecisionGenerator
                     cashToDeploy * allocationWeight,
                     maxCashPerAllocation
             );
+
+            var prediction = scoredPrediction.prediction();
+            signals.put(prediction.getTicker(), signal(prediction, scoredPrediction.score(),
+                    allocatedCash < cashToDeploy * allocationWeight ? "CAPPED_ALLOCATION" : "ALLOCATION_REQUESTED",
+                    allocatedCash));
 
             allocations.add(new CapitalAllocation(
                     scoredPrediction.prediction().getTicker(),
